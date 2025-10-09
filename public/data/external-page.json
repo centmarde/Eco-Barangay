@@ -1,44 +1,44 @@
 {
-  "title": "Scan, Order, Savor: Implementing a QR-Code Based Point of Sale System for D'Home Makers Café",
-  "description": "An innovative food café automation system that revolutionizes dining experiences through QR-code technology, enabling seamless ordering and payment processes based on table identification.",
-  "subtitle": "Transforming Food Service with Smart QR-Code Technology",
+  "title": "Eco-Barangay: Community E-Waste Collection System",
+  "description": "A community-driven solution that coordinates e-waste collection from puroks to the barangay for safe and responsible disposal. The system streamlines pickup scheduling, tracking, and reporting to help local governments manage electronic waste effectively.",
+  "subtitle": "Organizing E-Waste Collection for Cleaner Barangays",
   "backgroundImage": {
     "src": "/images/markup.png",
     "alt": "Abstract academic background with geometric patterns",
     "overlay": {
       "enabled": true,
-      "color": "rgba(139, 69, 19, 0.15)",
+      "color": "rgba(34, 139, 34, 0.12)",
       "opacity": 0.8
     }
   },
   "features": [
     {
-      "title": "QR-Code Table Ordering",
-      "description": "Customers scan unique QR codes at their tables to instantly access the digital menu and place orders directly from their smartphones.",
-      "icon": "mdi-qrcode-scan"
+      "title": "Purok-Level Pickup Coordination",
+      "description": "Residents schedule e-waste pickups at the purok level so collections can be consolidated at the barangay for proper disposal.",
+      "icon": "mdi-map-marker-multiple"
     },
     {
-      "title": "Real-Time Order Management",
-      "description": "Kitchen staff receive orders instantly with table identification, order status tracking, and preparation time estimates.",
-      "icon": "mdi-chef-hat"
+      "title": "Collection Tracking & Reporting",
+      "description": "Track inbound e-waste by category and generate reports for barangay officials to simplify disposal and recycling workflows.",
+      "icon": "mdi-truck-delivery"
     },
     {
-      "title": "Contactless Payment Integration",
-      "description": "Seamless payment processing through the system with multiple payment options and automated receipt generation.",
-      "icon": "mdi-contactless-payment"
+      "title": "Safe Handling Guidelines",
+      "description": "Provide residents with clear instructions for preparing electronic waste (batteries, small appliances, devices) to reduce hazards during collection and storage.",
+      "icon": "mdi-shield-check"
     },
     {
-      "title": "Table Management System",
-      "description": "Efficient table tracking with occupancy status, order history, and customer service optimization for café operations.",
-      "icon": "mdi-table-chair"
+      "title": "Community Engagement & Incentives",
+      "description": "Encourage participation through community drives, incentive programs, and transparent collection results shared with residents.",
+      "icon": "mdi-account-group"
     }
   ],
   "version": "1.0.0",
-  "author": "D'Home Makers Café Development Team",
-  "lastUpdated": "2025-10-01",
+  "author": "Eco-Barangay Development Team",
+  "lastUpdated": "2025-10-08",
   "theme": {
-    "primaryColor": "#8B4513",
-    "secondaryColor": "#F4E4BC"
+    "primaryColor": "#2E7D32",
+    "secondaryColor": "#C8E6C9"
   },
   "ui": {
     "showNavbar": true,
@@ -48,11 +48,11 @@
     "_footerComment": "Select the footer component to use: 1 or 2",
     "footerComponent": "1",
     "navbar": {
-      "title": "D'Home Makers Café POS",
-      "icon": "mdi-store",
+      "title": "Eco-Barangay E-Waste",
+      "icon": "mdi-recycle",
       "logo": {
         "src": "/src/assets/logo.svg",
-        "alt": "D'Home Makers Café Logo",
+        "alt": "Eco-Barangay Logo",
         "width": 32,
         "height": 32
       },
@@ -74,7 +74,7 @@
         }
       ],
       "ctaButton": {
-        "label": "Get Started",
+        "label": "Get Involved",
         "variant": "outlined",
         "color": "on-primary",
         "action": "navigate",
@@ -83,11 +83,11 @@
       }
     },
     "footer": {
-      "companyName": "D'Home Makers Café",
-      "tagline": "Smart dining through QR-code technology",
-      "icon": "mdi-coffee",
+      "companyName": "Eco-Barangay",
+      "tagline": "Collect. Consolidate. Dispose Responsibly.",
+      "icon": "mdi-recycle",
       "color": "grey-darken-3",
-      "copyright": "D'Home Makers Café Team. All rights reserved.",
+      "copyright": "Eco-Barangay Team. All rights reserved.",
       "socialLinks": [
         {
           "platform": "github",
@@ -96,10 +96,10 @@
           "label": "GitHub"
         },
         {
-          "platform": "twitter",
-          "icon": "mdi-twitter",
-          "url": "https://twitter.com",
-          "label": "Twitter"
+          "platform": "facebook",
+          "icon": "mdi-facebook",
+          "url": "https://facebook.com",
+          "label": "Facebook"
         },
         {
           "platform": "linkedin",
@@ -110,34 +110,34 @@
       ],
       "technologies": [
         {
-          "name": "QR Code",
-          "icon": "mdi-qrcode",
-          "color": "brown"
+          "name": "Community Coordination",
+          "icon": "mdi-account-multiple",
+          "color": "green"
         },
         {
-          "name": "Point of Sale",
-          "icon": "mdi-cash-register",
-          "color": "orange"
+          "name": "Waste Tracking",
+          "icon": "mdi-chart-line",
+          "color": "teal"
         }
       ],
       "thesisTeam": {
         "enabled": true,
-        "title": "Development Team",
-        "subtitle": "Meet the minds behind your café automation system",
+        "title": "Project Team",
+        "subtitle": "Meet the community members and developers",
         "members": [
           {
-            "name": "Lead Developer",
-            "role": "System Architect",
+            "name": "Project Lead",
+            "role": "Coordinator",
             "avatar": "/images/team/sarah.jpg"
           },
           {
-            "name": "UX Designer",
-            "role": "User Experience Specialist",
+            "name": "Community Liaison",
+            "role": "Outreach",
             "avatar": "/images/team/michael.jpg"
           },
           {
-            "name": "QR Specialist",
-            "role": "QR Technology Expert",
+            "name": "Technical Specialist",
+            "role": "Systems",
             "avatar": "/images/team/emma.jpg"
           }
         ]
@@ -145,23 +145,23 @@
     }
   },
   "authPage": {
-    "title": "Welcome to D'Home Makers Café POS System",
-    "subtitle": "Access your QR-code based point of sale workspace",
+    "title": "Welcome to Eco-Barangay E-Waste Portal",
+    "subtitle": "Join your purok and barangay in responsible e-waste collection",
     "layout": {
       "quotePosition": "right"
     },
     "quote": {
-      "text": "Innovation distinguishes between a leader and a follower.",
-      "author": "Steve Jobs",
-      "source": "Tech Visionary",
-      "motivationalText": "Start your digital café journey today. Every great service begins with smart technology."
+      "text": "Small acts, when multiplied by millions of people, can transform the world.",
+      "author": "Howard Zinn",
+      "source": "Community Wisdom",
+      "motivationalText": "Sign up to coordinate pickups, report collections, and help keep your barangay clean and safe."
     },
     "backgroundImage": {
       "src": "/images/auth-background.jpg",
-      "alt": "Modern café interior with QR codes on tables",
+      "alt": "Community volunteers collecting e-waste",
       "overlay": {
         "enabled": true,
-        "color": "rgba(139, 69, 19, 0.1)",
+        "color": "rgba(34, 139, 34, 0.08)",
         "opacity": 0.9
       }
     }

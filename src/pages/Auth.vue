@@ -34,6 +34,27 @@ const quoteSectionOrder = computed(() => {
   return isQuoteOnLeft.value ? 1 : 2;
 });
 
+// Computed background style for auth page left panel
+const leftPanelStyle = computed(() => {
+  const bg = authPageData.value?.backgroundImage;
+  if (!bg || !bg.src) return {};
+  return {
+   /*  backgroundImage: `url(${bg.src})`, */
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat'
+  } as Record<string, string>;
+});
+
+const leftOverlayStyle = computed(() => {
+  const overlay = authPageData.value?.backgroundImage?.overlay;
+  if (!overlay || !overlay.enabled) return { backgroundColor: 'transparent' };
+  const color = overlay.color || 'rgba(0,0,0,0.3)';
+  const opacity = typeof overlay.opacity === 'number' ? overlay.opacity : 0.5;
+  // If color already has rgba, assume it includes alpha; otherwise apply opacity
+  return { backgroundColor: color.includes('rgba') ? color : color, opacity: String(opacity) } as Record<string, string>;
+});
+
 // Methods
 const switchToRegister = () => {
   isLoginMode.value = false;
@@ -128,131 +149,96 @@ onMounted(async () => {
     {{ themeError || authPageError }}
   </v-alert>
 
-  <!-- Main Content -->
-  <v-row v-if="!themeLoading && !authPageLoading && authPageData" class="fill-height" align="center" no-gutters>
-    <!-- Form Section -->
+  <!-- Full-page Background with Overlay -->
+  <div v-if="!themeLoading && !authPageLoading && authPageData" class="auth-page-wrapper" :style="leftPanelStyle">
+    <div class="overlay" :style="leftOverlayStyle"></div>
 
-    <v-col
-      cols="12"
-      lg="5"
-      class="bg-primary d-flex align-center justify-center fill-height"
-      :order="formSectionOrder"
-    >
-
-      <div class="w-100" style="max-width: 500px">
-         <!-- Back to Home Button (static) -->
-            <v-btn
-              variant="text"
-              color="light"
-              size="small"
-              class="ma-2"
-              @click="navigateHome"
-            >
-              <v-icon start size="small">mdi-arrow-left</v-icon>
-              Back to Home
-            </v-btn>
-        <!-- Auth Form Container -->
-        <v-fade-transition mode="out-in">
-          <div v-if="isLoginMode" key="login">
-            <LoginForm @switch-to-register="switchToRegister" />
-          </div>
-          <div v-else key="register">
-            <RegisterForm @switch-to-login="switchToLogin" />
-          </div>
-        </v-fade-transition>
-
-        <!-- Additional Options -->
-        <v-card class="mt-4" variant="text">
-          <v-card-text class="text-center">
-            <v-divider class="mb-4" />
-
-            <div class="text-body-2 text-medium-emphasis mb-2">
-              Or continue with
+    <!-- Centered Card -->
+    <v-container fluid class="fill-height d-flex align-center justify-center" style="position:relative; z-index:1;">
+      <v-card class="auth-card" elevation="12" max-width="1000" style="width: 95%;">
+        <v-row no-gutters>
+          <!-- Left: Illustration / Quote -->
+          <v-col cols="12" md="6" class="pa-8 d-flex align-center bg-surface" :order="quoteSectionOrder">
+            <div class="text-center w-100">
+              <v-icon size="56" color="primary" class="mb-6">mdi-format-quote-open</v-icon>
+              <div class="text-h5 font-weight-light mb-4 text-primary">
+                {{ authPageData?.quote?.text }}
+              </div>
+              <div class="text-subtitle-1 text-primary opacity-75 mb-4">
+                — {{ authPageData?.quote?.author }}
+              </div>
+              <div v-if="authPageData?.quote?.motivationalText" class="text-body-2 text-primary opacity-70">
+                {{ authPageData?.quote?.motivationalText }}
+              </div>
             </div>
+          </v-col>
 
-            <!-- Social Login Options (static) -->
-            <v-row no-gutters justify="center">
-              <v-col cols="auto">
-                <v-btn
-                  variant="outlined"
-                  color="light"
-                  size="small"
-                  disabled
-                  class="mx-1"
-                >
-                  <v-icon start>mdi-google</v-icon>
-                  Google
-                </v-btn>
-              </v-col>
-              <v-col cols="auto">
-                <v-btn
-                  variant="outlined"
-                  color="light"
-                  size="small"
-                  disabled
-                  class="mx-1"
-                >
-                  <v-icon start>mdi-github</v-icon>
-                  GitHub
-                </v-btn>
-              </v-col>
-            </v-row>
+          <!-- Right: Auth Form -->
+          <v-col cols="12" md="6" class="pa-8 d-flex align-center justify-center" :order="formSectionOrder">
+            <div style="width:100%; max-width:480px;">
+              <!-- Back to Home -->
+              <v-btn variant="text"  size="small" class="mb-4" @click="navigateHome">
+                <v-icon start size="16">mdi-arrow-left</v-icon>
+                Back to Home
+              </v-btn>
 
-                <div class="text-caption text-medium-emphasis mt-2">
-              Social login coming soon
+              <v-sheet elevation="0" class="pa-0">
+                <v-fade-transition mode="out-in">
+                  <div v-if="isLoginMode" key="login">
+                    <LoginForm @switch-to-register="switchToRegister" />
+                  </div>
+                  <div v-else key="register">
+                    <RegisterForm @switch-to-login="switchToLogin" />
+                  </div>
+                </v-fade-transition>
+              </v-sheet>
+
+              <!-- Social / Toggle -->
+              <div class="mt-6 text-center">
+                <div class="text-body-2 text-medium-emphasis mb-3">Or continue with</div>
+                <v-row no-gutters justify="center">
+                  <v-col cols="auto"><v-btn variant="outlined" color="light" size="small" disabled class="mx-1"><v-icon start>mdi-google</v-icon>Google</v-btn></v-col>
+                  <v-col cols="auto"><v-btn variant="outlined" color="light" size="small" disabled class="mx-1"><v-icon start>mdi-github</v-icon>GitHub</v-btn></v-col>
+                </v-row>
+
+                <v-btn variant="text" color="light" size="small" class="mt-4" @click="toggleMode">
+                  <v-icon start>mdi-swap-horizontal</v-icon>
+                  Switch to {{ isLoginMode ? 'Register' : 'Login' }}
+                </v-btn>
+              </div>
             </div>
-          </v-card-text>
-        </v-card>
+          </v-col>
+        </v-row>
+      </v-card>
+    </v-container>
+  </div>
 
-        <!-- Toggle Mode Button (static) -->
-        <v-card class="mx-auto mt-2" variant="text">
-          <v-card-actions class="justify-center">
-
-            <v-btn
-              variant="text"
-              color="light"
-              size="small"
-              @click="toggleMode"
-            >
-              <v-icon start>mdi-swap-horizontal</v-icon>
-              Switch to {{ isLoginMode ? "Register" : "Login" }}
-            </v-btn>
-
-          </v-card-actions>
-
-        </v-card>
-      </div>
-
-    </v-col>
-
-    <!-- Quote Section -->
-    <v-col
-      cols="12"
-      lg="7"
-      class="d-none d-lg-flex align-center justify-center fill-height"
-      :order="quoteSectionOrder"
-    >
-      <v-card-text class="text-center">
-        <v-icon size="48" color="primary" class="mb-4 d-flex justify-start">
-          mdi-format-quote-open
-        </v-icon>
-
-        <div class="text-h4 font-weight-light mb-6 text-primary">
-          {{ authPageData.quote.text }}
-        </div>
-
-        <div class="text-h6 text-primary opacity-75">
-          — {{ authPageData.quote.author }}
-          <span v-if="authPageData.quote.source" class="text-caption">
-            ({{ authPageData.quote.source }})
-          </span>
-        </div>
-
-        <div v-if="authPageData.quote.motivationalText" class="text-body-1 text-primary opacity-75">
-          {{ authPageData.quote.motivationalText }}
-        </div>
-      </v-card-text>
-
-    </v-col>
-  </v-row>
 </template>
+
+<style scoped>
+.auth-page-wrapper {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow-y: auto;
+}
+
+.auth-page-wrapper .overlay {
+  position: fixed;
+  inset: 0;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+.auth-card {
+  border-radius: 12px;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+}
+
+
+</style>

@@ -9,6 +9,15 @@ import ForbiddenView from "@/pages/ForbiddenView.vue";
 import AdminUserRolesView from "@/pages/admin/AdminUserRolesView.vue";
 import UserManagementView from "@/pages/admin/UserManagementView.vue";
 
+// Collectors pages
+import RequestsView from "@/pages/collectors/RequestsView.vue";
+import RequestsHistoryView from "@/pages/collectors/RequestsHistoryView.vue";
+
+// Barangay Officials pages
+import PickupsView from "@/pages/barangay/PickupsView.vue";
+import MonitoringView from "@/pages/barangay/MonitoringView.vue";
+import ReportAnalysisView from "@/pages/barangay/ReportAnalysisView.vue";
+
 /**
  * Route definitions for the application
  */
@@ -27,6 +36,34 @@ const routes = setupLayouts([
     component: Dashboard,
     meta: { requiresAuth: true },
   },
+  // Collectors routes
+  {
+    path: "/collectors/requests",
+    component: RequestsView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/collectors/requests-history",
+    component: RequestsHistoryView,
+    meta: { requiresAuth: true },
+  },
+  // Barangay Officials routes
+  {
+    path: "/barangay/pickups",
+    component: PickupsView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/barangay/monitoring",
+    component: MonitoringView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/barangay/report-analysis",
+    component: ReportAnalysisView,
+    meta: { requiresAuth: true },
+  },
+  // Admin routes
   {
     path: "/admin/user-roles",
     component: AdminUserRolesView,

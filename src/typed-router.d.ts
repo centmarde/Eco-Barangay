@@ -27,9 +27,13 @@ declare module 'vue-router/auto-routes' {
     '/admin/dialogs/AdminUserRolesDialog': RouteRecordInfo<'/admin/dialogs/AdminUserRolesDialog', '/admin/dialogs/AdminUserRolesDialog', Record<never, never>, Record<never, never>>,
     '/admin/UserManagementView': RouteRecordInfo<'/admin/UserManagementView', '/admin/UserManagementView', Record<never, never>, Record<never, never>>,
     '/Auth': RouteRecordInfo<'/Auth', '/Auth', Record<never, never>, Record<never, never>>,
+    '/barangay/MonitoringView': RouteRecordInfo<'/barangay/MonitoringView', '/barangay/MonitoringView', Record<never, never>, Record<never, never>>,
+    '/barangay/PickupsView': RouteRecordInfo<'/barangay/PickupsView', '/barangay/PickupsView', Record<never, never>, Record<never, never>>,
+    '/barangay/ReportAnalysisView': RouteRecordInfo<'/barangay/ReportAnalysisView', '/barangay/ReportAnalysisView', Record<never, never>, Record<never, never>>,
+    '/collectors/RequestsHistoryView': RouteRecordInfo<'/collectors/RequestsHistoryView', '/collectors/RequestsHistoryView', Record<never, never>, Record<never, never>>,
+    '/collectors/RequestsView': RouteRecordInfo<'/collectors/RequestsView', '/collectors/RequestsView', Record<never, never>, Record<never, never>>,
     '/ForbiddenView': RouteRecordInfo<'/ForbiddenView', '/ForbiddenView', Record<never, never>, Record<never, never>>,
     '/HomeView': RouteRecordInfo<'/HomeView', '/HomeView', Record<never, never>, Record<never, never>>,
     '/NotFound': RouteRecordInfo<'/NotFound', '/NotFound', Record<never, never>, Record<never, never>>,
-    '/otherTab/Page1View': RouteRecordInfo<'/otherTab/Page1View', '/otherTab/Page1View', Record<never, never>, Record<never, never>>,
   }
 }

@@ -52,6 +52,17 @@ export const authGuard = async (to: RouteLocationNormalized, from: RouteLocation
 
             if (!isPageAllowed) {
               console.log('Access denied for path:', to.path, 'Role ID:', userRoleId);
+
+              // Check if user is trying to access a parent tab route (collectors or barangay)
+              // and redirect to forbidden if they don't have access to any child pages
+              const isCollectorsRoute = to.path.startsWith('/collectors');
+              const isBarangayRoute = to.path.startsWith('/barangay');
+              const isAdminRoute = to.path.startsWith('/admin');
+
+              if (isCollectorsRoute || isBarangayRoute || isAdminRoute) {
+                return next("/forbidden");
+              }
+
               return next("/forbidden"); // Redirect to forbidden page if access denied
             }
           } else {

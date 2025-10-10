@@ -1,4 +1,11 @@
 // Utilities
-import { createPinia } from 'pinia'
+import { createPinia } from "pinia";
 
-export default createPinia()
+// Export stores
+export { useAuthUserStore } from "./authUser";
+export { useUserRolesStore } from "./roles";
+export { useUserPagesStore } from "./pages";
+export { useDashboardStore } from "./dashboard";
+export { useAppStore } from "./app";
+
+export default createPinia();

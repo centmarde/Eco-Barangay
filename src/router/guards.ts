@@ -1,12 +1,20 @@
-import { useToast } from 'vue-toastification';
-import { useAuthUserStore } from '@/stores/authUser';
-import { useUserPagesStore } from '@/stores/pages';
-import type { RouteLocationNormalized, NavigationGuardNext, Router } from 'vue-router';
+import { useToast } from "vue-toastification";
+import { useAuthUserStore } from "@/stores/authUser";
+import { useUserPagesStore } from "@/stores/pages";
+import type {
+  RouteLocationNormalized,
+  NavigationGuardNext,
+  Router,
+} from "vue-router";
 
 /**
  * Authentication and role-based page access guard
  */
-export const authGuard = async (to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
+export const authGuard = async (
+  to: RouteLocationNormalized,
+  from: RouteLocationNormalized,
+  next: NavigationGuardNext
+) => {
   const isLoggedIn = localStorage.getItem("access_token") !== null;
   const publicPages = ["/", "/auth"];
   const toast = useToast();
@@ -17,14 +25,8 @@ export const authGuard = async (to: RouteLocationNormalized, from: RouteLocation
     return next("/auth");
   }
 
-  // If user is authenticated and trying to access public/auth pages, redirect to dashboard
+  // If user is authenticated and trying to access public/auth pages, redirect based on role
   if (isLoggedIn && publicPages.includes(to.path)) {
-    /*  toast.info("You are already logged in. Redirecting to home."); */
-    return next("/account/home");
-  }
-
-  // Check role-based page access for authenticated users on protected routes
-  if (isLoggedIn && to.meta.requiresAuth && to.path !== "/account/home") {
     try {
       const authStore = useAuthUserStore();
       const pagesStore = useUserPagesStore();
@@ -36,28 +38,91 @@ export const authGuard = async (to: RouteLocationNormalized, from: RouteLocation
         const userRoleId = currentUserResult.user.user_metadata?.role;
 
         if (userRoleId) {
-          console.log('Checking page access for role ID:', userRoleId);
-          console.log('Requested path:', to.path);
+          // Fetch pages accessible by this role
+          const rolePages = await pagesStore.fetchRolePagesByRoleId(userRoleId);
+
+          if (rolePages && rolePages.length > 0) {
+            // Check if user has access to admin pages
+            const allowedPages = rolePages
+              .map((rolePage) => rolePage.pages)
+              .filter(Boolean);
+            const hasAdminAccess = allowedPages.some((page: string) =>
+              page.startsWith("/admin/")
+            );
+
+            // Redirect admin users to dashboard, others to home
+            if (hasAdminAccess) {
+              return next("/admin/dashboard");
+            } else {
+              return next("/account/home");
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error checking user role for redirect:", error);
+    }
+
+    // Default fallback to home
+    return next("/account/home");
+  }
+
+  // Check role-based page access for authenticated users on protected routes
+  if (
+    isLoggedIn &&
+    to.meta.requiresAuth &&
+    to.path !== "/account/home" &&
+    to.path !== "/admin/dashboard"
+  ) {
+    try {
+      const authStore = useAuthUserStore();
+      const pagesStore = useUserPagesStore();
+
+      // Get current user data to access role ID from metadata
+      const currentUserResult = await authStore.getCurrentUser();
+
+      if (currentUserResult.user) {
+        const userRoleId = currentUserResult.user.user_metadata?.role;
+
+        if (userRoleId) {
+          console.log("Checking page access for role ID:", userRoleId);
+          console.log("Requested path:", to.path);
 
           // Fetch pages accessible by this role
           const rolePages = await pagesStore.fetchRolePagesByRoleId(userRoleId);
 
           if (rolePages && rolePages.length > 0) {
             // Check if the current path is in the allowed pages
-            const allowedPages = rolePages.map(rolePage => rolePage.pages).filter(Boolean);
+            const allowedPages = rolePages
+              .map((rolePage) => rolePage.pages)
+              .filter(Boolean);
             const isPageAllowed = allowedPages.includes(to.path);
 
-            console.log('Allowed pages for role:', allowedPages);
-            console.log('Is page allowed:', isPageAllowed);
+            console.log("Allowed pages for role:", allowedPages);
+            console.log("Is page allowed:", isPageAllowed);
+
+            // Special handling for admin dashboard - allow if user has any admin access
+            if (
+              to.path === "/admin/dashboard" &&
+              allowedPages.some((page: string) => page.startsWith("/admin/"))
+            ) {
+              console.log("Admin dashboard access granted");
+              return next();
+            }
 
             if (!isPageAllowed) {
-              console.log('Access denied for path:', to.path, 'Role ID:', userRoleId);
+              console.log(
+                "Access denied for path:",
+                to.path,
+                "Role ID:",
+                userRoleId
+              );
 
               // Check if user is trying to access a parent tab route (collectors or barangay)
               // and redirect to forbidden if they don't have access to any child pages
-              const isCollectorsRoute = to.path.startsWith('/collectors');
-              const isBarangayRoute = to.path.startsWith('/barangay');
-              const isAdminRoute = to.path.startsWith('/admin');
+              const isCollectorsRoute = to.path.startsWith("/collectors");
+              const isBarangayRoute = to.path.startsWith("/barangay");
+              const isAdminRoute = to.path.startsWith("/admin");
 
               if (isCollectorsRoute || isBarangayRoute || isAdminRoute) {
                 return next("/forbidden");
@@ -67,16 +132,16 @@ export const authGuard = async (to: RouteLocationNormalized, from: RouteLocation
             }
           } else {
             // No pages defined for this role - redirect to forbidden page
-            console.log('No pages configured for role ID:', userRoleId);
+            console.log("No pages configured for role ID:", userRoleId);
             return next("/forbidden");
           }
         } else {
-          console.log('No role ID found in user metadata');
+          console.log("No role ID found in user metadata");
           // If no role ID, allow access but log the issue
         }
       }
     } catch (error) {
-      console.error('Error checking role-based page access:', error);
+      console.error("Error checking role-based page access:", error);
       // Continue with navigation if there's an error to avoid blocking the user
     }
   }

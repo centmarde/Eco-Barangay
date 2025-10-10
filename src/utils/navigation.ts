@@ -27,6 +27,50 @@ export const navigationConfig: NavigationGroup[] = [
     ]
   },
   {
+    title: 'Collectors',
+    icon: 'mdi-truck',
+    permission: 'collectors.access',
+    children: [
+      {
+        title: 'Requests',
+        icon: 'mdi-clipboard-text',
+        route: '/collectors/requests',
+        permission: 'collectors.requests.view'
+      },
+      {
+        title: 'Requests History',
+        icon: 'mdi-history',
+        route: '/collectors/requests-history',
+        permission: 'collectors.requests.history'
+      },
+    ]
+  },
+  {
+    title: 'Barangay Officials',
+    icon: 'mdi-account-tie',
+    permission: 'barangay.access',
+    children: [
+      {
+        title: 'Pickups',
+        icon: 'mdi-truck-delivery',
+        route: '/barangay/pickups',
+        permission: 'barangay.pickups.view'
+      },
+      {
+        title: 'Monitoring',
+        icon: 'mdi-monitor-dashboard',
+        route: '/barangay/monitoring',
+        permission: 'barangay.monitoring.view'
+      },
+      {
+        title: 'Report Analysis',
+        icon: 'mdi-chart-box',
+        route: '/barangay/report-analysis',
+        permission: 'barangay.reports.view'
+      },
+    ]
+  },
+  {
     title: 'Admin Controls',
     icon: 'mdi-cog',
     permission: 'admin.access',

@@ -25,45 +25,9 @@ export const authGuard = async (
     return next("/auth");
   }
 
-  // If user is authenticated and trying to access public/auth pages, redirect based on role
+  // If user is authenticated and trying to access public/auth pages, redirect to dashboard
   if (isLoggedIn && publicPages.includes(to.path)) {
-    try {
-      const authStore = useAuthUserStore();
-      const pagesStore = useUserPagesStore();
-
-      // Get current user data to access role ID from metadata
-      const currentUserResult = await authStore.getCurrentUser();
-
-      if (currentUserResult.user) {
-        const userRoleId = currentUserResult.user.user_metadata?.role;
-
-        if (userRoleId) {
-          // Fetch pages accessible by this role
-          const rolePages = await pagesStore.fetchRolePagesByRoleId(userRoleId);
-
-          if (rolePages && rolePages.length > 0) {
-            // Check if user has access to admin pages
-            const allowedPages = rolePages
-              .map((rolePage) => rolePage.pages)
-              .filter(Boolean);
-            const hasAdminAccess = allowedPages.some((page: string) =>
-              page.startsWith("/admin/")
-            );
-
-            // Redirect admin users to dashboard, others to home
-            if (hasAdminAccess) {
-              return next("/admin/dashboard");
-            } else {
-              return next("/account/home");
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error checking user role for redirect:", error);
-    }
-
-    // Default fallback to home
+    /*  toast.info("You are already logged in. Redirecting to home."); */
     return next("/account/home");
   }
 

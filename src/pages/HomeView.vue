@@ -1,15 +1,11 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
 import { storeToRefs } from "pinia";
-import { useRouter } from "vue-router";
 import { useAuthUserStore } from "@/stores/authUser";
 import { useToast } from "vue-toastification";
 import InnerLayoutWrapper from "@/layouts/InnerLayoutWrapper.vue";
-import { userHasAdminAccess } from "@/utils/userRouting";
 
 const authStore = useAuthUserStore();
 const toast = useToast();
-const router = useRouter();
 
 // Reactive references from the auth store
 const { userName, loading } = storeToRefs(authStore);
@@ -28,14 +24,6 @@ const handleLogout = async () => {
     toast.error("An unexpected error occurred during logout");
   }
 };
-
-// Redirect admin users to dashboard
-onMounted(async () => {
-  const hasAdminAccess = await userHasAdminAccess();
-  if (hasAdminAccess) {
-    router.replace("/admin/dashboard");
-  }
-});
 </script>
 
 <template>

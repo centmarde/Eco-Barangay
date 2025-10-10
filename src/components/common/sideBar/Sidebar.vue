@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useDisplay } from 'vuetify'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthUserStore } from '@/stores/authUser'
 import { navigationConfig } from '@/utils/navigation'
+import { usePermissions } from '@/composables/usePermissions'
+import type { NavigationGroup, NavigationItem } from '@/utils/navigation'
 
 // Vuetify display composable for responsive design
 const { smAndDown } = useDisplay()
@@ -14,6 +16,9 @@ const route = useRoute()
 
 // Auth store
 const authStore = useAuthUserStore()
+
+// Permissions composable
+const { fetchUserPermissions, hasPageAccess, hasGroupAccess, isLoading: permissionsLoading } = usePermissions()
 
 // Reactive state for sidebar
 const isExpanded = ref(true)
@@ -59,8 +64,30 @@ watch(
 // Hide sidebar on small screens
 const showSidebar = computed(() => !smAndDown.value)
 
-// Get navigation groups from shared config
-const navigationGroups = computed(() => navigationConfig)
+// Filter navigation groups based on user permissions
+const navigationGroups = computed(() => {
+  return navigationConfig
+    .map(group => {
+      // Filter children based on page access
+      const accessibleChildren = group.children.filter(child => hasPageAccess(child.route))
+
+      // Only include group if it has accessible children
+      if (accessibleChildren.length > 0) {
+        return {
+          ...group,
+          children: accessibleChildren
+        }
+      }
+
+      return null
+    })
+    .filter(Boolean) as NavigationGroup[]
+})
+
+// Initialize permissions on component mount
+onMounted(async () => {
+  await fetchUserPermissions()
+})
 
 // Helper function to get group expansion state
 const getGroupExpansion = (groupTitle: string) => {
@@ -114,8 +141,23 @@ const handleLogout = async () => {
 
     <v-divider class="mx-4"></v-divider>
 
+    <!-- Loading State -->
+    <div v-if="permissionsLoading" class="pa-4">
+      <v-skeleton-loader
+        type="list-item"
+        class="mb-2"
+      ></v-skeleton-loader>
+      <v-skeleton-loader
+        type="list-item"
+        class="mb-2"
+      ></v-skeleton-loader>
+      <v-skeleton-loader
+        type="list-item"
+      ></v-skeleton-loader>
+    </div>
+
     <!-- Navigation Menu -->
-    <v-list nav class="pa-2">
+    <v-list v-else nav class="pa-2">
       <!-- Dynamic Navigation Groups -->
       <div
         v-for="group in navigationGroups"

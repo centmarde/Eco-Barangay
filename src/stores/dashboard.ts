@@ -57,7 +57,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
       title: "User Roles",
       description: "Configure user permissions",
       icon: "mdi-shield-account",
-      color: "secondary",
+      color: "primary",
       route: "/admin/user-roles",
     },
     {
@@ -68,10 +68,10 @@ export const useDashboardStore = defineStore("dashboard", () => {
       route: "/barangay/monitoring",
     },
     {
-      title: "Reports Analysis",
+      title: "Report Analysis",
       description: "View analytics and reports",
       icon: "mdi-chart-line",
-      color: "warning",
+      color: "primary",
       route: "/barangay/report-analysis",
     },
   ]);

@@ -5,8 +5,8 @@ const { mobile } = useDisplay();
 </script>
 
 <template>
-  <v-card elevation="2" :class="mobile ? 'pa-4' : 'pa-6'">
-    <v-card-title :class="mobile ? 'text-h6 mb-3 pa-0' : 'text-h5 mb-4 pa-0'">
+  <v-card elevation="2" :class="mobile ? 'pa-4' : 'pa-6'" class="h-100">
+    <v-card-title :class="mobile ? 'text-h6 mb-4 pa-0' : 'text-h5 mb-4 pa-0'">
       <v-icon :class="mobile ? 'mr-1' : 'mr-2'" :size="mobile ? 20 : 24">
         mdi-monitor-dashboard
       </v-icon>

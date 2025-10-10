@@ -29,19 +29,19 @@ const statsConfig = computed(() => [
     label: "Pending",
     value: props.stats.pendingRequests,
     icon: "mdi-clock-outline",
-    color: "warning",
+    color: "primary",
   },
   {
     label: "Completed",
     value: props.stats.completedPickups,
     icon: "mdi-check-circle",
-    color: "info",
+    color: "primary",
   },
   {
     label: "Reports",
     value: props.stats.totalReports,
     icon: "mdi-file-document",
-    color: "secondary",
+    color: "green",
   },
   {
     label: "Waste (kg)",

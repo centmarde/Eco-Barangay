@@ -43,7 +43,7 @@ const handleActionClick = (route: string) => {
             <v-card
               :color="action.color"
               variant="tonal"
-              :class="mobile ? 'pa-3' : 'pa-4'"
+              :class="mobile ? 'pa-2' : 'pa-4'"
               class="action-card cursor-pointer h-100"
               elevation="1"
               hover
@@ -54,14 +54,15 @@ const handleActionClick = (route: string) => {
               >
                 <v-icon
                   :color="action.color"
-                  :size="mobile ? 36 : 48"
+                  :size="mobile ? 32 : 48"
                   class="mb-2"
                 >
                   {{ action.icon }}
                 </v-icon>
                 <div
-                  :class="mobile ? 'text-body-2' : 'text-h6'"
-                  class="font-weight-bold mb-1"
+                  :class="mobile ? 'text-caption' : 'text-h6'"
+                  class="font-weight-bold mb-1 text-wrap"
+                  style="word-break: break-word; line-height: 1.2"
                 >
                   {{ action.title }}
                 </div>
@@ -92,10 +93,18 @@ const handleActionClick = (route: string) => {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
+.text-wrap {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  white-space: normal !important;
+  max-width: 100%;
+}
+
 /* Mobile optimizations */
 @media (max-width: 600px) {
   .action-card {
-    min-height: 100px;
+    min-height: 110px;
   }
 }
 </style>

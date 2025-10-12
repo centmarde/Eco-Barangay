@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseAdmin } from "@/lib/supabase";
 import { useToast } from "vue-toastification";
 
 // Type definitions
@@ -103,12 +103,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
     error.value = null;
 
     try {
-      // Fetch total users count from auth.users via admin API
-      const { count: totalUsers, error: usersError } = await supabase
-        .from("auth.users")
-        .select("*", { count: "exact", head: true });
+      // Fetch total users count using admin API
+      const { data: usersData, error: usersError } =
+        await supabaseAdmin.auth.admin.listUsers();
 
-      if (usersError && usersError.code !== "PGRST116") {
+      const totalUsers = usersData?.users?.length || 0;
+
+      if (usersError) {
         console.error("Error fetching users:", usersError);
       }
 
@@ -135,7 +136,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
       // Update stats with real data where available
       dashboardStats.value = {
-        totalUsers: totalUsers || 0,
+        totalUsers: totalUsers,
         activeCollectors: 0, // Replace with actual query
         pendingRequests: 0, // Replace with actual query
         completedPickups: 0, // Replace with actual query

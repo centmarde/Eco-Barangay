@@ -5,6 +5,7 @@ import { useNotificationsStore } from "@/stores/notifications";
 import { useAuthUserStore } from "@/stores/authUser";
 import { useDisplay } from "vuetify";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { getNotificationIcon, getNotificationColor } from "@/utils/helpers";
 
 const router = useRouter();
 const notificationsStore = useNotificationsStore();
@@ -45,36 +46,6 @@ const handleNotificationClick = async (notification: any) => {
   if (notification.action_url) {
     notificationMenu.value = false;
     router.push(notification.action_url);
-  }
-};
-
-const getNotificationIcon = (type: string) => {
-  switch (type) {
-    case "success":
-      return "mdi-check-circle";
-    case "warning":
-      return "mdi-alert";
-    case "error":
-      return "mdi-alert-circle";
-    case "info":
-    default:
-      return "mdi-information";
-  }
-};
-
-const getNotificationColor = (notification: any) => {
-  if (notification.read) return "grey-lighten-1";
-
-  switch (notification.type) {
-    case "success":
-      return "success";
-    case "warning":
-      return "warning";
-    case "error":
-      return "error";
-    case "info":
-    default:
-      return "primary";
   }
 };
 

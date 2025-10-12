@@ -2,7 +2,6 @@ import type { CollectionWithEmails } from "@/stores/collectionsData";
 import { useCollectionsStore } from "@/stores/collectionsData";
 import { useAuthUserStore } from "@/stores/authUser";
 import { ref, computed, onMounted } from "vue";
-import { useToast } from "vue-toastification";
 import { formatDate } from "@/utils/helpers";
 import {
   getStatusColor,
@@ -15,13 +14,16 @@ import {
 export const useRequestView = () => {
   const collectionsStore = useCollectionsStore();
   const authStore = useAuthUserStore();
-  const toast = useToast();
 
   // State
   const collections = ref<CollectionWithEmails[]>([]);
   const loading = ref(false);
   const selectedStatus = ref<string>("all");
   const showOnlyMyCollections = ref<boolean>(true);
+
+  // Dialog state
+  const showDialog = ref(false);
+  const selectedCollection = ref<CollectionWithEmails | null>(null);
 
   // Status order for fetching (pending first)
   const statusOrder = ["pending", "in_progress", "completed", "cancelled"];
@@ -93,7 +95,32 @@ export const useRequestView = () => {
       collections.value = data;
     } catch (error) {
       console.error("Error fetching collections:", error);
-      toast.error("Failed to load collections");
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const openDialog = (collection: CollectionWithEmails) => {
+    selectedCollection.value = collection;
+    showDialog.value = true;
+  };
+
+  const closeDialog = () => {
+    showDialog.value = false;
+    selectedCollection.value = null;
+  };
+
+  const updateCollectionStatus = async (
+    collectionId: number,
+    newStatus: string
+  ) => {
+    loading.value = true;
+    try {
+      await collectionsStore.updateCollectionStatus(collectionId, newStatus);
+      await fetchCollections();
+      closeDialog();
+    } catch (error) {
+      console.error("Error updating collection status:", error);
     } finally {
       loading.value = false;
     }
@@ -105,6 +132,8 @@ export const useRequestView = () => {
     loading,
     selectedStatus,
     showOnlyMyCollections,
+    showDialog,
+    selectedCollection,
     // Computed
     sortedCollections,
     filteredCollections,
@@ -112,6 +141,9 @@ export const useRequestView = () => {
     myCollectionsCount,
     // Actions
     fetchCollections,
+    openDialog,
+    closeDialog,
+    updateCollectionStatus,
     getStatusColor,
     getStatusIcon,
     getStatusText,

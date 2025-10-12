@@ -1,83 +1,98 @@
 <script lang="ts" setup>
-  import type { UIConfig, LogoConfig } from '@/controller/landingController'
-  import { computed, ref, onMounted, onUnmounted } from 'vue'
-  import { useRouter } from 'vue-router'
-  import { useTheme } from '@/composables/useTheme'
-  import { useDisplay } from 'vuetify'
-  import { useAuthUserStore } from '@/stores/authUser'
-  import SlugName from './SlugName.vue'
-  import { navigationConfig, type NavigationGroup, type NavigationItem } from '@/utils/navigation'
+import type { UIConfig, LogoConfig } from "@/controller/landingController";
+import { computed, ref, onMounted, onUnmounted } from "vue";
+import { useRouter } from "vue-router";
+import { useTheme } from "@/composables/useTheme";
+import { useDisplay } from "vuetify";
+import { useAuthUserStore } from "@/stores/authUser";
+import SlugName from "./SlugName.vue";
+import NotificationBell from "@/components/common/NotificationBell.vue";
+import {
+  navigationConfig,
+  type NavigationGroup,
+  type NavigationItem,
+} from "@/utils/navigation";
 
-  interface Props {
-    config?: UIConfig | null
+interface Props {
+  config?: UIConfig | null;
+}
+
+const props = defineProps<Props>();
+const router = useRouter();
+const authStore = useAuthUserStore();
+
+// Responsive breakpoints
+const { mobile } = useDisplay();
+
+// Mobile drawer state
+const mobileDrawer = ref(false);
+
+// Theme management
+const {
+  toggleTheme: handleToggleTheme,
+  getCurrentTheme,
+  isLoadingTheme,
+} = useTheme();
+
+// Scroll detection for mobile drawer auto-close
+let lastScrollY = ref(0);
+let ticking = ref(false);
+
+const handleScroll = () => {
+  if (!ticking.value) {
+    requestAnimationFrame(() => {
+      const currentScrollY = window.scrollY;
+
+      // Close mobile drawer when scrolling down
+      if (
+        mobile.value &&
+        mobileDrawer.value &&
+        currentScrollY > lastScrollY.value
+      ) {
+        mobileDrawer.value = false;
+      }
+
+      lastScrollY.value = currentScrollY;
+      ticking.value = false;
+    });
+    ticking.value = true;
   }
+};
 
-  const props = defineProps<Props>()
-  const router = useRouter()
-  const authStore = useAuthUserStore()
+// Add scroll listener on mount, remove on unmount
+onMounted(() => {
+  window.addEventListener("scroll", handleScroll, { passive: true });
+  lastScrollY.value = window.scrollY;
+});
 
-  // Responsive breakpoints
-  const { mobile } = useDisplay()
+onUnmounted(() => {
+  window.removeEventListener("scroll", handleScroll);
+});
 
-  // Mobile drawer state
-  const mobileDrawer = ref(false)
+const navbarConfig = computed(() => props.config?.navbar);
 
-  // Theme management
-  const { toggleTheme: handleToggleTheme, getCurrentTheme, isLoadingTheme } = useTheme()
+// Theme toggle computed properties
+const currentTheme = computed(() => getCurrentTheme());
+const themeIcon = computed(() => {
+  return currentTheme.value === "dark"
+    ? "mdi-white-balance-sunny"
+    : "mdi-weather-night";
+});
+const themeTooltip = computed(() => {
+  return `Switch to ${currentTheme.value === "dark" ? "light" : "dark"} theme`;
+});
 
-  // Scroll detection for mobile drawer auto-close
-  let lastScrollY = ref(0)
-  let ticking = ref(false)
+function toggleTheme() {
+  handleToggleTheme();
+}
 
-  const handleScroll = () => {
-    if (!ticking.value) {
-      requestAnimationFrame(() => {
-        const currentScrollY = window.scrollY
-
-        // Close mobile drawer when scrolling down
-        if (mobile.value && mobileDrawer.value && currentScrollY > lastScrollY.value) {
-          mobileDrawer.value = false
-        }
-
-        lastScrollY.value = currentScrollY
-        ticking.value = false
-      })
-      ticking.value = true
-    }
+async function handleLogout() {
+  try {
+    await authStore.signOut();
+  } catch (error) {
+    console.error("Logout failed:", error);
   }
-
-  // Add scroll listener on mount, remove on unmount
-  onMounted(() => {
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    lastScrollY.value = window.scrollY
-  })
-
-  onUnmounted(() => {
-    window.removeEventListener('scroll', handleScroll)
-  })
-
-  const navbarConfig = computed(() => props.config?.navbar)
-
-  // Theme toggle computed properties
-  const currentTheme = computed(() => getCurrentTheme())
-  const themeIcon = computed(() => {
-    return currentTheme.value === 'dark' ? 'mdi-white-balance-sunny' : 'mdi-weather-night'
-  })
-  const themeTooltip = computed(() => {
-    return `Switch to ${currentTheme.value === 'dark' ? 'light' : 'dark'} theme`
-  })
-
-  function toggleTheme () {
-    handleToggleTheme()
-  }
-
-  async function handleLogout () {
-    try {
-      await authStore.signOut()
-    } catch (error) {
-      console.error('Logout failed:', error)
-    }
-  }
+}
 </script>
 
 <template>
@@ -103,20 +118,12 @@
           contain
         >
           <template #error>
-            <v-icon
-              class="me-2"
-              :icon="navbarConfig.icon"
-              size="large"
-            />
+            <v-icon class="me-2" :icon="navbarConfig.icon" size="large" />
           </template>
         </v-img>
       </template>
       <template v-else>
-        <v-icon
-          class="me-2"
-          :icon="navbarConfig?.icon"
-          size="large"
-        />
+        <v-icon class="me-2" :icon="navbarConfig?.icon" size="large" />
       </template>
       <span class="text-h6 font-weight-bold">{{ navbarConfig?.title }}</span>
     </div>
@@ -153,6 +160,9 @@
       </template>
 
       <v-divider class="my-2 mx-4" />
+
+      <!-- Notifications (Mobile) -->
+      <NotificationBell />
 
       <!-- Theme Toggle -->
       <v-list-item
@@ -204,25 +214,19 @@
           >
             <template #error>
               <!-- Fallback to icon if image fails to load -->
-              <v-icon
-                class="me-2"
-                :icon="navbarConfig.icon"
-                size="large"
-              />
+              <v-icon class="me-2" :icon="navbarConfig.icon" size="large" />
             </template>
           </v-img>
         </template>
 
         <template v-else>
           <!-- Default icon when no logo is configured -->
-          <v-icon
-            class="me-2"
-            :icon="navbarConfig?.icon"
-            size="large"
-          />
+          <v-icon class="me-2" :icon="navbarConfig?.icon" size="large" />
         </template>
 
-        <span class="text-h6 font-weight-bold ms-2">{{ navbarConfig?.title }}</span>
+        <span class="text-h6 font-weight-bold ms-2">{{
+          navbarConfig?.title
+        }}</span>
       </div>
     </template>
 
@@ -243,6 +247,9 @@
         </v-tooltip>
       </v-btn>
 
+      <!-- Notification Bell Component -->
+      <NotificationBell />
+
       <!-- User Slug Name Component -->
       <SlugName />
     </template>
@@ -256,7 +263,9 @@
   top: 0 !important;
   left: 280px !important; /* Position to the right of sidebar */
   right: 0 !important;
-  width: calc(100% - 280px) !important; /* Adjust width to account for sidebar */
+  width: calc(
+    100% - 280px
+  ) !important; /* Adjust width to account for sidebar */
   z-index: 1001 !important; /* Above sidebar but below overlays */
 }
 

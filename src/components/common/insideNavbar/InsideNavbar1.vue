@@ -188,6 +188,7 @@ async function handleLogout() {
     :elevation="navbarConfig.elevation"
     class="navbar-toolbar"
     fixed
+    :height="mobile ? '56' : '64'"
   >
     <template #prepend>
       <!-- Mobile Hamburger Menu -->
@@ -195,13 +196,14 @@ async function handleLogout() {
         v-if="mobile"
         icon
         variant="text"
+        size="small"
         @click="mobileDrawer = !mobileDrawer"
       >
-        <v-icon icon="mdi-menu" />
+        <v-icon icon="mdi-menu" size="24" />
       </v-btn>
 
-      <!-- Logo and Title -->
-      <div class="d-flex align-center">
+      <!-- Logo and Title - Desktop only -->
+      <div v-if="!mobile" class="d-flex align-center">
         <!-- Logo Image with Icon Fallback -->
         <template v-if="navbarConfig?.logo?.src">
           <v-img
@@ -228,12 +230,32 @@ async function handleLogout() {
           navbarConfig?.title
         }}</span>
       </div>
+
+      <!-- Mobile Logo Only (no title) -->
+      <div v-else class="d-flex align-center">
+        <template v-if="navbarConfig?.logo?.src">
+          <v-img
+            :src="navbarConfig.logo.src"
+            :alt="navbarConfig.logo.alt"
+            :width="32"
+            :height="32"
+            contain
+          >
+            <template #error>
+              <v-icon :icon="navbarConfig.icon" size="24" />
+            </template>
+          </v-img>
+        </template>
+        <template v-else>
+          <v-icon :icon="navbarConfig?.icon" size="24" />
+        </template>
+      </div>
     </template>
 
     <v-spacer />
 
     <!-- Desktop Actions -->
-    <template #append>
+    <template v-if="!mobile" #append>
       <!-- Theme Toggle Button -->
       <v-btn
         :loading="isLoadingTheme"
@@ -245,6 +267,26 @@ async function handleLogout() {
         <v-tooltip activator="parent" location="bottom">
           {{ themeTooltip }}
         </v-tooltip>
+      </v-btn>
+
+      <!-- Notification Bell Component -->
+      <NotificationBell />
+
+      <!-- User Slug Name Component -->
+      <SlugName />
+    </template>
+
+    <!-- Mobile Actions - Icons only -->
+    <template v-else #append>
+      <!-- Theme Toggle Button -->
+      <v-btn
+        :loading="isLoadingTheme"
+        size="small"
+        variant="text"
+        icon
+        @click="toggleTheme"
+      >
+        <v-icon :icon="themeIcon" size="20" />
       </v-btn>
 
       <!-- Notification Bell Component -->
@@ -275,6 +317,12 @@ async function handleLogout() {
     left: 0 !important;
     width: 100% !important;
     z-index: 1010 !important; /* Higher z-index on mobile for mobile drawer */
+    padding: 0 8px !important;
+  }
+
+  /* Compact buttons on mobile */
+  .navbar-toolbar :deep(.v-btn) {
+    min-width: 40px !important;
   }
 }
 

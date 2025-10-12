@@ -3,6 +3,7 @@ import { getUserDisplayName, getEmailInitials } from "@/utils/helpers";
 import { useRequestView } from "../composables/requestView";
 import { useDisplay } from "vuetify";
 import { onMounted } from "vue";
+import RequestDialog from "../dialogs/RequestDialog.vue";
 
 const { smAndDown, mdAndUp } = useDisplay();
 
@@ -13,7 +14,12 @@ const {
   filteredCollections,
   statusCounts,
   myCollectionsCount,
+  showDialog,
+  selectedCollection,
   fetchCollections,
+  openDialog,
+  closeDialog,
+  updateCollectionStatus,
   getStatusColor,
   getStatusIcon,
   getStatusText,
@@ -25,6 +31,10 @@ const {
 onMounted(async () => {
   await fetchCollections();
 });
+
+const handleStatusUpdate = async (collectionId: number, newStatus: string) => {
+  await updateCollectionStatus(collectionId, newStatus);
+};
 </script>
 
 <template>
@@ -285,7 +295,13 @@ onMounted(async () => {
 
           <!-- Actions -->
           <v-card-actions>
-            <v-btn variant="text" color="primary" size="small" block>
+            <v-btn
+              variant="text"
+              color="primary"
+              size="small"
+              block
+              @click="openDialog(collection)"
+            >
               <v-icon start>mdi-eye</v-icon>
               View Details
             </v-btn>
@@ -293,6 +309,13 @@ onMounted(async () => {
         </v-card>
       </v-col>
     </v-row>
+
+    <!-- Request Dialog -->
+    <RequestDialog
+      v-model="showDialog"
+      :collection="selectedCollection"
+      @status-updated="handleStatusUpdate"
+    />
   </div>
 </template>
 

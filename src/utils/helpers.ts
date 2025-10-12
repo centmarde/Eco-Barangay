@@ -184,6 +184,40 @@ export function createDisplaySlugName(email: string | null | undefined): string 
 
 
 // ========================================
+// GARBAGE COLLECTION HELPERS
+// ========================================
+
+/**
+ * Gets the color for a garbage type
+ * @param type - The garbage type to get color for
+ * @returns A color string for Vuetify components
+ */
+export function getGarbageTypeColor(type: string): string {
+  const colors: Record<string, string> = {
+    biodegradable: "success",
+    non_biodegradable: "error",
+    recyclable: "info",
+    hazardous: "warning",
+  };
+  return colors[type] || "grey";
+}
+
+/**
+ * Gets the icon for a garbage type
+ * @param type - The garbage type to get icon for
+ * @returns An icon string for Vuetify components
+ */
+export function getGarbageTypeIcon(type: string): string {
+  const icons: Record<string, string> = {
+    biodegradable: "mdi-leaf",
+    non_biodegradable: "mdi-delete",
+    recyclable: "mdi-recycle",
+    hazardous: "mdi-biohazard",
+  };
+  return icons[type] || "mdi-trash-can";
+}
+
+// ========================================
 // ORGANIZATION MEMBERS HELPERS
 // ========================================
 

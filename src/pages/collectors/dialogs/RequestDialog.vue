@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { getUserDisplayName, getEmailInitials } from "@/utils/helpers";
+import { getUserDisplayName, getEmailInitials, getGarbageTypeColor, getGarbageTypeIcon } from "@/utils/helpers";
 import type { CollectionWithEmails } from "@/stores/collectionsData";
 
 interface Props {
@@ -59,26 +59,6 @@ const getStatusIcon = (status: string) => {
 
 const getStatusTitle = (status: string) => {
   return statusOptions.find((s) => s.value === status)?.title || status;
-};
-
-const getGarbageTypeColor = (type: string) => {
-  const colors: Record<string, string> = {
-    biodegradable: "success",
-    non_biodegradable: "error",
-    recyclable: "info",
-    hazardous: "warning",
-  };
-  return colors[type] || "grey";
-};
-
-const getGarbageTypeIcon = (type: string) => {
-  const icons: Record<string, string> = {
-    biodegradable: "mdi-leaf",
-    non_biodegradable: "mdi-delete",
-    recyclable: "mdi-recycle",
-    hazardous: "mdi-biohazard",
-  };
-  return icons[type] || "mdi-trash-can";
 };
 </script>
 

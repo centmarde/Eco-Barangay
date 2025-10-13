@@ -8,6 +8,12 @@ import RequestsPagination from "./RequestsPagination.vue";
 
 const { smAndDown, mdAndUp } = useDisplay();
 
+// Dialog for completed/cancelled collections
+const showNotificationDialog = ref(false);
+const notificationMessage = ref("");
+const notificationTitle = ref("");
+const notificationColor = ref("info");
+
 const {
   loading,
   selectedStatus,
@@ -56,6 +62,28 @@ onMounted(async () => {
 
 const handleStatusUpdate = async (collectionId: number, newStatus: string) => {
   await updateCollectionStatus(collectionId, newStatus);
+};
+
+const handleOpenDialog = (collection: any) => {
+  // Check if collection is completed or cancelled
+  if (collection.status === "completed") {
+    notificationTitle.value = "Collection Completed";
+    notificationMessage.value = "This collection has already been completed and cannot be modified.";
+    notificationColor.value = "success";
+    showNotificationDialog.value = true;
+    return;
+  }
+
+  if (collection.status === "cancelled") {
+    notificationTitle.value = "Collection Cancelled";
+    notificationMessage.value = "This collection has been cancelled and cannot be modified.";
+    notificationColor.value = "error";
+    showNotificationDialog.value = true;
+    return;
+  }
+
+  // If not completed or cancelled, open the dialog normally
+  openDialog(collection);
 };
 </script>
 
@@ -294,7 +322,7 @@ const handleStatusUpdate = async (collectionId: number, newStatus: string) => {
               color="primary"
               size="small"
               block
-              @click="openDialog(collection)"
+              @click="handleOpenDialog(collection)"
             >
               <v-icon start>mdi-eye</v-icon>
               View Details
@@ -317,6 +345,33 @@ const handleStatusUpdate = async (collectionId: number, newStatus: string) => {
       :collection="selectedCollection"
       @status-updated="handleStatusUpdate"
     />
+
+    <!-- Notification Dialog for Completed/Cancelled Collections -->
+    <v-dialog v-model="showNotificationDialog" max-width="500">
+      <v-card>
+        <v-card-title class="text-h6 font-weight-bold d-flex align-center" :class="`bg-${notificationColor}`">
+          <v-icon :color="notificationColor" class="mr-2">
+            {{ notificationColor === 'success' ? 'mdi-check-circle' : 'mdi-cancel' }}
+          </v-icon>
+          {{ notificationTitle }}
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <p class="text-body-1 mb-0">{{ notificationMessage }}</p>
+        </v-card-text>
+        <v-divider />
+        <v-card-actions class="pa-4">
+          <v-spacer />
+          <v-btn
+            variant="elevated"
+            :color="notificationColor"
+            @click="showNotificationDialog = false"
+          >
+            <v-icon start>mdi-check</v-icon>
+            OK
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 

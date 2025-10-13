@@ -68,6 +68,12 @@ const closeDialog = () => {
 const saveStatus = () => {
   if (!props.collection || !localStatus.value) return;
 
+  // Prevent saving if already completed or cancelled
+  if (props.collection.status === "completed" || props.collection.status === "cancelled") {
+    closeDialog();
+    return;
+  }
+
   emit("statusUpdated", props.collection.id, localStatus.value);
 };
 
@@ -250,7 +256,7 @@ const getStatusTitle = (status: string) => {
           </v-col>
 
           <!-- Status Update Section -->
-          <v-col cols="12">
+          <v-col cols="12" v-if="collection.status !== 'completed' && collection.status !== 'cancelled'">
             <v-divider class="my-4" />
             <v-card variant="outlined" color="primary">
               <v-card-title class="text-subtitle-1 bg-primary">
@@ -290,6 +296,30 @@ const getStatusTitle = (status: string) => {
               </v-card-text>
             </v-card>
           </v-col>
+
+          <!-- Read-only message for completed/cancelled -->
+          <v-col cols="12" v-else>
+            <v-divider class="my-4" />
+            <v-alert
+              :color="collection.status === 'completed' ? 'success' : 'error'"
+              variant="tonal"
+              prominent
+            >
+              <template #prepend>
+                <v-icon size="large">
+                  {{ collection.status === 'completed' ? 'mdi-check-circle' : 'mdi-cancel' }}
+                </v-icon>
+              </template>
+              <div class="text-body-1">
+                <strong>This collection is {{ collection.status }}</strong>
+                <p class="mb-0 mt-2">
+                  {{ collection.status === 'completed'
+                    ? 'This collection has been completed and can no longer be modified.'
+                    : 'This collection has been cancelled and can no longer be modified.' }}
+                </p>
+              </div>
+            </v-alert>
+          </v-col>
         </v-row>
       </v-card-text>
 
@@ -298,23 +328,34 @@ const getStatusTitle = (status: string) => {
       <v-card-actions class="pa-4">
         <v-spacer />
         <v-btn
-          variant="text"
-          color="grey"
-          @click="closeDialog"
-          :disabled="saving"
-        >
-          Cancel
-        </v-btn>
-        <v-btn
+          v-if="collection.status === 'completed' || collection.status === 'cancelled'"
           variant="elevated"
           color="primary"
-          @click="saveStatus"
-          :loading="saving"
-          :disabled="localStatus === collection.status"
+          @click="closeDialog"
         >
-          <v-icon start>mdi-content-save</v-icon>
-          Save Changes
+          <v-icon start>mdi-close</v-icon>
+          Close
         </v-btn>
+        <template v-else>
+          <v-btn
+            variant="text"
+            color="grey"
+            @click="closeDialog"
+            :disabled="saving"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+            variant="elevated"
+            color="primary"
+            @click="saveStatus"
+            :loading="saving"
+            :disabled="localStatus === collection.status"
+          >
+            <v-icon start>mdi-content-save</v-icon>
+            Save Changes
+          </v-btn>
+        </template>
       </v-card-actions>
     </v-card>
   </v-dialog>

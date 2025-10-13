@@ -27,6 +27,32 @@ const {
   formatDate,
 } = useRequestHistoryView();
 
+// Search
+const searchQuery = ref("");
+
+// Apply search filter
+const searchedCollections = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return filteredCollections.value;
+  }
+
+  const query = searchQuery.value.toLowerCase().trim();
+
+  return filteredCollections.value.filter((collection) => {
+    const requesterName = collection.requester_name?.toLowerCase() || "";
+    const requesterEmail = collection.requester_email?.toLowerCase() || "";
+    const collectorName = collection.collector_name?.toLowerCase() || "";
+    const collectorEmail = collection.collector_email?.toLowerCase() || "";
+
+    return (
+      requesterName.includes(query) ||
+      requesterEmail.includes(query) ||
+      collectorName.includes(query) ||
+      collectorEmail.includes(query)
+    );
+  });
+});
+
 // Pagination
 const currentPage = ref(1);
 const itemsPerPage = ref(8);
@@ -34,7 +60,7 @@ const itemsPerPage = ref(8);
 const paginatedCollections = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
-  return filteredCollections.value.slice(start, end);
+  return searchedCollections.value.slice(start, end);
 });
 
 // Reset to page 1 when filters change
@@ -43,7 +69,7 @@ const resetPagination = () => {
 };
 
 // Watch for filter changes
-watch(selectedStatus, () => {
+watch([selectedStatus, searchQuery], () => {
   resetPagination();
 });
 
@@ -58,6 +84,35 @@ const handleStatusUpdate = async (collectionId: number, newStatus: string) => {
 
 <template>
   <div class="requests-widget">
+    <!-- Search Section -->
+    <v-card class="mb-4">
+      <v-card-text class="pa-3">
+        <v-text-field
+          v-model="searchQuery"
+          density="comfortable"
+          variant="outlined"
+          placeholder="Search by name or email..."
+          prepend-inner-icon="mdi-magnify"
+          clearable
+          hide-details
+          :loading="loading"
+        >
+          <template #append-inner>
+            <v-fade-transition>
+              <v-chip
+                v-if="searchQuery"
+                size="small"
+                color="primary"
+                variant="flat"
+              >
+                {{ searchedCollections.length }} found
+              </v-chip>
+            </v-fade-transition>
+          </template>
+        </v-text-field>
+      </v-card-text>
+    </v-card>
+
     <!-- Filter Section -->
     <v-card class="mb-4">
       <v-card-text class="pa-2">
@@ -126,20 +181,39 @@ const handleStatusUpdate = async (collectionId: number, newStatus: string) => {
 
     <!-- Empty State -->
     <v-row
-      v-else-if="!filteredCollections.length"
+      v-else-if="!searchedCollections.length"
       justify="center"
       class="my-8"
     >
       <v-col cols="12" class="text-center">
-        <v-icon size="64" color="grey">mdi-inbox</v-icon>
-        <p class="text-h6 mt-4 text-grey">No collections found</p>
-        <p class="text-body-2 text-grey">
-          {{
-            selectedStatus === "all"
-              ? "There are no collections yet."
-              : `No ${getStatusText(selectedStatus).toLowerCase()} collections.`
-          }}
+        <v-icon size="64" color="grey">
+          {{ searchQuery ? "mdi-file-search-outline" : "mdi-inbox" }}
+        </v-icon>
+        <p class="text-h6 mt-4 text-grey">
+          {{ searchQuery ? "No results found" : "No collections found" }}
         </p>
+        <p class="text-body-2 text-grey">
+          <template v-if="searchQuery">
+            No collections match your search "{{ searchQuery }}"
+          </template>
+          <template v-else>
+            {{
+              selectedStatus === "all"
+                ? "There are no collections yet."
+                : `No ${getStatusText(selectedStatus).toLowerCase()} collections.`
+            }}
+          </template>
+        </p>
+        <v-btn
+          v-if="searchQuery"
+          variant="outlined"
+          color="primary"
+          class="mt-2"
+          @click="searchQuery = ''"
+        >
+          <v-icon start>mdi-close</v-icon>
+          Clear Search
+        </v-btn>
       </v-col>
     </v-row>
 
@@ -293,7 +367,7 @@ const handleStatusUpdate = async (collectionId: number, newStatus: string) => {
     <RequestsPagination
       v-model:current-page="currentPage"
       v-model:items-per-page="itemsPerPage"
-      :total-items="filteredCollections.length"
+      :total-items="searchedCollections.length"
     />
 
     <!-- Request Dialog -->

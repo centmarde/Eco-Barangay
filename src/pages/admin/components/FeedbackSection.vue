@@ -159,7 +159,7 @@ onMounted(() => {
         <v-col cols="6" sm="3">
           <v-card
             variant="tonal"
-            color="warning"
+            color="success"
             class="stat-card"
             elevation="0"
           >

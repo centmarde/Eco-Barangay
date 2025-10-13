@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { useRouter } from "vue-router";
 import { useNotificationsStore } from "@/stores/notifications";
 import { getNotificationIcon, getNotificationColor } from "@/utils/helpers";
 
@@ -48,6 +49,9 @@ const isOpen = computed({
         >
           <v-icon icon="mdi-bell" />
         </v-badge>
+        <v-tooltip activator="parent" location="bottom">
+          Notifications
+        </v-tooltip>
       </v-btn>
     </template>
 

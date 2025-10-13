@@ -260,6 +260,7 @@ async function handleLogout() {
         <!-- Theme Toggle Button -->
         <v-btn
           :loading="isLoadingTheme"
+          icon
           size="small"
           variant="text"
           @click="toggleTheme"

@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { useRouter } from "vue-router";
 import { useNotificationsStore } from "@/stores/notifications";
 import { getNotificationIcon, getNotificationColor } from "@/utils/helpers";
 
 // Props
 interface Props {
   modelValue: boolean;
+  notifications: any[];
+  unreadCount: number;
 }
 
 const props = defineProps<Props>();
@@ -14,10 +15,12 @@ const props = defineProps<Props>();
 // Emits
 const emit = defineEmits<{
   (e: "update:modelValue", value: boolean): void;
+  (e: "mark-all-read"): void;
+  (e: "mark-read", notificationId: number): void;
+  (e: "view-all"): void;
+  (e: "notification-click", notification: any): void;
 }>();
 
-// Composables
-const router = useRouter();
 const notificationsStore = useNotificationsStore();
 
 // Computed
@@ -25,43 +28,6 @@ const isOpen = computed({
   get: () => props.modelValue,
   set: (value) => emit("update:modelValue", value),
 });
-
-const notifications = computed(() =>
-  notificationsStore.notifications.slice(0, 5)
-); // Show only latest 5
-
-const unreadCount = computed(() => notificationsStore.unreadCount);
-
-// Methods
-const closeDialog = () => {
-  isOpen.value = false;
-};
-
-const markAllAsRead = async () => {
-  await notificationsStore.markAllAsRead();
-};
-
-const markAsRead = async (notificationId: number) => {
-  await notificationsStore.markAsRead(notificationId);
-};
-
-const viewAllNotifications = () => {
-  closeDialog();
-  router.push("/notifications");
-};
-
-const handleNotificationClick = async (notification: any) => {
-  // Mark as read
-  if (!notification.read) {
-    await markAsRead(notification.id);
-  }
-
-  // Navigate if there's an action URL
-  if (notification.action_url) {
-    closeDialog();
-    router.push(notification.action_url);
-  }
-};
 </script>
 
 <template>
@@ -69,27 +35,33 @@ const handleNotificationClick = async (notification: any) => {
     v-model="isOpen"
     :close-on-content-click="false"
     location="bottom end"
-    :offset="[0, 20]"
-    max-width="400"
+    offset="8"
+    max-width="420"
   >
-    <template v-slot:activator="{ props: activatorProps }">
-      <v-btn icon v-bind="activatorProps">
+    <template #activator="{ props: menuProps }">
+      <v-btn v-bind="menuProps" icon variant="text" size="small">
         <v-badge
           :content="unreadCount"
           :model-value="unreadCount > 0"
           color="error"
           overlap
         >
-          <v-icon>mdi-bell</v-icon>
+          <v-icon icon="mdi-bell" />
         </v-badge>
       </v-btn>
     </template>
 
-    <v-card min-width="350" max-width="400">
+    <v-card min-width="380" max-width="420">
       <v-card-title class="d-flex justify-space-between align-center pa-4">
         <span class="text-h6">Notifications</span>
-        <v-btn icon variant="text" size="small" @click="closeDialog">
-          <v-icon>mdi-close</v-icon>
+        <v-btn
+          v-if="unreadCount > 0"
+          variant="text"
+          size="small"
+          color="primary"
+          @click="emit('mark-all-read')"
+        >
+          Mark all as read
         </v-btn>
       </v-card-title>
 
@@ -102,7 +74,7 @@ const handleNotificationClick = async (notification: any) => {
             :key="notification.id"
             :class="{ 'bg-surface-light': !notification.read }"
             class="px-4 py-3 cursor-pointer"
-            @click="handleNotificationClick(notification)"
+            @click="emit('notification-click', notification)"
           >
             <template #prepend>
               <v-avatar
@@ -126,33 +98,20 @@ const handleNotificationClick = async (notification: any) => {
           </v-list-item>
         </template>
 
-        <div v-else class="text-center py-8">
-          <v-icon size="48" color="grey-lighten-1" class="mb-2">
-            mdi-bell-off-outline
-          </v-icon>
-          <p class="text-body-2 text-medium-emphasis">No notifications</p>
-        </div>
+        <v-list-item v-else class="text-center py-8">
+          <div class="text-center">
+            <v-icon size="48" color="grey-lighten-1" class="mb-2">
+              mdi-bell-off
+            </v-icon>
+            <p class="text-body-2 text-medium-emphasis">No notifications</p>
+          </div>
+        </v-list-item>
       </v-list>
 
       <v-divider />
 
-      <v-card-actions class="pa-3 d-flex flex-column ga-2">
-        <v-btn
-          v-if="unreadCount > 0"
-          block
-          variant="text"
-          color="primary"
-          size="small"
-          @click="markAllAsRead"
-        >
-          Mark all as read
-        </v-btn>
-        <v-btn
-          block
-          variant="tonal"
-          color="primary"
-          @click="viewAllNotifications"
-        >
+      <v-card-actions class="pa-3">
+        <v-btn block variant="text" color="primary" @click="emit('view-all')">
           View All Notifications
         </v-btn>
       </v-card-actions>

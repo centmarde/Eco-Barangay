@@ -25,6 +25,7 @@ declare module 'vue-router/auto-routes' {
     '/admin/components/dialogs/DeleteUserDialog': RouteRecordInfo<'/admin/components/dialogs/DeleteUserDialog', '/admin/components/dialogs/DeleteUserDialog', Record<never, never>, Record<never, never>>,
     '/admin/components/dialogs/EditUserDialog': RouteRecordInfo<'/admin/components/dialogs/EditUserDialog', '/admin/components/dialogs/EditUserDialog', Record<never, never>, Record<never, never>>,
     '/admin/components/dialogs/UserDetailsDialog': RouteRecordInfo<'/admin/components/dialogs/UserDetailsDialog', '/admin/components/dialogs/UserDetailsDialog', Record<never, never>, Record<never, never>>,
+    '/admin/components/FeedbackSection': RouteRecordInfo<'/admin/components/FeedbackSection', '/admin/components/FeedbackSection', Record<never, never>, Record<never, never>>,
     '/admin/components/QuickActionsCard': RouteRecordInfo<'/admin/components/QuickActionsCard', '/admin/components/QuickActionsCard', Record<never, never>, Record<never, never>>,
     '/admin/components/RecentActivitiesCard': RouteRecordInfo<'/admin/components/RecentActivitiesCard', '/admin/components/RecentActivitiesCard', Record<never, never>, Record<never, never>>,
     '/admin/components/SystemStatusCard': RouteRecordInfo<'/admin/components/SystemStatusCard', '/admin/components/SystemStatusCard', Record<never, never>, Record<never, never>>,

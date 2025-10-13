@@ -9,6 +9,10 @@ import {
   getFeedbackStatusColor,
   formatRelativeTime,
 } from "@/utils/helpers";
+import {
+  FEEDBACK_STATUS_OPTIONS,
+  type FeedbackStatus,
+} from "@/utils/constants";
 
 const toast = useToast();
 const { mobile, smAndDown } = useDisplay();
@@ -22,13 +26,16 @@ type FeedbackWithUser = {
   rating: number;
   comment: string;
   timestamp: string;
-  status: string;
+  status: FeedbackStatus;
   user_id: string;
 };
 
 const feedbackList = ref<FeedbackWithUser[]>([]);
-const selectedFilter = ref("all");
+const selectedFilter = ref<string>("all");
 const isLoading = ref(false);
+
+// Constants
+const statusOptions = FEEDBACK_STATUS_OPTIONS;
 
 // Computed
 const filteredFeedback = computed(() => {
@@ -59,7 +66,7 @@ const getRatingColor = getFeedbackRatingColor;
 const getStatusColor = getFeedbackStatusColor;
 const formatTimestamp = formatRelativeTime;
 
-const updateStatus = async (id: number, newStatus: string) => {
+const updateStatus = async (id: number, newStatus: FeedbackStatus) => {
   const feedback = feedbackList.value.find((f) => f.id === id);
   if (feedback) {
     feedback.status = newStatus;
@@ -199,17 +206,13 @@ onMounted(() => {
         class="mb-4"
         slider-color="primary"
       >
-        <v-tab value="all" class="text-none">
-          <span class="text-caption text-sm-body-2">All</span>
-        </v-tab>
-        <v-tab value="new" class="text-none">
-          <span class="text-caption text-sm-body-2">New</span>
-        </v-tab>
-        <v-tab value="reviewed" class="text-none">
-          <span class="text-caption text-sm-body-2">Reviewed</span>
-        </v-tab>
-        <v-tab value="resolved" class="text-none">
-          <span class="text-caption text-sm-body-2">Resolved</span>
+        <v-tab
+          v-for="option in statusOptions"
+          :key="option.value"
+          :value="option.value"
+          class="text-none"
+        >
+          <span class="text-caption text-sm-body-2">{{ option.label }}</span>
         </v-tab>
       </v-tabs>
 

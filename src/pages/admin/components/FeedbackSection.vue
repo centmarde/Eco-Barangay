@@ -1,120 +1,36 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
-import { useToast } from "vue-toastification";
+import { onMounted } from "vue";
 import { useDisplay } from "vuetify";
-import { useFeedbackStore } from "@/stores/feedBackData";
 import {
   getFeedbackRatingIcon,
   getFeedbackRatingColor,
   getFeedbackStatusColor,
   formatRelativeTime,
 } from "@/utils/helpers";
-import {
-  FEEDBACK_STATUS_OPTIONS,
-  type FeedbackStatus,
-} from "@/utils/constants";
+import { FEEDBACK_STATUS_OPTIONS } from "@/utils/constants";
+import { useFeedbackManagement } from "../composables/useFeedbackManagement";
 
-const toast = useToast();
 const { mobile, smAndDown } = useDisplay();
-const feedbackStore = useFeedbackStore();
 
-// Types
-type FeedbackWithUser = {
-  id: number;
-  userName: string;
-  userAvatar: string | null;
-  rating: number;
-  comment: string;
-  timestamp: string;
-  status: FeedbackStatus;
-  user_id: string;
-};
-
-const feedbackList = ref<FeedbackWithUser[]>([]);
-const selectedFilter = ref<string>("all");
-const isLoading = ref(false);
+// Use feedback management composable
+const {
+  selectedFilter,
+  isLoading,
+  filteredFeedback,
+  feedbackStats,
+  loadFeedbacks,
+  updateStatus,
+  deleteFeedback,
+} = useFeedbackManagement();
 
 // Constants
 const statusOptions = FEEDBACK_STATUS_OPTIONS;
 
-// Computed
-const filteredFeedback = computed(() => {
-  if (selectedFilter.value === "all") {
-    return feedbackList.value;
-  }
-  return feedbackList.value.filter(
-    (item) => item.status === selectedFilter.value
-  );
-});
-
-const feedbackStats = computed(() => {
-  return {
-    total: feedbackList.value.length,
-    new: feedbackList.value.filter((f) => f.status === "new").length,
-    reviewed: feedbackList.value.filter((f) => f.status === "reviewed").length,
-    resolved: feedbackList.value.filter((f) => f.status === "resolved").length,
-    avgRating: (
-      feedbackList.value.reduce((sum, f) => sum + f.rating, 0) /
-      feedbackList.value.length
-    ).toFixed(1),
-  };
-});
-
-// Methods
+// Methods (aliases for helpers)
 const getRatingIcon = getFeedbackRatingIcon;
 const getRatingColor = getFeedbackRatingColor;
 const getStatusColor = getFeedbackStatusColor;
 const formatTimestamp = formatRelativeTime;
-
-const updateStatus = async (id: number, newStatus: FeedbackStatus) => {
-  const feedback = feedbackList.value.find((f) => f.id === id);
-  if (feedback) {
-    feedback.status = newStatus;
-    // Update in Supabase (you may need to add a status field to the feedbacks table)
-    toast.success(`Status updated to ${newStatus}`);
-  }
-};
-
-const deleteFeedback = async (id: number) => {
-  try {
-    const success = await feedbackStore.deleteFeedback(id);
-    if (success) {
-      const index = feedbackList.value.findIndex((f) => f.id === id);
-      if (index !== -1) {
-        feedbackList.value.splice(index, 1);
-      }
-    }
-  } catch (error) {
-    toast.error("Failed to delete feedback");
-  }
-};
-
-const loadFeedbacks = async () => {
-  isLoading.value = true;
-  try {
-    // Fetch feedbacks with user information from the store
-    const data = await feedbackStore.fetchFeedbacksWithUsers();
-
-    // Transform data to match component structure
-    feedbackList.value = (data || []).map((item: any) => ({
-      id: item.id,
-      userName: item.users
-        ? `${item.users.first_name} ${item.users.last_name}`
-        : "Unknown User",
-      userAvatar: item.users?.profile_photo_url || null,
-      rating: item.rate,
-      comment: item.description,
-      timestamp: item.created_at,
-      status: "new", // Default status, you may want to add a status field to the table
-      user_id: item.user_id,
-    }));
-  } catch (error) {
-    console.error("Error loading feedbacks:", error);
-    toast.error("Failed to load feedbacks");
-  } finally {
-    isLoading.value = false;
-  }
-};
 
 // Lifecycle
 onMounted(() => {

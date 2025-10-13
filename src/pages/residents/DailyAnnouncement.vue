@@ -61,9 +61,6 @@ onMounted(async () => {
     <div class="daily-announcement-wrapper">
       <div class="announcement-card">
         <div class="announcement-actions">
-          <button class="view-all-button" @click="goToAnnouncements" aria-label="View all announcements">
-            view all
-          </button>
           <button class="close-button" @click="closeAnnouncement" aria-label="Close announcement">
             close
           </button>

@@ -1,137 +1,139 @@
 <script setup lang="ts">
-import { ref, reactive, watch, computed } from 'vue'
-import { useAuthUserStore } from '@/stores/authUser'
-import { useUserRolesStore } from '@/stores/roles'
-import { useToast } from 'vue-toastification'
-import { getErrorMessage } from '@/utils/helpers'
+import { ref, reactive, watch, computed } from "vue";
+import { useAuthUserStore } from "@/stores/authUser";
+import { useUserRolesStore } from "@/stores/roles";
+import { useToast } from "vue-toastification";
+import { getErrorMessage } from "@/utils/errorHelpers";
 
 interface User {
-  id: string
-  email?: string
-  full_name?: string
-  role_id?: number
-  user_metadata?: Record<string, any>
+  id: string;
+  email?: string;
+  full_name?: string;
+  role_id?: number;
+  user_metadata?: Record<string, any>;
 }
 
 interface Props {
-  user: User | null
+  user: User | null;
 }
 
 interface Emits {
-  (e: 'user-updated', user: User): void
+  (e: "user-updated", user: User): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
-const model = defineModel<boolean>()
+const model = defineModel<boolean>();
 
 // Composables
-const authStore = useAuthUserStore()
-const rolesStore = useUserRolesStore()
-const toast = useToast()
+const authStore = useAuthUserStore();
+const rolesStore = useUserRolesStore();
+const toast = useToast();
 
 // Reactive data
-const updating = ref(false)
-const form = ref()
+const updating = ref(false);
+const form = ref();
 
 // Form data
 const formData = reactive({
-  email: '',
-  full_name: '',
-  role_id: null as number | null
-})
+  email: "",
+  full_name: "",
+  role_id: null as number | null,
+});
 
 // Validation rules
 const rules = {
   email: [
-    (v: string) => !!v || 'Email is required',
-    (v: string) => /.+@.+\..+/.test(v) || 'Email must be valid'
+    (v: string) => !!v || "Email is required",
+    (v: string) => /.+@.+\..+/.test(v) || "Email must be valid",
   ],
   full_name: [
-    (v: string) => !!v || 'Full name is required',
-    (v: string) => v.length >= 2 || 'Full name must be at least 2 characters'
+    (v: string) => !!v || "Full name is required",
+    (v: string) => v.length >= 2 || "Full name must be at least 2 characters",
   ],
-  role_id: [
-    (v: number | null) => v !== null || 'Role is required'
-  ]
-}
+  role_id: [(v: number | null) => v !== null || "Role is required"],
+};
 
 // Computed
 const roleOptions = computed(() => {
-  return rolesStore.roles.map(role => ({
+  return rolesStore.roles.map((role) => ({
     title: role.title,
-    value: role.id
-  }))
-})
+    value: role.id,
+  }));
+});
 
 // Watch for user changes to populate form
-watch(() => props.user, (newUser) => {
-  if (newUser) {
-    formData.email = newUser.email || ''
-    formData.full_name = newUser.full_name || ''
-    formData.role_id = newUser.role_id || null
-  }
-}, { immediate: true })
+watch(
+  () => props.user,
+  (newUser) => {
+    if (newUser) {
+      formData.email = newUser.email || "";
+      formData.full_name = newUser.full_name || "";
+      formData.role_id = newUser.role_id || null;
+    }
+  },
+  { immediate: true }
+);
 
 // Watch for dialog close to reset form
 watch(model, (isOpen) => {
   if (!isOpen) {
-    resetForm()
+    resetForm();
   }
-})
+});
 
 // Methods
 const resetForm = () => {
   if (form.value) {
-    form.value.reset()
+    form.value.reset();
   }
-  formData.email = ''
-  formData.full_name = ''
-  formData.role_id = null
-}
+  formData.email = "";
+  formData.full_name = "";
+  formData.role_id = null;
+};
 
 const handleSubmit = async () => {
-  if (!props.user) return
+  if (!props.user) return;
 
-  const { valid } = await form.value.validate()
-  if (!valid) return
+  const { valid } = await form.value.validate();
+  if (!valid) return;
 
-  updating.value = true
+  updating.value = true;
   try {
     const updateData = {
       email: formData.email,
       user_metadata: {
         ...props.user.user_metadata,
         full_name: formData.full_name,
-        role: formData.role_id
-      }
-    }
+        role: formData.role_id,
+      },
+    };
 
-    const result = await authStore.updateUser(props.user.id, updateData)
+    const result = await authStore.updateUser(props.user.id, updateData);
 
     if (result.error) {
-      toast.error('Failed to update user: ' + getErrorMessage(result.error))
-      console.error('Error updating user:', result.error)
-      return
+      toast.error("Failed to update user: " + getErrorMessage(result.error));
+      console.error("Error updating user:", result.error);
+      return;
     }
 
     if (result.user) {
-      toast.success('User updated successfully')
-      emit('user-updated', result.user)
-      model.value = false
+      toast.success("User updated successfully");
+      emit("user-updated", result.user);
+      model.value = false;
     }
   } catch (error) {
-    toast.error('An unexpected error occurred while updating user')
-    console.error('Unexpected error:', error)
+    toast.error("An unexpected error occurred while updating user");
+    console.error("Unexpected error:", error);
   } finally {
-    updating.value = false
+    updating.value = false;
   }
-}
+};
 
 const handleClose = () => {
-  model.value = false
-}
+  model.value = false;
+};
 </script>
 
 <template>
@@ -183,12 +185,7 @@ const handleClose = () => {
           </v-container>
         </v-form>
 
-        <v-alert
-          v-if="user"
-          type="info"
-          variant="tonal"
-          class="mt-4"
-        >
+        <v-alert v-if="user" type="info" variant="tonal" class="mt-4">
           <div class="font-weight-medium">Current User ID:</div>
           <div class="text-caption">{{ user.id }}</div>
         </v-alert>

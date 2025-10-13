@@ -144,8 +144,33 @@ The following files have been updated to use the new helper imports:
    - Changed to: `@/utils/userHelpers`
 
 5. **`src/pages/collectors/dialogs/RequestDialog.vue`**
+
    - Changed from: `@/utils/helpers`
    - Changed to: `@/utils/userHelpers`
+
+6. **`src/components/common/insideNavbar/SlugName.vue`**
+
+   - Changed from: `@/utils/helpers`
+   - Changed to: `@/utils/userHelpers`
+
+7. **`src/pages/admin/components/UserManagementTable.vue`**
+
+   - Changed from: `@/utils/helpers`
+   - Changed to: `@/utils/dateHelpers`, `@/utils/errorHelpers`, `@/utils/roleHelpers`
+
+8. **`src/pages/admin/components/dialogs/DeleteUserDialog.vue`**
+
+   - Changed from: `@/utils/helpers`
+   - Changed to: `@/utils/errorHelpers`
+
+9. **`src/pages/admin/components/dialogs/EditUserDialog.vue`**
+
+   - Changed from: `@/utils/helpers`
+   - Changed to: `@/utils/errorHelpers`
+
+10. **`src/pages/admin/components/dialogs/UserDetailsDialog.vue`**
+    - Changed from: `@/utils/helpers`
+    - Changed to: `@/utils/roleHelpers` and `@/utils/dateHelpers`
 
 ---
 

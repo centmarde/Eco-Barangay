@@ -1,25 +1,25 @@
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
-import { useAuthUserStore } from '@/stores/authUser'
-import { createDisplaySlugName, getEmailInitials } from '@/utils/helpers'
+import { computed, ref } from "vue";
+import { useAuthUserStore } from "@/stores/authUser";
+import { createDisplaySlugName, getEmailInitials } from "@/utils/userHelpers";
 
-const authStore = useAuthUserStore()
+const authStore = useAuthUserStore();
 
 // Dropdown menu state
-const menu = ref(false)
+const menu = ref(false);
 
 // Computed properties for user data
-const userEmail = computed(() => authStore.userEmail)
-const displayName = computed(() => createDisplaySlugName(userEmail.value))
-const userInitials = computed(() => getEmailInitials(userEmail.value))
+const userEmail = computed(() => authStore.userEmail);
+const displayName = computed(() => createDisplaySlugName(userEmail.value));
+const userInitials = computed(() => getEmailInitials(userEmail.value));
 
 // Handle logout
 async function handleLogout() {
   try {
-    menu.value = false // Close dropdown first
-    await authStore.signOut()
+    menu.value = false; // Close dropdown first
+    await authStore.signOut();
   } catch (error) {
-    console.error('Logout failed:', error)
+    console.error("Logout failed:", error);
   }
 }
 </script>
@@ -35,10 +35,7 @@ async function handleLogout() {
       transition="slide-y-transition"
     >
       <template #activator="{ props }">
-        <div
-          v-bind="props"
-          class="user-avatar-container"
-        >
+        <div v-bind="props" class="user-avatar-container">
           <!-- Avatar -->
           <v-avatar
             size="36"
@@ -50,7 +47,8 @@ async function handleLogout() {
             </span>
           </v-avatar>
         </div>
-      </template>      <!-- Dropdown Menu -->
+      </template>
+      <!-- Dropdown Menu -->
       <v-card
         min-width="280"
         class="user-dropdown-card"
@@ -60,11 +58,7 @@ async function handleLogout() {
         <!-- User Info Header -->
         <v-card-item class="pb-2">
           <div class="d-flex align-center">
-            <v-avatar
-              size="48"
-              color="primary"
-              class="me-3"
-            >
+            <v-avatar size="48" color="primary" class="me-3">
               <span class="text-white font-weight-bold">
                 {{ userInitials }}
               </span>

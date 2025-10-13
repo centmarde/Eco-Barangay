@@ -8,6 +8,7 @@ import NotFound from "@/pages/NotFound.vue";
 import ForbiddenView from "@/pages/ForbiddenView.vue";
 import AdminUserRolesView from "@/pages/admin/AdminUserRolesView.vue";
 import UserManagementView from "@/pages/admin/UserManagementView.vue";
+import AdminDashboardView from "@/pages/admin/DashboardView.vue";
 
 // Collectors pages
 import RequestsView from "@/pages/collectors/RequestsView.vue";
@@ -65,6 +66,11 @@ const routes = setupLayouts([
   },
   // Admin routes
   {
+    path: "/admin/dashboard",
+    component: AdminDashboardView,
+    meta: { requiresAuth: true },
+  },
+  {
     path: "/admin/user-roles",
     component: AdminUserRolesView,
     meta: { requiresAuth: true },
@@ -72,7 +78,7 @@ const routes = setupLayouts([
   {
     path: "/admin/user-management",
     component: UserManagementView,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   {
     path: "/forbidden",

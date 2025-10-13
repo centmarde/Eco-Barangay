@@ -2,119 +2,45 @@
   <v-footer
     v-if="config?.showFooter && footerConfig"
     app
-    class="text-white"
+    class="text-white footer-compact"
     :color="footerConfig.color"
   >
-    <v-container>
-      <v-row align="center" justify="space-between">
-        <v-col cols="12" md="6">
-          <div class="d-flex align-center">
-            <v-icon class="me-2" :icon="footerConfig.icon" size="large" />
-            <div>
-              <div class="text-h6 font-weight-bold">
+    <v-container class="py-2">
+      <!-- Company Info Section - Ultra Compact -->
+      <v-row dense>
+        <v-col cols="12" class="py-1">
+          <div class="d-flex flex-column align-center text-center">
+            <div class="d-flex align-center mb-1">
+              <v-icon class="me-1" :icon="footerConfig.icon" size="small" />
+              <span class="text-body-2 font-weight-bold">
                 {{ footerConfig.companyName }}
-              </div>
-              <div class="text-caption">
-                {{ footerConfig.tagline }}
-              </div>
-            </div>
-          </div>
-        </v-col>
-
-        <v-col class="text-md-end text-center" cols="12" md="6">
-          <div class="mb-2">
-            <v-btn
-              v-for="social in footerConfig.socialLinks"
-              :key="social.platform"
-              :aria-label="social.label"
-              class="me-2"
-              color="on-primary"
-              icon
-              variant="text"
-              @click="openLink(social.url)"
-            >
-              <v-icon :icon="social.icon" />
-            </v-btn>
-          </div>
-
-          <div class="text-caption">
-            {{ currentYear }} © {{ footerConfig.copyright }}
-          </div>
-        </v-col>
-      </v-row>
-      <!-- Thesis Team Section -->
-      <template v-if="footerConfig.thesisTeam?.enabled">
-        <v-divider class="my-4 " />
-
-        <v-row>
-          <v-col cols="12">
-            <div class="text-center mb-4">
-              <div class="text-h6 font-weight-bold">
-                {{ footerConfig.thesisTeam.title }}
-              </div>
-              <div class="text-caption text-grey-lighten-1">
-                {{ footerConfig.thesisTeam.subtitle }}
-              </div>
-            </div>
-
-            <v-row justify="center">
-              <v-col
-                v-for="member in footerConfig.thesisTeam.members"
-                :key="member.name"
-                cols="12"
-                sm="6"
-                md="3"
-                class="d-flex justify-center"
-              >
-                <div class="d-flex align-center mb-3">
-                  <v-avatar
-                    :image="member.avatar"
-                    size="48"
-                    class="me-3"
-                    color="primary"
-                  >
-                    <v-icon
-                      v-if="!member.avatar"
-                      icon="mdi-account"
-                      size="24"
-                    />
-                  </v-avatar>
-
-                  <div class="flex-grow-1">
-                    <div class="text-body-2 font-weight-bold">
-                      {{ member.name }}
-                    </div>
-                    <div class="text-caption text-grey-lighten-1">
-                      {{ member.role }}
-                    </div>
-                  </div>
-                </div>
-              </v-col>
-            </v-row>
-          </v-col>
-        </v-row>
-      </template>
-      <v-divider class="my-4" />
-
-      <v-row>
-        <v-col class="text-center" cols="12">
-          <div class="text-caption">
-            Built with
-            <template
-              v-for="(tech, index) in footerConfig.technologies"
-              :key="tech.name"
-            >
-              <v-icon
-                class="mx-1"
-                :color="tech.color"
-                :icon="tech.icon"
-                size="small"
-              />
-              {{ tech.name }}
-              <span v-if="index < footerConfig.technologies.length - 1">
-                &
               </span>
-            </template>
+            </div>
+            <div class="text-caption mb-1" style="font-size: 0.7rem">
+              {{ footerConfig.tagline }}
+            </div>
+
+            <!-- Social Links - Ultra Compact -->
+            <div class="mb-1">
+              <v-btn
+                v-for="social in footerConfig.socialLinks"
+                :key="social.platform"
+                :aria-label="social.label"
+                class="mx-1"
+                color="on-primary"
+                icon
+                size="x-small"
+                variant="text"
+                @click="openLink(social.url)"
+              >
+                <v-icon :icon="social.icon" size="16" />
+              </v-btn>
+            </div>
+
+            <!-- Copyright -->
+            <div class="text-caption" style="font-size: 0.65rem">
+              {{ currentYear }} © {{ footerConfig.copyright }}
+            </div>
           </div>
         </v-col>
       </v-row>
@@ -139,3 +65,13 @@ function openLink(url: string) {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 </script>
+
+<style scoped>
+.footer-compact {
+  padding: 0 !important;
+}
+
+.footer-compact .v-container {
+  max-width: 100% !important;
+}
+</style>

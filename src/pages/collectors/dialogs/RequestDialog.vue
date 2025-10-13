@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { getUserDisplayName, getEmailInitials } from "@/utils/helpers";
+import { getUserDisplayName, getEmailInitials } from "@/utils/userHelpers";
 import type { CollectionWithEmails } from "@/stores/collectionsData";
 
 interface Props {
@@ -22,10 +22,30 @@ const saving = ref(false);
 
 // Status options
 const statusOptions = [
-  { value: "pending", title: "Pending", color: "warning", icon: "mdi-clock-outline" },
-  { value: "in_progress", title: "In Progress", color: "info", icon: "mdi-truck-delivery" },
-  { value: "completed", title: "Completed", color: "success", icon: "mdi-check-circle" },
-  { value: "cancelled", title: "Cancelled", color: "error", icon: "mdi-close-circle" },
+  {
+    value: "pending",
+    title: "Pending",
+    color: "warning",
+    icon: "mdi-clock-outline",
+  },
+  {
+    value: "in_progress",
+    title: "In Progress",
+    color: "info",
+    icon: "mdi-truck-delivery",
+  },
+  {
+    value: "completed",
+    title: "Completed",
+    color: "success",
+    icon: "mdi-check-circle",
+  },
+  {
+    value: "cancelled",
+    title: "Cancelled",
+    color: "error",
+    icon: "mdi-close-circle",
+  },
 ];
 
 // Watch for changes in collection prop
@@ -54,7 +74,9 @@ const getStatusColor = (status: string) => {
 };
 
 const getStatusIcon = (status: string) => {
-  return statusOptions.find((s) => s.value === status)?.icon || "mdi-help-circle";
+  return (
+    statusOptions.find((s) => s.value === status)?.icon || "mdi-help-circle"
+  );
 };
 
 const getStatusTitle = (status: string) => {
@@ -85,7 +107,9 @@ const getGarbageTypeIcon = (type: string) => {
 <template>
   <v-dialog :model-value="modelValue" max-width="800" persistent>
     <v-card v-if="collection">
-      <v-card-title class="text-h5 font-weight-bold d-flex align-center bg-primary">
+      <v-card-title
+        class="text-h5 font-weight-bold d-flex align-center bg-primary"
+      >
         <v-icon left class="mr-2">mdi-file-document-edit</v-icon>
         Collection Details
         <v-spacer />
@@ -99,7 +123,9 @@ const getGarbageTypeIcon = (type: string) => {
           <!-- Current Status Badge -->
           <v-col cols="12">
             <div class="d-flex align-center justify-space-between mb-4">
-              <span class="text-subtitle-1 font-weight-bold">Current Status:</span>
+              <span class="text-subtitle-1 font-weight-bold"
+                >Current Status:</span
+              >
               <v-chip
                 :color="getStatusColor(collection.status)"
                 size="large"
@@ -130,7 +156,9 @@ const getGarbageTypeIcon = (type: string) => {
                     <p class="text-body-1 mb-1 font-weight-medium">
                       {{
                         collection.requester_name ||
-                        getUserDisplayName({ email: collection.requester_email })
+                        getUserDisplayName({
+                          email: collection.requester_email,
+                        })
                       }}
                     </p>
                     <p class="text-caption text-grey mb-0">
@@ -311,8 +339,6 @@ const getGarbageTypeIcon = (type: string) => {
 </template>
 
 <style scoped>
-
-
 .v-card-title.bg-grey-lighten-4 {
   padding: 12px 16px;
 }

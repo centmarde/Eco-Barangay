@@ -2,7 +2,7 @@ import type { CollectionWithEmails } from "@/stores/collectionsData";
 import { useCollectionsStore } from "@/stores/collectionsData";
 import { useAuthUserStore } from "@/stores/authUser";
 import { ref, computed, onMounted } from "vue";
-import { formatDate } from "@/utils/helpers";
+import { formatDate } from "@/utils/dateHelpers";
 import {
   getStatusColor,
   getStatusIcon,

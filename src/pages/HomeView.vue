@@ -1,76 +1,33 @@
-
 <script setup lang="ts">
-import { useAuthUserStore } from '@/stores/authUser'
-import { useToast } from 'vue-toastification'
-import InnerLayoutWrapper from '@/layouts/InnerLayoutWrapper.vue'
+import { storeToRefs } from "pinia";
+import { useAuthUserStore } from "@/stores/authUser";
+import InnerLayoutWrapper from "@/layouts/InnerLayoutWrapper.vue";
+import FeedbackList from "@/pages/admin/components/FeedbackSection.vue";
 
-const authStore = useAuthUserStore()
-const toast = useToast()
+const authStore = useAuthUserStore();
 
 // Reactive references from the auth store
-const { userName, loading } = storeToRefs(authStore)
-
-const handleLogout = async () => {
-  try {
-    const result = await authStore.signOut()
-
-    if (result.error) {
-      toast.error('Logout failed: ' + result.error.message)
-    } else {
-      toast.success('You have been logged out successfully')
-    }
-  } catch (error) {
-    console.error('Logout error:', error)
-    toast.error('An unexpected error occurred during logout')
-  }
-}
+const { userName } = storeToRefs(authStore);
 </script>
 
 <template>
   <InnerLayoutWrapper>
     <template #content>
-      <v-container fluid class="fill-height">
-        <v-row justify="center" align="center" class="fill-height">
-          <v-col cols="12" md="8" lg="6">
-            <v-card elevation="4" class="pa-6">
-              <v-card-title class="text-h4 text-center mb-4">
-                Welcome Home!
-              </v-card-title>
+      <v-container fluid class="px-4 px-md-6">
+        <v-row justify="center">
+          <v-col cols="12" xl="10">
+            <!-- Simple Welcome Message -->
+            <div class="welcome-header text-center mb-8 mt-6">
+              <h1 class="text-h5 text-sm-h4 text-md-h4 font-weight-bold mb-2">
+                Welcome back, {{ userName }}!
+              </h1>
+              <p class="text-body-2 text-sm-body-1 text-medium-emphasis">
+                Here's what your users are saying
+              </p>
+            </div>
 
-              <v-card-text class="text-center">
-                <v-avatar size="80" class="mb-4" color="primary">
-                  <v-icon size="40" color="white">mdi-account-circle</v-icon>
-                </v-avatar>
-
-                <p class="text-h6 mb-2">Hello, {{ userName }}!</p>
-                <p class="text-body-1 text-medium-emphasis mb-4">
-                  You are successfully logged in.
-                </p>
-
-                <v-chip
-                  color="success"
-                  variant="tonal"
-                  class="mb-4"
-                  prepend-icon="mdi-check-circle"
-                >
-                  Authenticated
-                </v-chip>
-              </v-card-text>
-
-              <v-card-actions class="justify-center pt-4">
-                <v-btn
-                  color="error"
-                  variant="elevated"
-                  size="large"
-                  prepend-icon="mdi-logout"
-                  :loading="loading"
-                  @click="handleLogout"
-                  class="px-8"
-                >
-                  Logout
-                </v-btn>
-              </v-card-actions>
-            </v-card>
+            <!-- Feedback Section -->
+            <FeedbackList />
           </v-col>
         </v-row>
       </v-container>
@@ -78,3 +35,14 @@ const handleLogout = async () => {
   </InnerLayoutWrapper>
 </template>
 
+<style scoped>
+.welcome-header {
+  padding: 1rem 0;
+}
+
+@media (min-width: 600px) {
+  .welcome-header {
+    padding: 1.5rem 0;
+  }
+}
+</style>

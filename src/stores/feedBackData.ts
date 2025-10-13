@@ -62,6 +62,46 @@ export const useFeedbackStore = defineStore("feedback", () => {
     }
   };
 
+  const fetchFeedbacksWithUsers = async () => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from("feedbacks")
+        .select(
+          `
+          id,
+          created_at,
+          user_id,
+          title,
+          rate,
+          description,
+          collection_id,
+          users (
+            first_name,
+            last_name,
+            profile_photo_url
+          )
+        `
+        )
+        .order("created_at", { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      return data || [];
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : "Failed to fetch feedbacks with users";
+      toast.error("Failed to fetch feedbacks with users");
+      return [];
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const fetchFeedbackById = async (id: number) => {
     loading.value = true;
     error.value = undefined;
@@ -354,6 +394,7 @@ export const useFeedbackStore = defineStore("feedback", () => {
     error,
     // Actions
     fetchFeedbacks,
+    fetchFeedbacksWithUsers,
     fetchFeedbackById,
     fetchFeedbacksByUserId,
     fetchFeedbacksByCollectionId,

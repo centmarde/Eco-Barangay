@@ -13,15 +13,15 @@ const { userName } = storeToRefs(authStore);
 <template>
   <InnerLayoutWrapper>
     <template #content>
-      <v-container fluid>
+      <v-container fluid class="px-4 px-md-6">
         <v-row justify="center">
-          <v-col cols="12" md="10" lg="8">
+          <v-col cols="12" xl="10">
             <!-- Simple Welcome Message -->
-            <div class="text-center mb-6 mt-4">
-              <h1 class="text-h4 text-md-h3 font-weight-bold mb-2">
+            <div class="welcome-header text-center mb-8 mt-6">
+              <h1 class="text-h5 text-sm-h4 text-md-h4 font-weight-bold mb-2">
                 Welcome back, {{ userName }}!
               </h1>
-              <p class="text-body-1 text-medium-emphasis">
+              <p class="text-body-2 text-sm-body-1 text-medium-emphasis">
                 Here's what your users are saying
               </p>
             </div>
@@ -34,3 +34,15 @@ const { userName } = storeToRefs(authStore);
     </template>
   </InnerLayoutWrapper>
 </template>
+
+<style scoped>
+.welcome-header {
+  padding: 1rem 0;
+}
+
+@media (min-width: 600px) {
+  .welcome-header {
+    padding: 1.5rem 0;
+  }
+}
+</style>

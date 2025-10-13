@@ -1,50 +1,32 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useToast } from "vue-toastification";
+import { useDisplay } from "vuetify";
+import { useFeedbackStore } from "@/stores/feedBackData";
+import {
+  getFeedbackRatingIcon,
+  getFeedbackRatingColor,
+  getFeedbackStatusColor,
+  formatRelativeTime,
+} from "@/utils/helpers";
 
 const toast = useToast();
+const { mobile, smAndDown } = useDisplay();
+const feedbackStore = useFeedbackStore();
 
-// Mock data - Replace with actual API call
-const feedbackList = ref([
-  {
-    id: 1,
-    userName: "John Doe",
-    userAvatar: null,
-    rating: 4,
-    comment:
-      "Great app! Very intuitive and easy to use. Would love to see dark mode support.",
-    timestamp: "2025-10-13T10:30:00",
-    status: "new", // new, reviewed, resolved
-  },
-  {
-    id: 2,
-    userName: "Jane Smith",
-    userAvatar: null,
-    rating: 3,
-    comment: "Good overall, but the loading times could be improved.",
-    timestamp: "2025-10-13T09:15:00",
-    status: "reviewed",
-  },
-  {
-    id: 3,
-    userName: "Mike Johnson",
-    userAvatar: null,
-    rating: 2,
-    comment: "Encountered several bugs. Please fix the form validation issues.",
-    timestamp: "2025-10-12T16:45:00",
-    status: "new",
-  },
-  {
-    id: 4,
-    userName: "Sarah Williams",
-    userAvatar: null,
-    rating: 4,
-    comment: "Excellent service! The notification system works perfectly.",
-    timestamp: "2025-10-12T14:20:00",
-    status: "resolved",
-  },
-]);
+// Types
+type FeedbackWithUser = {
+  id: number;
+  userName: string;
+  userAvatar: string | null;
+  rating: number;
+  comment: string;
+  timestamp: string;
+  status: string;
+  user_id: string;
+};
 
+const feedbackList = ref<FeedbackWithUser[]>([]);
 const selectedFilter = ref("all");
 const isLoading = ref(false);
 
@@ -72,141 +54,196 @@ const feedbackStats = computed(() => {
 });
 
 // Methods
-const getRatingIcon = (rating: number) => {
-  if (rating >= 4) return "mdi-emoticon-excited";
-  if (rating === 3) return "mdi-emoticon-happy";
-  if (rating === 2) return "mdi-emoticon-neutral";
-  return "mdi-emoticon-sad";
-};
+const getRatingIcon = getFeedbackRatingIcon;
+const getRatingColor = getFeedbackRatingColor;
+const getStatusColor = getFeedbackStatusColor;
+const formatTimestamp = formatRelativeTime;
 
-const getRatingColor = (rating: number) => {
-  if (rating >= 4) return "success";
-  if (rating === 3) return "info";
-  if (rating === 2) return "warning";
-  return "error";
-};
-
-const getStatusColor = (status: string) => {
-  const colors: Record<string, string> = {
-    new: "primary",
-    reviewed: "warning",
-    resolved: "success",
-  };
-  return colors[status] || "default";
-};
-
-const formatTimestamp = (timestamp: string) => {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffInHours = Math.floor(
-    (now.getTime() - date.getTime()) / (1000 * 60 * 60)
-  );
-
-  if (diffInHours < 1) return "Just now";
-  if (diffInHours < 24) return `${diffInHours}h ago`;
-  if (diffInHours < 48) return "Yesterday";
-  return date.toLocaleDateString();
-};
-
-const updateStatus = (id: number, newStatus: string) => {
+const updateStatus = async (id: number, newStatus: string) => {
   const feedback = feedbackList.value.find((f) => f.id === id);
   if (feedback) {
     feedback.status = newStatus;
+    // Update in Supabase (you may need to add a status field to the feedbacks table)
     toast.success(`Status updated to ${newStatus}`);
   }
 };
 
-const deleteFeedback = (id: number) => {
-  const index = feedbackList.value.findIndex((f) => f.id === id);
-  if (index !== -1) {
-    feedbackList.value.splice(index, 1);
-    toast.success("Feedback deleted");
+const deleteFeedback = async (id: number) => {
+  try {
+    const success = await feedbackStore.deleteFeedback(id);
+    if (success) {
+      const index = feedbackList.value.findIndex((f) => f.id === id);
+      if (index !== -1) {
+        feedbackList.value.splice(index, 1);
+      }
+    }
+  } catch (error) {
+    toast.error("Failed to delete feedback");
+  }
+};
+
+const loadFeedbacks = async () => {
+  isLoading.value = true;
+  try {
+    // Fetch feedbacks with user information from the store
+    const data = await feedbackStore.fetchFeedbacksWithUsers();
+
+    // Transform data to match component structure
+    feedbackList.value = (data || []).map((item: any) => ({
+      id: item.id,
+      userName: item.users
+        ? `${item.users.first_name} ${item.users.last_name}`
+        : "Unknown User",
+      userAvatar: item.users?.profile_photo_url || null,
+      rating: item.rate,
+      comment: item.description,
+      timestamp: item.created_at,
+      status: "new", // Default status, you may want to add a status field to the table
+      user_id: item.user_id,
+    }));
+  } catch (error) {
+    console.error("Error loading feedbacks:", error);
+    toast.error("Failed to load feedbacks");
+  } finally {
+    isLoading.value = false;
   }
 };
 
 // Lifecycle
 onMounted(() => {
-  // TODO: Fetch feedback from API
-  console.log("Fetching feedback...");
+  loadFeedbacks();
 });
 </script>
 
 <template>
-  <v-card elevation="2">
-    <v-card-title class="d-flex align-center justify-space-between pa-4">
+  <v-card elevation="2" class="feedback-card rounded-lg">
+    <!-- Header -->
+    <v-card-title class="d-flex align-center justify-space-between pa-4 pb-3">
       <div class="d-flex align-center">
-        <v-icon class="me-2" color="primary">mdi-message-text</v-icon>
-        <span class="text-h6">User Feedback</span>
+        <v-icon class="me-2" color="primary" size="24">mdi-message-text</v-icon>
+        <span class="text-h6 text-sm-h5">User Feedback</span>
       </div>
-      <v-chip color="primary" size="small">
-        {{ feedbackStats.total }} Total
+      <v-chip color="primary" variant="tonal" size="small">
+        <span class="font-weight-bold">{{ feedbackStats.total }}</span>
+        <span class="ms-1">Total</span>
       </v-chip>
     </v-card-title>
 
+    <v-divider />
+
     <!-- Stats Overview -->
-    <v-card-text class="pa-4 pt-0">
-      <v-row dense class="mb-3">
+    <v-card-text class="pa-4">
+      <v-row dense class="mb-4">
         <v-col cols="6" sm="3">
-          <v-card variant="tonal" color="primary">
+          <v-card
+            variant="tonal"
+            color="primary"
+            class="stat-card"
+            elevation="0"
+          >
             <v-card-text class="pa-3 text-center">
-              <div class="text-h6">{{ feedbackStats.new }}</div>
-              <div class="text-caption">New</div>
+              <div class="text-h5 text-sm-h4 font-weight-bold mb-1">
+                {{ feedbackStats.new }}
+              </div>
+              <div class="text-caption text-sm-body-2">New</div>
             </v-card-text>
           </v-card>
         </v-col>
         <v-col cols="6" sm="3">
-          <v-card variant="tonal" color="warning">
+          <v-card
+            variant="tonal"
+            color="warning"
+            class="stat-card"
+            elevation="0"
+          >
             <v-card-text class="pa-3 text-center">
-              <div class="text-h6">{{ feedbackStats.reviewed }}</div>
-              <div class="text-caption">Reviewed</div>
+              <div class="text-h5 text-sm-h4 font-weight-bold mb-1">
+                {{ feedbackStats.reviewed }}
+              </div>
+              <div class="text-caption text-sm-body-2">Reviewed</div>
             </v-card-text>
           </v-card>
         </v-col>
         <v-col cols="6" sm="3">
-          <v-card variant="tonal" color="success">
+          <v-card
+            variant="tonal"
+            color="success"
+            class="stat-card"
+            elevation="0"
+          >
             <v-card-text class="pa-3 text-center">
-              <div class="text-h6">{{ feedbackStats.resolved }}</div>
-              <div class="text-caption">Resolved</div>
+              <div class="text-h5 text-sm-h4 font-weight-bold mb-1">
+                {{ feedbackStats.resolved }}
+              </div>
+              <div class="text-caption text-sm-body-2">Resolved</div>
             </v-card-text>
           </v-card>
         </v-col>
         <v-col cols="6" sm="3">
-          <v-card variant="tonal" color="info">
+          <v-card variant="tonal" color="info" class="stat-card" elevation="0">
             <v-card-text class="pa-3 text-center">
-              <div class="text-h6">{{ feedbackStats.avgRating }}</div>
-              <div class="text-caption">Avg Rating</div>
+              <div class="text-h5 text-sm-h4 font-weight-bold mb-1">
+                {{ feedbackStats.avgRating }}
+              </div>
+              <div class="text-caption text-sm-body-2">Avg Rating</div>
             </v-card-text>
           </v-card>
         </v-col>
       </v-row>
 
       <!-- Filter Tabs -->
-      <v-tabs v-model="selectedFilter" density="compact" class="mb-3">
-        <v-tab value="all">All</v-tab>
-        <v-tab value="new">New</v-tab>
-        <v-tab value="reviewed">Reviewed</v-tab>
-        <v-tab value="resolved">Resolved</v-tab>
+      <v-tabs
+        v-model="selectedFilter"
+        :density="smAndDown ? 'comfortable' : 'default'"
+        color="primary"
+        class="mb-4"
+        slider-color="primary"
+      >
+        <v-tab value="all" class="text-none">
+          <span class="text-caption text-sm-body-2">All</span>
+        </v-tab>
+        <v-tab value="new" class="text-none">
+          <span class="text-caption text-sm-body-2">New</span>
+        </v-tab>
+        <v-tab value="reviewed" class="text-none">
+          <span class="text-caption text-sm-body-2">Reviewed</span>
+        </v-tab>
+        <v-tab value="resolved" class="text-none">
+          <span class="text-caption text-sm-body-2">Resolved</span>
+        </v-tab>
       </v-tabs>
 
       <!-- Feedback List -->
-      <div v-if="filteredFeedback.length > 0" class="feedback-list">
+      <div v-if="isLoading" class="text-center py-12">
+        <v-progress-circular
+          indeterminate
+          color="primary"
+          size="64"
+        ></v-progress-circular>
+        <p class="text-body-2 text-medium-emphasis mt-4">
+          Loading feedbacks...
+        </p>
+      </div>
+
+      <div v-else-if="filteredFeedback.length > 0" class="feedback-list">
         <v-card
           v-for="feedback in filteredFeedback"
           :key="feedback.id"
           variant="outlined"
-          class="mb-3"
+          class="mb-3 feedback-item"
+          elevation="0"
         >
-          <v-card-text class="pa-3">
+          <v-card-text class="pa-3 pa-sm-4">
             <!-- Header Row -->
-            <div class="d-flex align-center justify-space-between mb-2">
-              <div class="d-flex align-center">
-                <v-avatar size="32" color="primary" class="me-2">
-                  <v-icon v-if="!feedback.userAvatar" size="18">
+            <div class="d-flex align-start justify-space-between mb-3">
+              <div class="d-flex align-start flex-grow-1">
+                <v-avatar size="40" color="primary" class="me-3">
+                  <v-icon v-if="!feedback.userAvatar" size="20">
                     mdi-account
                   </v-icon>
                 </v-avatar>
-                <div>
-                  <div class="text-body-2 font-weight-bold">
+                <div class="flex-grow-1">
+                  <div class="text-body-1 font-weight-bold mb-1">
                     {{ feedback.userName }}
                   </div>
                   <div class="text-caption text-medium-emphasis">
@@ -215,15 +252,22 @@ onMounted(() => {
                 </div>
               </div>
 
-              <div class="d-flex align-center ga-1">
+              <div
+                class="d-flex flex-column flex-sm-row align-end align-sm-center ga-2 ms-2"
+              >
                 <!-- Rating -->
                 <v-chip
                   :color="getRatingColor(feedback.rating)"
                   size="small"
                   variant="flat"
+                  class="rating-chip"
                 >
-                  <v-icon size="16" :icon="getRatingIcon(feedback.rating)" />
-                  <span class="ms-1">{{ feedback.rating }}/4</span>
+                  <v-icon
+                    size="16"
+                    :icon="getRatingIcon(feedback.rating)"
+                    class="me-1"
+                  />
+                  <span class="font-weight-bold">{{ feedback.rating }}/4</span>
                 </v-chip>
 
                 <!-- Status -->
@@ -231,6 +275,7 @@ onMounted(() => {
                   :color="getStatusColor(feedback.status)"
                   size="small"
                   variant="tonal"
+                  class="text-capitalize"
                 >
                   {{ feedback.status }}
                 </v-chip>
@@ -238,34 +283,42 @@ onMounted(() => {
             </div>
 
             <!-- Comment -->
-            <p class="text-body-2 mb-3">{{ feedback.comment }}</p>
+            <p class="text-body-2 mb-3 feedback-comment">
+              {{ feedback.comment }}
+            </p>
 
             <!-- Actions -->
             <div class="d-flex flex-wrap ga-2">
               <v-btn
                 v-if="feedback.status === 'new'"
-                size="x-small"
-                variant="tonal"
+                size="small"
+                variant="flat"
                 color="warning"
+                class="text-none"
                 @click="updateStatus(feedback.id, 'reviewed')"
               >
-                Mark Reviewed
+                <v-icon size="16" class="me-1">mdi-eye-check</v-icon>
+                <span class="d-none d-sm-inline">Mark </span>Reviewed
               </v-btn>
               <v-btn
                 v-if="feedback.status !== 'resolved'"
-                size="x-small"
-                variant="tonal"
+                size="small"
+                variant="flat"
                 color="success"
+                class="text-none"
                 @click="updateStatus(feedback.id, 'resolved')"
               >
-                Mark Resolved
+                <v-icon size="16" class="me-1">mdi-check-circle</v-icon>
+                <span class="d-none d-sm-inline">Mark </span>Resolved
               </v-btn>
               <v-btn
-                size="x-small"
-                variant="tonal"
+                size="small"
+                variant="flat"
                 color="error"
+                class="text-none"
                 @click="deleteFeedback(feedback.id)"
               >
+                <v-icon size="16" class="me-1">mdi-delete</v-icon>
                 Delete
               </v-btn>
             </div>
@@ -274,19 +327,92 @@ onMounted(() => {
       </div>
 
       <!-- Empty State -->
-      <div v-else class="text-center py-8">
-        <v-icon size="64" color="grey-lighten-1" class="mb-3">
-          mdi-message-off
+      <div v-else-if="!isLoading" class="text-center py-12">
+        <v-icon size="80" color="grey-lighten-1" class="mb-4">
+          mdi-message-off-outline
         </v-icon>
-        <p class="text-body-2 text-medium-emphasis">No feedback found</p>
+        <p class="text-h6 text-medium-emphasis mb-2">No feedback found</p>
+        <p class="text-body-2 text-medium-emphasis">
+          Try selecting a different filter
+        </p>
       </div>
     </v-card-text>
   </v-card>
 </template>
 
 <style scoped>
+.feedback-card {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.stat-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 8px;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 .feedback-list {
-  max-height: 600px;
+  max-height: 800px;
   overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Custom scrollbar for feedback list */
+.feedback-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.feedback-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.feedback-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.feedback-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.feedback-item {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 8px;
+}
+
+.feedback-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.feedback-comment {
+  line-height: 1.6;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.v-theme--dark .feedback-comment {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.rating-chip {
+  min-width: 60px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 599px) {
+  .feedback-list {
+    max-height: 600px;
+  }
+}
+
+@media (min-width: 960px) {
+  .feedback-list {
+    max-height: 1000px;
+  }
 }
 </style>

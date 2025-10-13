@@ -67,29 +67,46 @@ export const useFeedbackStore = defineStore("feedback", () => {
     error.value = undefined;
 
     try {
-      const { data, error: fetchError } = await supabase
+      // First, fetch all feedbacks
+      const { data: feedbacksData, error: feedbacksError } = await supabase
         .from("feedbacks")
-        .select(
-          `
-          id,
-          created_at,
-          user_id,
-          title,
-          rate,
-          description,
-          collection_id,
-          users (
-            first_name,
-            last_name,
-            profile_photo_url
-          )
-        `
-        )
+        .select("*")
         .order("created_at", { ascending: false });
 
-      if (fetchError) throw fetchError;
+      if (feedbacksError) throw feedbacksError;
 
-      return data || [];
+      if (!feedbacksData || feedbacksData.length === 0) {
+        return [];
+      }
+
+      // Get unique user IDs
+      const userIds = [...new Set(feedbacksData.map((f) => f.user_id))];
+
+      // Fetch user data
+      const { data: usersData, error: usersError } = await supabase
+        .from("users")
+        .select("id, first_name, last_name, profile_photo_url")
+        .in("id", userIds);
+
+      if (usersError) {
+        console.warn("Failed to fetch user data:", usersError);
+        // Return feedbacks without user data
+        return feedbacksData.map((feedback) => ({
+          ...feedback,
+          users: null,
+        }));
+      }
+
+      // Create a map of users for quick lookup
+      const usersMap = new Map(usersData?.map((user) => [user.id, user]) || []);
+
+      // Combine feedback with user data
+      const combinedData = feedbacksData.map((feedback) => ({
+        ...feedback,
+        users: usersMap.get(feedback.user_id) || null,
+      }));
+
+      return combinedData;
     } catch (err) {
       error.value =
         err instanceof Error

@@ -2,7 +2,10 @@
 import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { useNotificationsStore } from "@/stores/notifications";
-import { getNotificationIcon, getNotificationColor } from "@/utils/helpers";
+import {
+  getNotificationIcon,
+  getNotificationColor,
+} from "@/utils/notificationHelpers";
 
 // Props
 interface Props {

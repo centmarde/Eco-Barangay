@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getUserDisplayName, getEmailInitials } from "@/utils/helpers";
+import { getUserDisplayName, getEmailInitials } from "@/utils/userHelpers";
 import { useRequestView } from "../composables/requestView";
 import { useDisplay } from "vuetify";
 import { onMounted } from "vue";

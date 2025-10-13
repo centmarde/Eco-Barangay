@@ -5,8 +5,8 @@ import {
   getFeedbackRatingIcon,
   getFeedbackRatingColor,
   getFeedbackStatusColor,
-  formatRelativeTime,
-} from "@/utils/helpers";
+} from "@/utils/feedbackHelpers";
+import { formatRelativeTime } from "@/utils/dateHelpers";
 import { FEEDBACK_STATUS_OPTIONS } from "@/utils/constants";
 import { useFeedbackManagement } from "../composables/useFeedbackManagement";
 

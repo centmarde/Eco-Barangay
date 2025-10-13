@@ -256,44 +256,48 @@ async function handleLogout() {
 
     <!-- Desktop Actions -->
     <template v-if="!mobile" #append>
-      <!-- Theme Toggle Button -->
-      <v-btn
-        :loading="isLoadingTheme"
-        size="small"
-        variant="text"
-        @click="toggleTheme"
-      >
-        <v-icon :icon="themeIcon" />
-        <v-tooltip activator="parent" location="bottom">
-          {{ themeTooltip }}
-        </v-tooltip>
-      </v-btn>
+      <div class="d-flex align-center ga-4">
+        <!-- Theme Toggle Button -->
+        <v-btn
+          :loading="isLoadingTheme"
+          size="small"
+          variant="text"
+          @click="toggleTheme"
+        >
+          <v-icon :icon="themeIcon" />
+          <v-tooltip activator="parent" location="bottom">
+            {{ themeTooltip }}
+          </v-tooltip>
+        </v-btn>
 
-      <!-- Notification Bell Component -->
-      <NotificationBell />
+        <!-- Notification Bell Component -->
+        <NotificationBell />
 
-      <!-- User Slug Name Component -->
-      <SlugName />
+        <!-- User Slug Name Component -->
+        <SlugName />
+      </div>
     </template>
 
     <!-- Mobile Actions - Icons only -->
     <template v-else #append>
-      <!-- Theme Toggle Button -->
-      <v-btn
-        :loading="isLoadingTheme"
-        size="small"
-        variant="text"
-        icon
-        @click="toggleTheme"
-      >
-        <v-icon :icon="themeIcon" size="20" />
-      </v-btn>
+      <div class="d-flex align-center ga-2">
+        <!-- Theme Toggle Button -->
+        <v-btn
+          :loading="isLoadingTheme"
+          size="small"
+          variant="text"
+          icon
+          @click="toggleTheme"
+        >
+          <v-icon :icon="themeIcon" size="20" />
+        </v-btn>
 
-      <!-- Notification Bell Component -->
-      <NotificationBell />
+        <!-- Notification Bell Component -->
+        <NotificationBell />
 
-      <!-- User Slug Name Component -->
-      <SlugName />
+        <!-- User Slug Name Component -->
+        <SlugName />
+      </div>
     </template>
   </v-toolbar>
 </template>

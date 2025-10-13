@@ -18,6 +18,7 @@ declare module 'vue' {
     InsideNavbar4: typeof import('./components/common/insideNavbar/InsideNavbar4.vue')['default']
     LoginForm: typeof import('./components/auth/LoginForm.vue')['default']
     NotificationBell: typeof import('./components/common/NotificationBell.vue')['default']
+    NotificationDialog: typeof import('./components/common/NotificationDialog.vue')['default']
     OuterFooter: typeof import('./components/common/outerFooters/OuterFooter.vue')['default']
     OuterFooter2: typeof import('./components/common/outerFooters/OuterFooter2.vue')['default']
     OuterNavbar: typeof import('./components/common/outerNavbars/OuterNavbar1.vue')['default']

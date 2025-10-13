@@ -1,30 +1,42 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from "vue";
+import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { useNotificationsStore } from "@/stores/notifications";
-import { useAuthUserStore } from "@/stores/authUser";
-import { useDisplay } from "vuetify";
-import type { RealtimeChannel } from "@supabase/supabase-js";
 import { getNotificationIcon, getNotificationColor } from "@/utils/helpers";
-import NotificationDialog from "./NotificationDialog.vue";
 
+// Props
+interface Props {
+  modelValue: boolean;
+}
+
+const props = defineProps<Props>();
+
+// Emits
+const emit = defineEmits<{
+  (e: "update:modelValue", value: boolean): void;
+}>();
+
+// Composables
 const router = useRouter();
 const notificationsStore = useNotificationsStore();
-const authStore = useAuthUserStore();
-const { mobile } = useDisplay();
 
-// Local state
-const notificationMenu = ref(false);
-const mobileMenu = ref(false);
-let realtimeChannel: RealtimeChannel | null = null;
+// Computed
+const isOpen = computed({
+  get: () => props.modelValue,
+  set: (value) => emit("update:modelValue", value),
+});
 
-// Computed properties
 const notifications = computed(() =>
   notificationsStore.notifications.slice(0, 5)
-); // Show only latest 5 in dropdown
+); // Show only latest 5
+
 const unreadCount = computed(() => notificationsStore.unreadCount);
 
 // Methods
+const closeDialog = () => {
+  isOpen.value = false;
+};
+
 const markAllAsRead = async () => {
   await notificationsStore.markAllAsRead();
 };
@@ -34,9 +46,8 @@ const markAsRead = async (notificationId: number) => {
 };
 
 const viewAllNotifications = () => {
-  notificationMenu.value = false;
-  mobileMenu.value = false;
-  router.push("/notifications"); // TODO: Update to actual notifications page route
+  closeDialog();
+  router.push("/notifications");
 };
 
 const handleNotificationClick = async (notification: any) => {
@@ -47,71 +58,38 @@ const handleNotificationClick = async (notification: any) => {
 
   // Navigate if there's an action URL
   if (notification.action_url) {
-    notificationMenu.value = false;
-    mobileMenu.value = false;
+    closeDialog();
     router.push(notification.action_url);
   }
 };
-
-const openMobileMenu = () => {
-  mobileMenu.value = true;
-};
-
-// Lifecycle hooks
-onMounted(async () => {
-  const userId = authStore.userData?.id;
-
-  if (userId) {
-    // Fetch initial notifications
-    await notificationsStore.fetchNotifications(userId);
-
-    // Subscribe to real-time updates
-    realtimeChannel = notificationsStore.subscribeToNotifications(userId);
-  }
-});
-
-onUnmounted(() => {
-  // Cleanup real-time subscription
-  if (realtimeChannel) {
-    realtimeChannel.unsubscribe();
-  }
-});
 </script>
 
 <template>
-  <!-- Desktop Notification Bell -->
   <v-menu
-    v-if="!mobile"
-    v-model="notificationMenu"
+    v-model="isOpen"
     :close-on-content-click="false"
     location="bottom end"
-    offset="8"
-    max-width="420"
+    :offset="[0, 20]"
+    max-width="400"
   >
-    <template #activator="{ props: menuProps }">
-      <v-btn v-bind="menuProps" icon variant="text" size="small">
+    <template v-slot:activator="{ props: activatorProps }">
+      <v-btn icon v-bind="activatorProps">
         <v-badge
           :content="unreadCount"
           :model-value="unreadCount > 0"
           color="error"
           overlap
         >
-          <v-icon icon="mdi-bell" />
+          <v-icon>mdi-bell</v-icon>
         </v-badge>
       </v-btn>
     </template>
 
-    <v-card min-width="380" max-width="420">
+    <v-card min-width="350" max-width="400">
       <v-card-title class="d-flex justify-space-between align-center pa-4">
         <span class="text-h6">Notifications</span>
-        <v-btn
-          v-if="unreadCount > 0"
-          variant="text"
-          size="small"
-          color="primary"
-          @click="markAllAsRead"
-        >
-          Mark all as read
+        <v-btn icon variant="text" size="small" @click="closeDialog">
+          <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
 
@@ -148,22 +126,30 @@ onUnmounted(() => {
           </v-list-item>
         </template>
 
-        <v-list-item v-else class="text-center py-8">
-          <div class="text-center">
-            <v-icon size="48" color="grey-lighten-1" class="mb-2">
-              mdi-bell-off
-            </v-icon>
-            <p class="text-body-2 text-medium-emphasis">No notifications</p>
-          </div>
-        </v-list-item>
+        <div v-else class="text-center py-8">
+          <v-icon size="48" color="grey-lighten-1" class="mb-2">
+            mdi-bell-off-outline
+          </v-icon>
+          <p class="text-body-2 text-medium-emphasis">No notifications</p>
+        </div>
       </v-list>
 
       <v-divider />
 
-      <v-card-actions class="pa-3">
+      <v-card-actions class="pa-3 d-flex flex-column ga-2">
         <v-btn
+          v-if="unreadCount > 0"
           block
           variant="text"
+          color="primary"
+          size="small"
+          @click="markAllAsRead"
+        >
+          Mark all as read
+        </v-btn>
+        <v-btn
+          block
+          variant="tonal"
           color="primary"
           @click="viewAllNotifications"
         >
@@ -172,23 +158,6 @@ onUnmounted(() => {
       </v-card-actions>
     </v-card>
   </v-menu>
-
-  <!-- Mobile Notification Bell - Icon Only -->
-  <div v-else>
-    <v-btn icon variant="text" size="small" @click="mobileMenu = true">
-      <v-badge
-        :content="unreadCount"
-        :model-value="unreadCount > 0"
-        color="error"
-        overlap
-      >
-        <v-icon icon="mdi-bell" size="20" />
-      </v-badge>
-    </v-btn>
-
-    <!-- Mobile Notification Dialog Component -->
-    <NotificationDialog v-model="mobileMenu" />
-  </div>
 </template>
 
 <style scoped>

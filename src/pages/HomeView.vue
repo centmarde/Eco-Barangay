@@ -4,6 +4,7 @@ import { useAuthUserStore } from "@/stores/authUser";
 import InnerLayoutWrapper from "@/layouts/InnerLayoutWrapper.vue";
 import FeedbackList from "@/pages/admin/components/FeedbackSection.vue";
 import DailyAnnouncement from "@/pages/residents/DailyAnnouncement.vue";
+import AnnouncementsWidget from "@/pages/residents/AnnouncementsWidget.vue";
 
 const authStore = useAuthUserStore();
 
@@ -17,10 +18,12 @@ const { userName } = storeToRefs(authStore);
 
   <InnerLayoutWrapper>
     <template #content>
-      <v-container fluid class="px-4 px-md-6">
+      <v-container fluid>
         <v-row justify="center">
-          <v-col cols="12" xl="10">
-
+          <v-col cols="12" xl="12">
+            <!-- Announcements Widget -->
+            <AnnouncementsWidget />
+						<v-divider></v-divider>
           </v-col>
         </v-row>
       </v-container>

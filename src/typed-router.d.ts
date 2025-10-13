@@ -46,6 +46,7 @@ declare module 'vue-router/auto-routes' {
     '/ForbiddenView': RouteRecordInfo<'/ForbiddenView', '/ForbiddenView', Record<never, never>, Record<never, never>>,
     '/HomeView': RouteRecordInfo<'/HomeView', '/HomeView', Record<never, never>, Record<never, never>>,
     '/NotFound': RouteRecordInfo<'/NotFound', '/NotFound', Record<never, never>, Record<never, never>>,
+    '/residents/AnnouncementsWidget': RouteRecordInfo<'/residents/AnnouncementsWidget', '/residents/AnnouncementsWidget', Record<never, never>, Record<never, never>>,
     '/residents/DailyAnnouncement': RouteRecordInfo<'/residents/DailyAnnouncement', '/residents/DailyAnnouncement', Record<never, never>, Record<never, never>>,
   }
 }

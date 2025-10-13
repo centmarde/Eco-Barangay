@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { getUserDisplayName, getEmailInitials } from "@/utils/userHelpers";
-import { useRequestView } from "../composables/requestView";
+import { useRequestHistoryView } from "../composables/requestView";
 import { useDisplay } from "vuetify";
 import { onMounted } from "vue";
 import RequestDialog from "../dialogs/RequestDialog.vue";
@@ -10,10 +10,8 @@ const { smAndDown, mdAndUp } = useDisplay();
 const {
   loading,
   selectedStatus,
-  showOnlyMyCollections,
   filteredCollections,
   statusCounts,
-  myCollectionsCount,
   showDialog,
   selectedCollection,
   fetchCollections,
@@ -26,7 +24,7 @@ const {
   getGarbageTypeColor,
   getGarbageTypeIcon,
   formatDate,
-} = useRequestView();
+} = useRequestHistoryView();
 
 onMounted(async () => {
   await fetchCollections();
@@ -42,6 +40,7 @@ const handleStatusUpdate = async (collectionId: number, newStatus: string) => {
     <!-- Filter Section -->
     <v-card class="mb-4">
       <v-card-text class="pa-2">
+        <!-- Filter Header -->
         <div class="d-flex align-center mb-3 px-2">
           <v-icon color="primary" class="mr-2">mdi-filter</v-icon>
           <span class="text-subtitle-2 font-weight-bold">Status Filters</span>
@@ -114,24 +113,11 @@ const handleStatusUpdate = async (collectionId: number, newStatus: string) => {
         <v-icon size="64" color="grey">mdi-inbox</v-icon>
         <p class="text-h6 mt-4 text-grey">No collections found</p>
         <p class="text-body-2 text-grey">
-          <template v-if="showOnlyMyCollections">
-            {{
-              selectedStatus === "all"
-                ? "You have no collections assigned yet."
-                : `You have no ${getStatusText(
-                    selectedStatus
-                  ).toLowerCase()} collections.`
-            }}
-          </template>
-          <template v-else>
-            {{
-              selectedStatus === "all"
-                ? "There are no collections yet."
-                : `No ${getStatusText(
-                    selectedStatus
-                  ).toLowerCase()} collections.`
-            }}
-          </template>
+          {{
+            selectedStatus === "all"
+              ? "There are no collections yet."
+              : `No ${getStatusText(selectedStatus).toLowerCase()} collections.`
+          }}
         </p>
       </v-col>
     </v-row>

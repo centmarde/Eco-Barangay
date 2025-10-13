@@ -2,8 +2,9 @@
 import { getUserDisplayName, getEmailInitials } from "@/utils/userHelpers";
 import { useRequestView } from "../composables/requestView";
 import { useDisplay } from "vuetify";
-import { onMounted } from "vue";
+import { onMounted, ref, computed } from "vue";
 import RequestDialog from "../dialogs/RequestDialog.vue";
+import RequestsPagination from "./RequestsPagination.vue";
 
 const { smAndDown, mdAndUp } = useDisplay();
 
@@ -27,6 +28,27 @@ const {
   getGarbageTypeIcon,
   formatDate,
 } = useRequestView();
+
+// Pagination
+const currentPage = ref(1);
+const itemsPerPage = ref(8);
+
+const paginatedCollections = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return filteredCollections.value.slice(start, end);
+});
+
+// Reset to page 1 when filters change
+const resetPagination = () => {
+  currentPage.value = 1;
+};
+
+// Watch for filter changes
+import { watch } from "vue";
+watch([selectedStatus, showOnlyMyCollections], () => {
+  resetPagination();
+});
 
 onMounted(async () => {
   await fetchCollections();
@@ -139,7 +161,7 @@ const handleStatusUpdate = async (collectionId: number, newStatus: string) => {
     <!-- Collections Grid -->
     <v-row v-else>
       <v-col
-        v-for="collection in filteredCollections"
+        v-for="collection in paginatedCollections"
         :key="collection.id"
         cols="12"
         sm="6"
@@ -281,6 +303,13 @@ const handleStatusUpdate = async (collectionId: number, newStatus: string) => {
         </v-card>
       </v-col>
     </v-row>
+
+    <!-- Pagination -->
+    <RequestsPagination
+      v-model:current-page="currentPage"
+      v-model:items-per-page="itemsPerPage"
+      :total-items="filteredCollections.length"
+    />
 
     <!-- Request Dialog -->
     <RequestDialog

@@ -1,44 +1,53 @@
 <script lang="ts" setup>
-import { onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useLandingController } from '@/controller/landingController'
-import OuterLayoutWrapper from '@/layouts/OuterLayoutWrapper.vue'
+import { onMounted, computed } from "vue";
+import { useRouter } from "vue-router";
+import { useTheme } from "vuetify";
+import { useLandingController } from "@/controller/landingController";
+import OuterLayoutWrapper from "@/layouts/OuterLayoutWrapper.vue";
 
-const router = useRouter()
-const { data, loading, error, fetchLandingData } = useLandingController()
+const router = useRouter();
+const theme = useTheme();
+const { data, loading, error, fetchLandingData } = useLandingController();
+
+// Compute the image source based on theme
+const heroImage = computed(() => {
+  return theme.global.current.value.dark
+    ? new URL("@/assets/landingDark.png", import.meta.url).href
+    : new URL("@/assets/landing.png", import.meta.url).href;
+});
 
 onMounted(async () => {
-  await fetchLandingData()
-})
+  await fetchLandingData();
+});
 
 function navigateToAuth() {
-  router.push('/auth')
+  router.push("/auth");
 }
 
 function scrollToFeatures() {
-  const element = document.querySelector('#features')
+  const element = document.querySelector("#features");
   if (element) {
     element.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    })
+      behavior: "smooth",
+      block: "start",
+    });
   }
 }
 
 function openGithub() {
-  window.open('https://github.com', '_blank', 'noopener,noreferrer')
+  window.open("https://github.com", "_blank", "noopener,noreferrer");
 }
 
 function openDocumentation() {
-  window.open('https://vuetifyjs.com/', '_blank', 'noopener,noreferrer')
+  window.open("https://vuetifyjs.com/", "_blank", "noopener,noreferrer");
 }
 
 function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 </script>
 
@@ -51,7 +60,12 @@ function formatDate(dateString: string) {
           v-if="loading"
           class="d-flex justify-center align-center loading-state"
         >
-          <v-progress-circular color="primary" indeterminate :size="48" :width="2" />
+          <v-progress-circular
+            color="primary"
+            indeterminate
+            :size="48"
+            :width="2"
+          />
         </v-container>
 
         <!-- Error State -->
@@ -75,8 +89,9 @@ function formatDate(dateString: string) {
           <!-- Hero Section -->
           <section class="hero-section">
             <v-container class="hero-container">
-              <v-row justify="center">
-                <v-col cols="12">
+              <v-row align="center">
+                <!-- Left Side: Text Content -->
+                <v-col cols="12" md="6">
                   <div class="hero-content">
                     <h1 class="hero-title">
                       {{ data.title }}
@@ -93,13 +108,23 @@ function formatDate(dateString: string) {
                     <v-btn
                       color="primary"
                       size="large"
-                      block
                       variant="flat"
                       class="cta-btn"
                       @click="navigateToAuth"
                     >
                       Get Started
                     </v-btn>
+                  </div>
+                </v-col>
+
+                <!-- Right Side: Image -->
+                <v-col cols="12" md="6">
+                  <div class="hero-image-wrapper">
+                    <img
+                      :src="heroImage"
+                      alt="Landing page illustration"
+                      class="hero-image"
+                    />
                   </div>
                 </v-col>
               </v-row>
@@ -158,7 +183,9 @@ function formatDate(dateString: string) {
 
                     <div class="info-item">
                       <span class="info-label">Last updated</span>
-                      <span class="info-value">{{ formatDate(data.lastUpdated) }}</span>
+                      <span class="info-value">{{
+                        formatDate(data.lastUpdated)
+                      }}</span>
                     </div>
                   </div>
 
@@ -182,10 +209,8 @@ function formatDate(dateString: string) {
           <footer class="footer-section">
             <v-container>
               <div class="footer-content">
-                <p class="footer-text">
-                  Open source and available on GitHub
-                </p>
-                
+                <p class="footer-text">Open source and available on GitHub</p>
+
                 <v-btn
                   variant="text"
                   size="small"
@@ -205,5 +230,5 @@ function formatDate(dateString: string) {
 </template>
 
 <style scoped>
-@import './css/landingView.css';
+@import "./css/landingView.css";
 </style>

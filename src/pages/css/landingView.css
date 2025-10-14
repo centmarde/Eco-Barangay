@@ -23,11 +23,9 @@
   display: flex;
   align-items: center;
   padding: 60px 20px 80px;
-  background: linear-gradient(
-    180deg,
-    rgb(var(--v-theme-surface)) 0%,
-    rgb(var(--v-theme-background)) 100%
-  );
+  background: rgb(
+    var(--v-theme-background)
+  ); /* Remove linear gradient, use background color variable */
   transition: background 0.3s ease;
 }
 

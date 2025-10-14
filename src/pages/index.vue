@@ -1,39 +1,45 @@
 <script lang="ts" setup>
-  import { onMounted } from 'vue'
-  import { useLandingController } from '@/controller/landingController'
-  import OuterLayoutWrapper from '@/layouts/OuterLayoutWrapper.vue'
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useLandingController } from '@/controller/landingController'
+import OuterLayoutWrapper from '@/layouts/OuterLayoutWrapper.vue'
 
-  const { data, loading, error, fetchLandingData } = useLandingController()
+const router = useRouter()
+const { data, loading, error, fetchLandingData } = useLandingController()
 
-  onMounted(async () => {
-    await fetchLandingData()
-  })
+onMounted(async () => {
+  await fetchLandingData()
+})
 
-  function scrollToFeatures () {
-    const element = document.querySelector('#features')
-    if (element) {
-      element.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      })
-    }
-  }
+function navigateToAuth() {
+  router.push('/auth')
+}
 
-  function openGithub () {
-    window.open('https://github.com', '_blank', 'noopener,noreferrer')
-  }
-
-  function openDocumentation () {
-    window.open('https://vuetifyjs.com/', '_blank', 'noopener,noreferrer')
-  }
-
-  function formatDate (dateString: string) {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+function scrollToFeatures() {
+  const element = document.querySelector('#features')
+  if (element) {
+    element.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
     })
   }
+}
+
+function openGithub() {
+  window.open('https://github.com', '_blank', 'noopener,noreferrer')
+}
+
+function openDocumentation() {
+  window.open('https://vuetifyjs.com/', '_blank', 'noopener,noreferrer')
+}
+
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+}
 </script>
 
 <template>
@@ -43,25 +49,23 @@
         <!-- Loading State -->
         <v-container
           v-if="loading"
-          class="d-flex justify-center align-center"
-          style="min-height: 50vh"
+          class="d-flex justify-center align-center loading-state"
         >
-          <v-progress-circular color="primary" indeterminate size="64" />
+          <v-progress-circular color="primary" indeterminate :size="48" :width="2" />
         </v-container>
 
         <!-- Error State -->
         <v-container
           v-else-if="error"
-          class="d-flex justify-center align-center"
-          style="min-height: 50vh"
+          class="d-flex justify-center align-center error-state"
         >
           <v-alert
             color="error"
-            icon="mdi-alert-circle"
+            density="compact"
             type="error"
             variant="tonal"
+            class="minimal-alert"
           >
-            <v-alert-title>Failed to load content</v-alert-title>
             {{ error }}
           </v-alert>
         </v-container>
@@ -70,47 +74,32 @@
         <div v-else-if="data">
           <!-- Hero Section -->
           <section class="hero-section">
-            <v-container>
-              <v-row align="center" class="min-height-screen" justify="center">
-                <v-col cols="12" lg="8" md="10">
-                  <div class="text-center">
-                    <h1 class="text-h2 text-md-h2 font-weight-bold mb-4">
+            <v-container class="hero-container">
+              <v-row justify="center">
+                <v-col cols="12">
+                  <div class="hero-content">
+                    <h1 class="hero-title">
                       {{ data.title }}
                     </h1>
 
-                    <h2 class="text-h4 text-md-h4 text-grey-darken-1 mb-6">
+                    <h2 class="hero-subtitle">
                       {{ data.subtitle }}
                     </h2>
 
-                    <p class="text-h6 text-md-h5 text-grey-darken-2 mb-8">
+                    <p class="hero-description">
                       {{ data.description }}
                     </p>
 
-                    <div
-                      class="d-flex flex-column flex-sm-row gap-4 justify-center"
+                    <v-btn
+                      color="primary"
+                      size="large"
+                      block
+                      variant="flat"
+                      class="cta-btn"
+                      @click="navigateToAuth"
                     >
-                      <v-btn
-                        class="text-none"
-                        color="primary"
-                        size="x-large"
-                        variant="elevated"
-                        @click="scrollToFeatures"
-                      >
-                        <v-icon class="me-2" icon="mdi-rocket-launch" />
-                        Explore Features
-                      </v-btn>
-
-                      <v-btn
-                        class="text-none"
-                        color="primary"
-                        size="x-large"
-                        variant="outlined"
-                        @click="openGithub"
-                      >
-                        <v-icon class="me-2" icon="mdi-github" />
-                        View Source
-                      </v-btn>
-                    </div>
+                      Get Started
+                    </v-btn>
                   </div>
                 </v-col>
               </v-row>
@@ -118,87 +107,97 @@
           </section>
 
           <!-- Features Section -->
-          <section id="features" class="features-section py-16">
+          <section id="features" class="features-section">
             <v-container>
-              <div class="text-center mb-12">
-                <h2 class="text-h3 font-weight-bold mb-4">Key Features</h2>
-                <p class="text-h6 text-grey-darken-1">
+              <div class="section-header">
+                <h2 class="section-title">Key Features</h2>
+                <p class="section-subtitle">
                   Everything you need for modern academic writing
                 </p>
               </div>
 
-              <v-row>
-                <v-col
+              <div class="features-grid">
+                <div
                   v-for="(feature, index) in data.features"
                   :key="index"
-                  cols="12"
-                  lg="3"
-                  md="6"
+                  class="feature-card"
                 >
-                  <v-card class="h-100" elevation="2" hover>
-                    <v-card-text class="text-center pa-6">
-                      <v-avatar class="mb-4" color="primary" size="64">
-                        <v-icon color="on-primary" :icon="feature.icon" size="32" />
-                      </v-avatar>
+                  <div class="feature-icon">
+                    <v-icon :icon="feature.icon" size="24" color="primary" />
+                  </div>
 
-                      <h3 class="text-h5 font-weight-bold mb-3">
-                        {{ feature.title }}
-                      </h3>
+                  <h3 class="feature-title">
+                    {{ feature.title }}
+                  </h3>
 
-                      <p class="text-body-1 text-grey-darken-1">
-                        {{ feature.description }}
-                      </p>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-              </v-row>
+                  <p class="feature-description">
+                    {{ feature.description }}
+                  </p>
+                </div>
+              </div>
             </v-container>
           </section>
 
           <!-- About Section -->
-          <section id="about" class="about-section py-16 bg-grey-lighten-4">
+          <section id="about" class="about-section">
             <v-container>
-              <v-row align="center" justify="center">
-                <v-col cols="12" lg="8" md="10">
-                  <div class="text-center">
-                    <h2 class="text-h3 font-weight-bold mb-6">
-                      About This Template
-                    </h2>
+              <div class="about-content">
+                <h2 class="section-title">About This Template</h2>
 
-                    <div class="pa-8" elevation="4">
-                      <v-row align="center">
-                        <v-col cols="12" md="8">
-                          <h3 class="text-h4 font-weight-bold mb-4">
-                            Version {{ data.version }}
-                          </h3>
-                          <p class="text-h6 text-grey-darken-1 mb-4">
-                            Created by {{ data.author }}
-                          </p>
-                          <p class="text-body-1 text-grey-darken-2">
-                            Last updated: {{ formatDate(data.lastUpdated) }}
-                          </p>
-                        </v-col>
+                <div class="about-card">
+                  <div class="about-info">
+                    <div class="info-item">
+                      <span class="info-label">Version</span>
+                      <span class="info-value">{{ data.version }}</span>
+                    </div>
 
-                        <v-col cols="12" md="4">
-                          <v-btn
-                            block
-                            class="text-none"
-                            color="primary"
-                            size="large"
-                            variant="elevated"
-                            @click="openDocumentation"
-                          >
-                            <v-icon class="me-2" icon="mdi-book-open" />
-                            Documentation
-                          </v-btn>
-                        </v-col>
-                      </v-row>
+                    <div class="info-item">
+                      <span class="info-label">Created by</span>
+                      <span class="info-value">{{ data.author }}</span>
+                    </div>
+
+                    <div class="info-item">
+                      <span class="info-label">Last updated</span>
+                      <span class="info-value">{{ formatDate(data.lastUpdated) }}</span>
                     </div>
                   </div>
-                </v-col>
-              </v-row>
+
+                  <v-btn
+                    color="primary"
+                    size="large"
+                    block
+                    variant="outlined"
+                    class="doc-btn"
+                    @click="openDocumentation"
+                  >
+                    <v-icon start size="20">mdi-book-open-outline</v-icon>
+                    Documentation
+                  </v-btn>
+                </div>
+              </div>
             </v-container>
           </section>
+
+          <!-- Footer -->
+          <footer class="footer-section">
+            <v-container>
+              <div class="footer-content">
+                <p class="footer-text">
+                  Open source and available on GitHub
+                </p>
+                
+                <v-btn
+                  variant="text"
+                  size="small"
+                  class="github-link"
+                  @click="openGithub"
+                >
+                  <v-icon start size="18">mdi-github</v-icon>
+                  View Source
+                </v-btn>
+              </div>
+            </v-container>
+          </footer>
         </div>
       </div>
     </template>
@@ -206,24 +205,5 @@
 </template>
 
 <style scoped>
-
-.min-height-screen {
-  min-height: calc(100vh - 64px);
-}
-
-.features-section {
-  background: white;
-}
-
-.about-section {
-  background: #fafafa;
-}
-
-.gap-4 {
-  gap: 1rem;
-}
-
-.landing-view {
-  min-height: 100vh;
-}
+@import './css/landingView.css';
 </style>

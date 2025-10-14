@@ -1,10 +1,18 @@
 <script setup lang="ts">
-import { getUserDisplayName, getEmailInitials } from "@/utils/helpers";
+import { getUserDisplayName, getEmailInitials } from "@/utils/userHelpers";
 import { useRequestView } from "../composables/requestView";
 import { useDisplay } from "vuetify";
-import { onMounted } from "vue";
+import { onMounted, ref, computed } from "vue";
+import RequestDialog from "../dialogs/RequestDialog.vue";
+import RequestsPagination from "./RequestsPagination.vue";
 
 const { smAndDown, mdAndUp } = useDisplay();
+
+// Dialog for completed/cancelled collections
+const showNotificationDialog = ref(false);
+const notificationMessage = ref("");
+const notificationTitle = ref("");
+const notificationColor = ref("info");
 
 const {
   loading,
@@ -13,7 +21,12 @@ const {
   filteredCollections,
   statusCounts,
   myCollectionsCount,
+  showDialog,
+  selectedCollection,
   fetchCollections,
+  openDialog,
+  closeDialog,
+  updateCollectionStatus,
   getStatusColor,
   getStatusIcon,
   getStatusText,
@@ -22,9 +35,56 @@ const {
   formatDate,
 } = useRequestView();
 
+// Pagination
+const currentPage = ref(1);
+const itemsPerPage = ref(8);
+
+const paginatedCollections = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return filteredCollections.value.slice(start, end);
+});
+
+// Reset to page 1 when filters change
+const resetPagination = () => {
+  currentPage.value = 1;
+};
+
+// Watch for filter changes
+import { watch } from "vue";
+watch([selectedStatus, showOnlyMyCollections], () => {
+  resetPagination();
+});
+
 onMounted(async () => {
   await fetchCollections();
 });
+
+const handleStatusUpdate = async (collectionId: number, newStatus: string) => {
+  await updateCollectionStatus(collectionId, newStatus);
+};
+
+const handleOpenDialog = (collection: any) => {
+  // Check if collection is completed or cancelled
+  if (collection.status === "completed") {
+    notificationTitle.value = "Collection Completed";
+    notificationMessage.value = "This collection has already been completed and cannot be modified.";
+    notificationColor.value = "success";
+    showNotificationDialog.value = true;
+    return;
+  }
+
+  if (collection.status === "cancelled") {
+    notificationTitle.value = "Collection Cancelled";
+    notificationMessage.value = "This collection has been cancelled and cannot be modified.";
+    notificationColor.value = "error";
+    showNotificationDialog.value = true;
+    return;
+  }
+
+  // If not completed or cancelled, open the dialog normally
+  openDialog(collection);
+};
 </script>
 
 <template>
@@ -32,37 +92,9 @@ onMounted(async () => {
     <!-- Filter Section -->
     <v-card class="mb-4">
       <v-card-text class="pa-2">
-        <!-- My Collections Toggle -->
-        <div class="d-flex align-center justify-space-between mb-3 px-2">
-          <div class="d-flex align-center">
-            <v-icon color="primary" class="mr-2">mdi-filter</v-icon>
-            <span class="text-subtitle-2 font-weight-bold">Filters</span>
-          </div>
-          <v-switch
-            v-model="showOnlyMyCollections"
-            color="primary"
-            density="compact"
-            hide-details
-            :label="
-              smAndDown
-                ? 'My Collections'
-                : `Show My Collections (${myCollectionsCount})`
-            "
-            class="flex-grow-0"
-          >
-            <template #label>
-              <div class="d-flex align-center">
-                <v-icon size="small" class="mr-1">mdi-account-check</v-icon>
-                <span :class="smAndDown ? 'text-caption' : 'text-body-2'">
-                  {{
-                    smAndDown
-                      ? "Mine"
-                      : `My Collections (${myCollectionsCount})`
-                  }}
-                </span>
-              </div>
-            </template>
-          </v-switch>
+        <div class="d-flex align-center mb-3 px-2">
+          <v-icon color="primary" class="mr-2">mdi-filter</v-icon>
+          <span class="text-subtitle-2 font-weight-bold">Status Filters</span>
         </div>
 
         <v-divider class="mb-2" />
@@ -157,7 +189,7 @@ onMounted(async () => {
     <!-- Collections Grid -->
     <v-row v-else>
       <v-col
-        v-for="collection in filteredCollections"
+        v-for="collection in paginatedCollections"
         :key="collection.id"
         cols="12"
         sm="6"
@@ -285,7 +317,13 @@ onMounted(async () => {
 
           <!-- Actions -->
           <v-card-actions>
-            <v-btn variant="text" color="primary" size="small" block>
+            <v-btn
+              variant="text"
+              color="primary"
+              size="small"
+              block
+              @click="handleOpenDialog(collection)"
+            >
               <v-icon start>mdi-eye</v-icon>
               View Details
             </v-btn>
@@ -293,6 +331,47 @@ onMounted(async () => {
         </v-card>
       </v-col>
     </v-row>
+
+    <!-- Pagination -->
+    <RequestsPagination
+      v-model:current-page="currentPage"
+      v-model:items-per-page="itemsPerPage"
+      :total-items="filteredCollections.length"
+    />
+
+    <!-- Request Dialog -->
+    <RequestDialog
+      v-model="showDialog"
+      :collection="selectedCollection"
+      @status-updated="handleStatusUpdate"
+    />
+
+    <!-- Notification Dialog for Completed/Cancelled Collections -->
+    <v-dialog v-model="showNotificationDialog" max-width="500">
+      <v-card>
+        <v-card-title class="text-h6 font-weight-bold d-flex align-center" :class="`bg-${notificationColor}`">
+          <v-icon :color="notificationColor" class="mr-2">
+            {{ notificationColor === 'success' ? 'mdi-check-circle' : 'mdi-cancel' }}
+          </v-icon>
+          {{ notificationTitle }}
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <p class="text-body-1 mb-0">{{ notificationMessage }}</p>
+        </v-card-text>
+        <v-divider />
+        <v-card-actions class="pa-4">
+          <v-spacer />
+          <v-btn
+            variant="elevated"
+            :color="notificationColor"
+            @click="showNotificationDialog = false"
+          >
+            <v-icon start>mdi-check</v-icon>
+            OK
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 

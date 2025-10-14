@@ -1,70 +1,64 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { useAuthUserStore } from '@/stores/authUser'
-import { useUserRolesStore } from '@/stores/roles'
-import { supabase } from '@/lib/supabase'
-import { useToast } from 'vue-toastification'
-import DeleteUserDialog from '@/pages/admin/components/dialogs/DeleteUserDialog.vue'
-import EditUserDialog from '@/pages/admin/components/dialogs/EditUserDialog.vue'
-import UserDetailsDialog from '@/pages/admin/components/dialogs/UserDetailsDialog.vue'
-
-import {
-  formatDate,
-  getErrorMessage,
-  getRoleTitle,
-  getRoleColor
-} from '@/utils/helpers'
+import { ref, onMounted, computed } from "vue";
+import { useAuthUserStore } from "@/stores/authUser";
+import { useUserRolesStore } from "@/stores/roles";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "vue-toastification";
+import DeleteUserDialog from "@/pages/admin/components/dialogs/DeleteUserDialog.vue";
+import EditUserDialog from "@/pages/admin/components/dialogs/EditUserDialog.vue";
+import UserDetailsDialog from "@/pages/admin/components/dialogs/UserDetailsDialog.vue";
+import { formatDate } from "@/utils/dateHelpers";
+import { getErrorMessage } from "@/utils/errorHelpers";
+import { getRoleTitle, getRoleColor } from "@/utils/roleHelpers";
 
 interface User {
-  id: string
-  email?: string
-  created_at?: string
-  user_metadata?: Record<string, any>
-  app_metadata?: Record<string, any>
-  full_name?: string
-  student_number?: string
-  organization_id?: number
-  role_id?: number
-  student_id?: number
+  id: string;
+  email?: string;
+  created_at?: string;
+  user_metadata?: Record<string, any>;
+  app_metadata?: Record<string, any>;
+  full_name?: string;
+  student_number?: string;
+  organization_id?: number;
+  role_id?: number;
+  student_id?: number;
 }
 
 // Composables
-const authStore = useAuthUserStore()
-const rolesStore = useUserRolesStore()
-const toast = useToast()
+const authStore = useAuthUserStore();
+const rolesStore = useUserRolesStore();
+const toast = useToast();
 
 // Reactive data
-const loading = ref(false)
-const search = ref('')
-const userDialog = ref(false)
-const editDialog = ref(false)
-const selectedUser = ref<User | null>(null)
-const editingUser = ref<User | null>(null)
-const studentEventStatusMap = ref<Record<string, any[]>>({}) // userId -> events array
-const deleteDialog = ref(false)
-const userToDelete = ref<User | null>(null)
-
-
+const loading = ref(false);
+const search = ref("");
+const userDialog = ref(false);
+const editDialog = ref(false);
+const selectedUser = ref<User | null>(null);
+const editingUser = ref<User | null>(null);
+const studentEventStatusMap = ref<Record<string, any[]>>({}); // userId -> events array
+const deleteDialog = ref(false);
+const userToDelete = ref<User | null>(null);
 
 // Table headers
 const headers = [
-  { title: 'Full Name', key: 'full_name', sortable: true },
-  { title: 'Email', key: 'email', sortable: true },
-  { title: 'Role', key: 'role_id', sortable: true },
-  { title: 'Created At', key: 'created_at', sortable: true },
-  { title: 'Actions', key: 'actions', sortable: false },
-]
+  { title: "Full Name", key: "full_name", sortable: true },
+  { title: "Email", key: "email", sortable: true },
+  { title: "Role", key: "role_id", sortable: true },
+  { title: "Created At", key: "created_at", sortable: true },
+  { title: "Actions", key: "actions", sortable: false },
+];
 
 // Methods
 const fetchUsers = async () => {
-  loading.value = true
+  loading.value = true;
   try {
-    const result = await authStore.getAllUsers()
+    const result = await authStore.getAllUsers();
 
     if (result.error) {
-      toast.error('Failed to fetch users: ' + getErrorMessage(result.error))
-      console.error('Error fetching users:', result.error)
-      return
+      toast.error("Failed to fetch users: " + getErrorMessage(result.error));
+      console.error("Error fetching users:", result.error);
+      return;
     }
 
     // Users are now stored in authStore.users reactively
@@ -72,43 +66,42 @@ const fetchUsers = async () => {
       // toast.success(`Loaded ${result.users.length} users`)
     }
   } catch (error) {
-    toast.error('An unexpected error occurred while fetching users')
-    console.error('Unexpected error:', error)
+    toast.error("An unexpected error occurred while fetching users");
+    console.error("Unexpected error:", error);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 const viewUser = (user: User) => {
-  selectedUser.value = user
-  userDialog.value = true
-}
+  selectedUser.value = user;
+  userDialog.value = true;
+};
 const editUser = (user: User) => {
-  editingUser.value = user
-  editDialog.value = true
-}
+  editingUser.value = user;
+  editDialog.value = true;
+};
 
 const deleteUser = (user: User) => {
-  userToDelete.value = user
-  deleteDialog.value = true
-}
+  userToDelete.value = user;
+  deleteDialog.value = true;
+};
 
 // Event handlers
 const onUserUpdated = (updatedUser: User) => {
   // The store already updates the users array automatically
-  console.log('User updated:', updatedUser)
-}
+  console.log("User updated:", updatedUser);
+};
 
 const onUserDeleted = (deletedUserId: string) => {
   // The store already removes the user from the users array automatically
-  console.log('User deleted:', deletedUserId)
-}
-
+  console.log("User deleted:", deletedUserId);
+};
 
 // Lifecycle
 onMounted(async () => {
-  await rolesStore.fetchRoles()
-  await fetchUsers()
-})
+  await rolesStore.fetchRoles();
+  await fetchUsers();
+});
 </script>
 
 <template>
@@ -118,7 +111,7 @@ onMounted(async () => {
         <h3>User Management</h3>
         <p class="text-subtitle-1 text-grey">Manage all system users</p>
       </div>
-     <!--  <v-btn
+      <!--  <v-btn
         color="primary"
         prepend-icon="mdi-refresh"
         @click="refreshData"
@@ -127,8 +120,6 @@ onMounted(async () => {
         Refresh
       </v-btn> -->
     </v-card-title>
-
-
 
     <v-card-text>
       <v-data-table
@@ -165,8 +156,6 @@ onMounted(async () => {
           </v-chip>
         </template>
 
-
-
         <template v-slot:item.created_at="{ item }">
           {{ formatDate(item.created_at) }}
         </template>
@@ -201,7 +190,9 @@ onMounted(async () => {
           <div class="text-center pa-4">
             <v-icon size="64" color="grey">mdi-account-off</v-icon>
             <p class="text-h6 mt-4">No users found</p>
-            <p class="text-body-2 text-grey">There are no users in the system yet.</p>
+            <p class="text-body-2 text-grey">
+              There are no users in the system yet.
+            </p>
           </div>
         </template>
 
@@ -212,10 +203,7 @@ onMounted(async () => {
     </v-card-text>
 
     <!-- User Details Dialog -->
-    <UserDetailsDialog
-      v-model="userDialog"
-      :user="selectedUser"
-    />
+    <UserDetailsDialog v-model="userDialog" :user="selectedUser" />
 
     <!-- Edit User Dialog -->
     <EditUserDialog

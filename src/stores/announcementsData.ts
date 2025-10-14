@@ -9,16 +9,19 @@ export type Announcement = {
   created_at: string;
   title: string;
   description: string;
+  image?: string;
 };
 
 export type CreateAnnouncementData = {
   title: string;
   description: string;
+  image?: string;
 };
 
 export type UpdateAnnouncementData = {
   title?: string;
   description?: string;
+  image?: string;
 };
 
 export const useAnnouncementsStore = defineStore("announcements", () => {

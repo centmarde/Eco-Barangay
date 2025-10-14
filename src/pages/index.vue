@@ -91,7 +91,7 @@ function formatDate(dateString: string) {
             <v-container class="hero-container">
               <v-row align="center">
                 <!-- Left Side: Text Content -->
-                <v-col cols="12" md="6">
+                <v-col cols="12" md="4">
                   <div class="hero-content">
                     <h1 class="hero-title">
                       {{ data.title }}
@@ -118,7 +118,7 @@ function formatDate(dateString: string) {
                 </v-col>
 
                 <!-- Right Side: Image -->
-                <v-col cols="12" md="6">
+                <v-col cols="12" md="8">
                   <div class="hero-image-wrapper">
                     <img
                       :src="heroImage"

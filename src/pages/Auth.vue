@@ -200,17 +200,10 @@ onMounted(async () => {
           <v-col
             cols="12"
             md="6"
-            class="pa-8 d-flex align-center justify-center bg-white"
+            class="pa-8 d-flex align-center justify-center"
             :order="formSectionOrder"
           >
-            <div
-              style="
-                width: 100%;
-                max-width: 480px;
-                background-color: #fff;
-                border-radius: 12px;
-              "
-            >
+            <div style="width: 100%; max-width: 480px; border-radius: 12px">
               <!-- Back to Home -->
               <v-btn
                 variant="text"
@@ -223,14 +216,12 @@ onMounted(async () => {
               </v-btn>
 
               <v-sheet elevation="0" class="pa-0">
-                <v-fade-transition mode="out-in">
-                  <div v-if="isLoginMode" key="login">
-                    <LoginForm @switch-to-register="switchToRegister" />
-                  </div>
-                  <div v-else key="register">
-                    <RegisterForm @switch-to-login="switchToLogin" />
-                  </div>
-                </v-fade-transition>
+                <div v-if="isLoginMode" key="login">
+                  <LoginForm @switch-to-register="switchToRegister" />
+                </div>
+                <div v-else key="register">
+                  <RegisterForm @switch-to-login="switchToLogin" />
+                </div>
               </v-sheet>
 
               <!-- Social / Toggle -->

@@ -1,3 +1,26 @@
+/**
+ * Electronic waste classifications
+ */
+export const ELECTRONIC_WASTE_TYPES = [
+  'Computers & Laptops',
+  'Mobile Phones & Tablets',
+  'Televisions & Monitors',
+  'Printers & Scanners',
+  'Kitchen Appliances',
+  'Batteries & Chargers',
+  'Audio & Video Equipment',
+  'Gaming Consoles',
+  'Other Electronics',
+] as const;
+
+/**
+ * Get available garbage types for collection requests
+ * @returns Array of garbage type options
+ */
+export const getGarbageTypes = (): string[] => {
+  return [...ELECTRONIC_WASTE_TYPES];
+};
+
 export const getStatusColor = (status: string): string => {
   const statusColors: Record<string, string> = {
     pending: "warning",
@@ -49,8 +72,17 @@ export const getGarbageTypeColor = (type: string): string => {
     non_biodegradable: "error",
     recyclable: "info",
     hazardous: "warning",
+    "computers & laptops": "primary",
+    "mobile phones & tablets": "info",
+    "televisions & monitors": "secondary",
+    "printers & scanners": "accent",
+    "kitchen appliances": "success",
+    "batteries & chargers": "warning",
+    "audio & video equipment": "purple",
+    "gaming consoles": "indigo",
+    "other electronics": "grey",
   };
-  return typeColors[type] || "grey";
+  return typeColors[type.toLowerCase()] || "grey";
 };
 
 /**
@@ -64,6 +96,33 @@ export const getGarbageTypeIcon = (type: string): string => {
     non_biodegradable: "mdi-trash-can",
     recyclable: "mdi-recycle",
     hazardous: "mdi-biohazard",
+    "computers & laptops": "mdi-laptop",
+    "mobile phones & tablets": "mdi-cellphone",
+    "televisions & monitors": "mdi-television",
+    "printers & scanners": "mdi-printer",
+    "kitchen appliances": "mdi-toaster-oven",
+    "batteries & chargers": "mdi-battery-charging",
+    "audio & video equipment": "mdi-speaker",
+    "gaming consoles": "mdi-gamepad-variant",
+    "other electronics": "mdi-chip",
   };
-  return typeIcons[type] || "mdi-delete";
+  return typeIcons[type.toLowerCase()] || "mdi-delete";
+};
+
+/**
+ * Validate collection form data
+ * @param address - The pickup address
+ * @param garbageType - The garbage type
+ * @returns Validation result with error message if invalid
+ */
+export const validateCollectionRequest = (address: string, garbageType: string): { valid: boolean; error?: string } => {
+  if (!address || address.trim().length === 0) {
+    return { valid: false, error: 'Pickup address is required' };
+  }
+
+  if (!garbageType || garbageType.trim().length === 0) {
+    return { valid: false, error: 'Garbage type is required' };
+  }
+
+  return { valid: true };
 };

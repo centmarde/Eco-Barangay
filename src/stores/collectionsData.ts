@@ -12,6 +12,7 @@ export type Collection = {
   collector_assign: string;
   status: string;
   garbage_type: string;
+  notes?: string;
 };
 
 export type CollectionWithEmails = Collection & {
@@ -47,9 +48,10 @@ export type CollectionWithUsers = Collection & {
 export type CreateCollectionData = {
   address: string;
   request_by: string;
-  collector_assign: string;
+  collector_assign?: string | null;
   status: string;
   garbage_type: string;
+  notes?: string;
 };
 
 export type UpdateCollectionData = {
@@ -58,6 +60,7 @@ export type UpdateCollectionData = {
   collector_assign?: string;
   status?: string;
   garbage_type?: string;
+  notes?: string;
 };
 
 export type StatusCounts = {

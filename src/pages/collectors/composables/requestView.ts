@@ -152,3 +152,108 @@ export const useRequestView = () => {
     formatDate,
   };
 };
+
+// New composable for history widget - shows all data sorted by latest first
+export const useRequestHistoryView = () => {
+  const collectionsStore = useCollectionsStore();
+
+  // State
+  const collections = ref<CollectionWithEmails[]>([]);
+  const loading = ref(false);
+  const selectedStatus = ref<string>("all");
+
+  // Dialog state
+  const showDialog = ref(false);
+  const selectedCollection = ref<CollectionWithEmails | null>(null);
+
+  // Computed properties - sort by latest first (created_at desc)
+  const sortedCollections = computed(() => {
+    if (!collections.value.length) return [];
+
+    // Sort by created_at (newest first)
+    return [...collections.value].sort((a, b) => {
+      return (
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    });
+  });
+
+  const filteredCollections = computed(() => {
+    let filtered = sortedCollections.value;
+
+    // Filter by status only
+    if (selectedStatus.value !== "all") {
+      filtered = filtered.filter((c) => c.status === selectedStatus.value);
+    }
+
+    return filtered;
+  });
+
+  const statusCounts = computed(() => {
+    // Get counts from all collections
+    return collectionsStore.getStatusCountsFromArray(collections.value);
+  });
+
+  // Actions
+  const fetchCollections = async () => {
+    loading.value = true;
+    try {
+      const data = await collectionsStore.fetchCollectionsWithEmails();
+      collections.value = data;
+    } catch (error) {
+      console.error("Error fetching collections:", error);
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const openDialog = (collection: CollectionWithEmails) => {
+    selectedCollection.value = collection;
+    showDialog.value = true;
+  };
+
+  const closeDialog = () => {
+    showDialog.value = false;
+    selectedCollection.value = null;
+  };
+
+  const updateCollectionStatus = async (
+    collectionId: number,
+    newStatus: string
+  ) => {
+    loading.value = true;
+    try {
+      await collectionsStore.updateCollectionStatus(collectionId, newStatus);
+      await fetchCollections();
+      closeDialog();
+    } catch (error) {
+      console.error("Error updating collection status:", error);
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  return {
+    // State
+    collections,
+    loading,
+    selectedStatus,
+    showDialog,
+    selectedCollection,
+    // Computed
+    sortedCollections,
+    filteredCollections,
+    statusCounts,
+    // Actions
+    fetchCollections,
+    openDialog,
+    closeDialog,
+    updateCollectionStatus,
+    getStatusColor,
+    getStatusIcon,
+    getStatusText,
+    getGarbageTypeColor,
+    getGarbageTypeIcon,
+    formatDate,
+  };
+};

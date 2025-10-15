@@ -178,7 +178,7 @@ onMounted(async () => {
           <v-col
             cols="12"
             md="6"
-            class="pa-8 d-flex align-center justify-center bg-surface"
+            class="pa-8 d-flex align-center justify-center bg-surface hide-on-small"
             :order="quoteSectionOrder"
           >
             <div class="w-100 d-flex align-center justify-center">
@@ -297,8 +297,17 @@ onMounted(async () => {
 }
 
 .auth-card-border {
-  background-color: #fff; /* Ensures radius is visible */
-  border-radius: 0 48px 48px 0; /* Top-right, bottom-right only */
-  height: 100%; /* Stretch vertically */
+  background-color: #fff;
+  border-radius: 0 48px 48px 0;
+  height: 100%;
+}
+
+@media (max-width: 959px) {
+  .hide-on-small {
+    display: none !important;
+  }
+  .auth-card-border {
+    border-radius: 0 !important;
+  }
 }
 </style>

@@ -51,7 +51,7 @@
       "title": "Eco-Barangay E-Waste",
       "icon": "mdi-recycle",
       "logo": {
-        "src": "/src/assets/logo.svg",
+        "src": "/src/assets/logo.png",
         "alt": "Eco-Barangay Logo",
         "width": 32,
         "height": 32

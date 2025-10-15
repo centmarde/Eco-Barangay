@@ -219,6 +219,7 @@ function scrollToSection(sectionId: string) {
     :color="navbarConfig.color"
     :density="navbarConfig.density"
     :elevation="navbarConfig.elevation"
+    class="px-6"
   >
     <template #prepend>
       <!-- Mobile Hamburger Menu -->

@@ -168,7 +168,7 @@ onMounted(async () => {
       style="position: relative; z-index: 1"
     >
       <v-card
-        class="auth-card"
+        class="auth-card bg-surface"
         elevation="12"
         max-width="1000"
         style="width: 95%; background-color: #fff"
@@ -200,10 +200,10 @@ onMounted(async () => {
           <v-col
             cols="12"
             md="6"
-            class="pa-8 d-flex align-center justify-center"
+            class="pa-8 d-flex align-center justify-center auth-card-border"
             :order="formSectionOrder"
           >
-            <div style="width: 100%; max-width: 480px; border-radius: 12px">
+            <div style="width: 100%; max-width: 480px">
               <!-- Back to Home -->
               <v-btn
                 variant="text"
@@ -294,5 +294,11 @@ onMounted(async () => {
   border-radius: 12px;
   overflow: hidden;
   backdrop-filter: blur(8px);
+}
+
+.auth-card-border {
+  background-color: #fff; /* Ensures radius is visible */
+  border-radius: 0 48px 48px 0; /* Top-right, bottom-right only */
+  height: 100%; /* Stretch vertically */
 }
 </style>

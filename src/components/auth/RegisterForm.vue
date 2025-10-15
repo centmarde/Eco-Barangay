@@ -1,7 +1,9 @@
 <template>
-  <v-card-title class="text-h5 text-center py-6"> Create Account </v-card-title>
+  <v-card-title class="text-h5 text-center py-6" style="background-color: #fff">
+    Create Account
+  </v-card-title>
 
-  <v-card-text class="px-6 pb-6">
+  <v-card-text class="px-6 pb-6" style="background-color: #fff">
     <v-form ref="formRef" v-model="formValid" @submit.prevent="handleRegister">
       <v-container class="pa-0">
         <v-row no-gutters>
@@ -185,9 +187,9 @@ const registerForm = reactive({
 
 // Computed properties for role options
 const roleOptions = computed(() => {
-  return rolesStore.roles.map(role => ({
-    title: role.title || 'Untitled Role',
-    value: role.id
+  return rolesStore.roles.map((role) => ({
+    title: role.title || "Untitled Role",
+    value: role.id,
   }));
 });
 
@@ -233,8 +235,7 @@ const handleRegister = async () => {
       registerForm.email,
       registerForm.password,
       registerForm.username,
-      registerForm.role,
-
+      registerForm.role
     );
 
     if (result.error) {
@@ -257,7 +258,7 @@ const handleRegister = async () => {
       );
       resetForm();
       // Switch back to login form after successful registration
-      emit('switch-to-login');
+      emit("switch-to-login");
     }
   } catch (error: any) {
     toast.error(error.message || "An unexpected error occurred");

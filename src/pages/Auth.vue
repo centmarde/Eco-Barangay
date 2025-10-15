@@ -171,7 +171,7 @@ onMounted(async () => {
         class="auth-card"
         elevation="12"
         max-width="1000"
-        style="width: 95%"
+        style="width: 95%; background-color: #fff"
       >
         <v-row no-gutters>
           <!-- Right: Illustration / Image -->
@@ -200,10 +200,17 @@ onMounted(async () => {
           <v-col
             cols="12"
             md="6"
-            class="pa-8 d-flex align-center justify-center"
+            class="pa-8 d-flex align-center justify-center bg-white"
             :order="formSectionOrder"
           >
-            <div style="width: 100%; max-width: 480px">
+            <div
+              style="
+                width: 100%;
+                max-width: 480px;
+                background-color: #fff;
+                border-radius: 12px;
+              "
+            >
               <!-- Back to Home -->
               <v-btn
                 variant="text"

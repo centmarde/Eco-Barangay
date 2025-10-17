@@ -112,10 +112,10 @@ async function handleLogout() {
         <v-img
           :src="navbarConfig.logo.src"
           :alt="navbarConfig.logo.alt"
-          :width="navbarConfig.logo.width"
-          :height="navbarConfig.logo.height"
-          class="me-2"
-          contain
+          width="50"
+          height="50"
+          class="me-2 rounded-circle"
+          cover
         >
           <template #error>
             <v-icon class="me-2" :icon="navbarConfig.icon" size="large" />
@@ -209,10 +209,10 @@ async function handleLogout() {
           <v-img
             :src="navbarConfig.logo.src"
             :alt="navbarConfig.logo.alt"
-            :width="navbarConfig.logo.width"
-            :height="navbarConfig.logo.height"
-            class="me-2"
-            contain
+            width="50"
+            height="50"
+            class="me-2 rounded-circle"
+            cover
           >
             <template #error>
               <!-- Fallback to icon if image fails to load -->
@@ -237,9 +237,10 @@ async function handleLogout() {
           <v-img
             :src="navbarConfig.logo.src"
             :alt="navbarConfig.logo.alt"
-            :width="32"
-            :height="32"
-            contain
+            width="32"
+            height="32"
+            class="rounded-circle"
+            cover
           >
             <template #error>
               <v-icon :icon="navbarConfig.icon" size="24" />

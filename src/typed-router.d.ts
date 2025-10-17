@@ -34,6 +34,7 @@ declare module 'vue-router/auto-routes' {
     '/admin/dialogs/AdminUserRolesDialog': RouteRecordInfo<'/admin/dialogs/AdminUserRolesDialog', '/admin/dialogs/AdminUserRolesDialog', Record<never, never>, Record<never, never>>,
     '/admin/UserManagementView': RouteRecordInfo<'/admin/UserManagementView', '/admin/UserManagementView', Record<never, never>, Record<never, never>>,
     '/Auth': RouteRecordInfo<'/Auth', '/Auth', Record<never, never>, Record<never, never>>,
+    '/barangay/components/requestsTable': RouteRecordInfo<'/barangay/components/requestsTable', '/barangay/components/requestsTable', Record<never, never>, Record<never, never>>,
     '/barangay/MonitoringView': RouteRecordInfo<'/barangay/MonitoringView', '/barangay/MonitoringView', Record<never, never>, Record<never, never>>,
     '/barangay/PickupsView': RouteRecordInfo<'/barangay/PickupsView', '/barangay/PickupsView', Record<never, never>, Record<never, never>>,
     '/barangay/ReportAnalysisView': RouteRecordInfo<'/barangay/ReportAnalysisView', '/barangay/ReportAnalysisView', Record<never, never>, Record<never, never>>,

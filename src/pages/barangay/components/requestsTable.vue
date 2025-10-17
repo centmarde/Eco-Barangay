@@ -223,10 +223,18 @@ const handleDelete = (collection: Collection) => {
 }
 
 .table-card {
-  background-color: white;
+  background-color: white !important;
+}
+
+.table-card :deep(.v-table) {
+  background-color: white !important;
 }
 
 .v-theme--dark .table-card {
-  background-color: rgb(var(--v-theme-surface));
+  background-color: rgb(var(--v-theme-surface)) !important;
+}
+
+.v-theme--dark .table-card :deep(.v-table) {
+  background-color: rgb(var(--v-theme-surface)) !important;
 }
 </style>

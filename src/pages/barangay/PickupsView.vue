@@ -5,6 +5,7 @@ import { supabase, supabaseAdmin } from "@/lib/supabase";
 import { useToast } from "vue-toastification";
 import RequestsTable from "./components/requestsTable.vue";
 import CollectorDialog from "./components/collectorDialog.vue";
+import StatCards from "./components/statCards.vue";
 
 // Types
 interface Collection {
@@ -291,79 +292,7 @@ onMounted(() => {
         </v-row>
 
         <!-- Stats Cards -->
-        <v-row class="mb-4">
-          <v-col cols="12" sm="6" md="3">
-            <v-card class="pa-4" elevation="0" color="surface-variant">
-              <div class="d-flex align-center">
-                <v-icon color="primary" size="32" class="mr-3"
-                  >mdi-clipboard-list</v-icon
-                >
-                <div>
-                  <div class="text-h5 font-weight-bold">
-                    {{ collections.length }}
-                  </div>
-                  <div class="text-caption text-medium-emphasis">
-                    Total Requests
-                  </div>
-                </div>
-              </div>
-            </v-card>
-          </v-col>
-          <v-col cols="12" sm="6" md="3">
-            <v-card class="pa-4" elevation="0" color="warning-lighten-5">
-              <div class="d-flex align-center">
-                <v-icon color="warning" size="32" class="mr-3"
-                  >mdi-clock-outline</v-icon
-                >
-                <div>
-                  <div class="text-h5 font-weight-bold">
-                    {{
-                      collections.filter((c) => c.status === "pending").length
-                    }}
-                  </div>
-                  <div class="text-caption text-medium-emphasis">Pending</div>
-                </div>
-              </div>
-            </v-card>
-          </v-col>
-          <v-col cols="12" sm="6" md="3">
-            <v-card class="pa-4" elevation="0" color="info-lighten-5">
-              <div class="d-flex align-center">
-                <v-icon color="info" size="32" class="mr-3"
-                  >mdi-truck-fast</v-icon
-                >
-                <div>
-                  <div class="text-h5 font-weight-bold">
-                    {{
-                      collections.filter((c) => c.status === "in_progress")
-                        .length
-                    }}
-                  </div>
-                  <div class="text-caption text-medium-emphasis">
-                    In Progress
-                  </div>
-                </div>
-              </div>
-            </v-card>
-          </v-col>
-          <v-col cols="12" sm="6" md="3">
-            <v-card class="pa-4" elevation="0" color="success-lighten-5">
-              <div class="d-flex align-center">
-                <v-icon color="success" size="32" class="mr-3"
-                  >mdi-check-circle</v-icon
-                >
-                <div>
-                  <div class="text-h5 font-weight-bold">
-                    {{
-                      collections.filter((c) => c.status === "completed").length
-                    }}
-                  </div>
-                  <div class="text-caption text-medium-emphasis">Completed</div>
-                </div>
-              </div>
-            </v-card>
-          </v-col>
-        </v-row>
+        <StatCards :collections="collections" />
 
         <!-- Collections Table -->
         <v-row>

@@ -36,6 +36,7 @@ declare module 'vue-router/auto-routes' {
     '/Auth': RouteRecordInfo<'/Auth', '/Auth', Record<never, never>, Record<never, never>>,
     '/barangay/components/collectorDialog': RouteRecordInfo<'/barangay/components/collectorDialog', '/barangay/components/collectorDialog', Record<never, never>, Record<never, never>>,
     '/barangay/components/requestsTable': RouteRecordInfo<'/barangay/components/requestsTable', '/barangay/components/requestsTable', Record<never, never>, Record<never, never>>,
+    '/barangay/components/statCards': RouteRecordInfo<'/barangay/components/statCards', '/barangay/components/statCards', Record<never, never>, Record<never, never>>,
     '/barangay/MonitoringView': RouteRecordInfo<'/barangay/MonitoringView', '/barangay/MonitoringView', Record<never, never>, Record<never, never>>,
     '/barangay/PickupsView': RouteRecordInfo<'/barangay/PickupsView', '/barangay/PickupsView', Record<never, never>, Record<never, never>>,
     '/barangay/ReportAnalysisView': RouteRecordInfo<'/barangay/ReportAnalysisView', '/barangay/ReportAnalysisView', Record<never, never>, Record<never, never>>,

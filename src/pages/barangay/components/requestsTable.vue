@@ -52,7 +52,7 @@ const handleDelete = (collection: Collection) => {
 </script>
 
 <template>
-  <v-card elevation="0" class="rounded-lg">
+  <v-card elevation="0" class="rounded-lg table-card">
     <v-data-table
       :headers="[
         { title: 'ID', key: 'id', width: '80px' },
@@ -220,5 +220,13 @@ const handleDelete = (collection: Collection) => {
 <style scoped>
 .rounded-lg {
   border-radius: 12px;
+}
+
+.table-card {
+  background-color: white;
+}
+
+.v-theme--dark .table-card {
+  background-color: rgb(var(--v-theme-surface));
 }
 </style>

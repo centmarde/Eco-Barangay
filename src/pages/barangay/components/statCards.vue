@@ -36,7 +36,7 @@ const completedRequests = computed(
 <template>
   <v-row class="mb-4">
     <v-col cols="12" sm="6" md="3">
-      <v-card class="pa-4" elevation="0" color="surface-variant">
+      <v-card class="pa-4 stat-card" elevation="0">
         <div class="d-flex align-center">
           <v-icon color="primary" size="32" class="mr-3"
             >mdi-clipboard-list</v-icon
@@ -51,7 +51,7 @@ const completedRequests = computed(
       </v-card>
     </v-col>
     <v-col cols="12" sm="6" md="3">
-      <v-card class="pa-4" elevation="0" color="warning-lighten-5">
+      <v-card class="pa-4 stat-card" elevation="0">
         <div class="d-flex align-center">
           <v-icon color="warning" size="32" class="mr-3"
             >mdi-clock-outline</v-icon
@@ -66,7 +66,7 @@ const completedRequests = computed(
       </v-card>
     </v-col>
     <v-col cols="12" sm="6" md="3">
-      <v-card class="pa-4" elevation="0" color="info-lighten-5">
+      <v-card class="pa-4 stat-card" elevation="0">
         <div class="d-flex align-center">
           <v-icon color="info" size="32" class="mr-3">mdi-truck-fast</v-icon>
           <div>
@@ -79,7 +79,7 @@ const completedRequests = computed(
       </v-card>
     </v-col>
     <v-col cols="12" sm="6" md="3">
-      <v-card class="pa-4" elevation="0" color="success-lighten-5">
+      <v-card class="pa-4 stat-card" elevation="0">
         <div class="d-flex align-center">
           <v-icon color="success" size="32" class="mr-3"
             >mdi-check-circle</v-icon
@@ -96,4 +96,15 @@ const completedRequests = computed(
   </v-row>
 </template>
 
-<style scoped></style>
+<style scoped>
+.stat-card {
+  background-color: white;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 16px;
+}
+
+.v-theme--dark .stat-card {
+  background-color: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+</style>

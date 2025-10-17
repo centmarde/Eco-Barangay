@@ -119,7 +119,7 @@ const handleDelete = (collection: Collection) => {
             >mdi-account</v-icon
           >
           <span :class="item.collector_assign ? '' : 'text-medium-emphasis'">
-            {{ getCollectorName(item.collector_assign, collectors) }}
+            {{ getCollectorName(item.collector_assign, props.collectors) }}
           </span>
         </div>
       </template>

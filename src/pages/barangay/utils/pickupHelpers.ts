@@ -57,9 +57,19 @@ export const getCollectorName = (
   collectors: Array<{ id: string; username: string; email: string }>
 ): string => {
   if (!collectorId) return "Unassigned";
-  const collector = collectors.find((c) => c.id === collectorId);
-  if (!collector) return "Unknown";
 
+  // Debug logging
+  console.log("Looking for collector with ID:", collectorId);
+  console.log("Available collectors:", collectors);
+
+  const collector = collectors.find((c) => c.id === collectorId);
+
+  if (!collector) {
+    console.log("Collector not found for ID:", collectorId);
+    return "Unknown";
+  }
+
+  console.log("Found collector:", collector);
   // Return the username which contains the full_name from user_metadata
   return collector.username || collector.email?.split("@")[0] || "Unknown";
 };

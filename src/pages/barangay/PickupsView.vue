@@ -3,8 +3,8 @@ import { ref, onMounted, computed } from "vue";
 import InnerLayoutWrapper from "@/layouts/InnerLayoutWrapper.vue";
 import { supabase, supabaseAdmin } from "@/lib/supabase";
 import { useToast } from "vue-toastification";
-import { formatDate } from "./utils/pickupHelpers";
 import RequestsTable from "./components/requestsTable.vue";
+import CollectorDialog from "./components/collectorDialog.vue";
 
 // Types
 interface Collection {
@@ -37,7 +37,6 @@ const garbageTypeFilter = ref<string | null>(null);
 // Modal state
 const assignCollectorDialog = ref(false);
 const selectedCollection = ref<Collection | null>(null);
-const selectedCollectorId = ref<string | null>(null);
 const assigningCollector = ref(false);
 
 // Computed
@@ -80,13 +79,6 @@ const garbageTypeOptions = computed(() => {
     ...new Set(collections.value.map((item) => item.garbage_type)),
   ];
   return types.map((type) => ({ title: type, value: type }));
-});
-
-const collectorOptions = computed(() => {
-  return collectors.value.map((collector) => ({
-    title: `${collector.username} (${collector.email})`,
-    value: collector.id,
-  }));
 });
 
 // Methods
@@ -136,14 +128,13 @@ const fetchCollectors = async () => {
   }
 };
 
-const openAssignCollectorDialog = (collection: Collection) => {
+const acceptRequest = (collection: Collection) => {
   selectedCollection.value = collection;
-  selectedCollectorId.value = collection.collector_assign;
   assignCollectorDialog.value = true;
 };
 
-const assignCollector = async () => {
-  if (!selectedCollection.value || !selectedCollectorId.value) {
+const assignCollector = async (collectorId: string) => {
+  if (!selectedCollection.value || !collectorId) {
     toast.error("Please select a collector");
     return;
   }
@@ -154,7 +145,7 @@ const assignCollector = async () => {
     const { error } = await supabase
       .from("collections")
       .update({
-        collector_assign: selectedCollectorId.value,
+        collector_assign: collectorId,
         status: "in_progress",
       })
       .eq("id", selectedCollection.value.id);
@@ -170,10 +161,6 @@ const assignCollector = async () => {
   } finally {
     assigningCollector.value = false;
   }
-};
-
-const acceptRequest = (collection: Collection) => {
-  openAssignCollectorDialog(collection);
 };
 
 const rejectRequest = async (collection: Collection) => {
@@ -393,74 +380,13 @@ onMounted(() => {
         </v-row>
 
         <!-- Assign Collector Dialog -->
-        <v-dialog v-model="assignCollectorDialog" max-width="500px" persistent>
-          <v-card>
-            <v-card-title class="text-h6 font-weight-bold bg-primary">
-              <v-icon class="mr-2">mdi-account-plus</v-icon>
-              Assign Collector
-            </v-card-title>
-
-            <v-card-text class="pt-6">
-              <div v-if="selectedCollection" class="mb-4">
-                <div class="text-subtitle-2 text-medium-emphasis mb-2">
-                  Request Details:
-                </div>
-                <div class="d-flex align-center mb-1">
-                  <v-icon size="small" class="mr-2">mdi-map-marker</v-icon>
-                  <span class="text-body-2">{{
-                    selectedCollection.address
-                  }}</span>
-                </div>
-                <div class="d-flex align-center mb-1">
-                  <v-icon size="small" class="mr-2">mdi-delete</v-icon>
-                  <span class="text-body-2">{{
-                    selectedCollection.garbage_type
-                  }}</span>
-                </div>
-                <div class="d-flex align-center">
-                  <v-icon size="small" class="mr-2">mdi-calendar</v-icon>
-                  <span class="text-body-2">{{
-                    formatDate(selectedCollection.created_at)
-                  }}</span>
-                </div>
-              </div>
-
-              <v-divider class="my-4" />
-
-              <v-select
-                v-model="selectedCollectorId"
-                :items="collectorOptions"
-                label="Select Collector"
-                variant="outlined"
-                density="comfortable"
-                prepend-inner-icon="mdi-account"
-                :rules="[(v) => !!v || 'Please select a collector']"
-                hint="Choose a collector to assign to this pickup request"
-                persistent-hint
-              />
-            </v-card-text>
-
-            <v-card-actions class="px-6 pb-4">
-              <v-spacer />
-              <v-btn
-                variant="text"
-                @click="assignCollectorDialog = false"
-                :disabled="assigningCollector"
-              >
-                Cancel
-              </v-btn>
-              <v-btn
-                color="primary"
-                variant="elevated"
-                @click="assignCollector"
-                :loading="assigningCollector"
-                :disabled="!selectedCollectorId"
-              >
-                Assign Collector
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
+        <CollectorDialog
+          v-model="assignCollectorDialog"
+          :collection="selectedCollection"
+          :collectors="collectors"
+          :loading="assigningCollector"
+          @assign="assignCollector"
+        />
       </v-container>
     </template>
   </InnerLayoutWrapper>

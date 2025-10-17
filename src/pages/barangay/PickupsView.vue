@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import InnerLayoutWrapper from "@/layouts/InnerLayoutWrapper.vue";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseAdmin } from "@/lib/supabase";
 import { useToast } from "vue-toastification";
 
 // Types
@@ -149,15 +149,24 @@ const fetchCollections = async () => {
 
 const fetchCollectors = async () => {
   try {
-    // Fetch users with collector role (role_id = 3 based on your database)
-    const { data, error } = await supabase
-      .from("user_profiles")
-      .select("id, username, email")
-      .eq("role_id", 3);
+    // Fetch all auth users using admin client
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers();
 
     if (error) throw error;
 
-    collectors.value = data || [];
+    // Filter users with collector role (role = 4) from user_metadata
+    const collectorUsers = (data.users || [])
+      .filter((user) => user.user_metadata?.role === 4)
+      .map((user) => ({
+        id: user.id,
+        username:
+          user.user_metadata?.full_name ||
+          user.email?.split("@")[0] ||
+          "Unknown",
+        email: user.email || "",
+      }));
+
+    collectors.value = collectorUsers;
   } catch (error: any) {
     console.error("Error fetching collectors:", error);
     toast.error("Failed to load collectors");

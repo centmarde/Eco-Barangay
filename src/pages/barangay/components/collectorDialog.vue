@@ -24,7 +24,6 @@ const props = defineProps<{
   modelValue: boolean;
   collection: Collection | null;
   collectors: Collector[];
-  collections: Collection[];
   loading?: boolean;
 }>();
 
@@ -38,31 +37,11 @@ const emit = defineEmits<{
 const selectedCollectorId = ref<string | null>(null);
 
 // Computed
-const assignedCollectorIds = computed(() => {
-  // Get all collector IDs that are currently assigned to active requests
-  return props.collections
-    .filter((c) => c.status === "in_progress" || c.status === "pending")
-    .map((c) => c.collector_assign)
-    .filter((id): id is string => id !== null);
-});
-
-const isCollectorAvailable = (collectorId: string): boolean => {
-  return !assignedCollectorIds.value.includes(collectorId);
-};
-
 const collectorOptions = computed(() => {
-  return props.collectors.map((collector) => {
-    const available = isCollectorAvailable(collector.id);
-    return {
-      title: available
-        ? `${collector.username} (${collector.email})`
-        : `${collector.username} (${collector.email}) - Currently Assigned`,
-      value: collector.id,
-      props: {
-        disabled: !available,
-      },
-    };
-  });
+  return props.collectors.map((collector) => ({
+    title: `${collector.username} (${collector.email})`,
+    value: collector.id,
+  }));
 });
 
 // Watch for dialog open/close to reset/populate collector
@@ -128,44 +107,9 @@ const handleAssign = () => {
           density="comfortable"
           prepend-inner-icon="mdi-account"
           :rules="[(v) => !!v || 'Please select a collector']"
-          hint="Choose an available collector to assign to this pickup request"
+          hint="Choose a collector to assign to this pickup request"
           persistent-hint
-        >
-          <template #item="{ props, item }">
-            <v-list-item
-              v-bind="props"
-              :disabled="!isCollectorAvailable(item.value as string)"
-            >
-              <template #append>
-                <v-chip
-                  v-if="!isCollectorAvailable(item.value as string)"
-                  size="x-small"
-                  color="error"
-                  variant="flat"
-                >
-                  Not Available
-                </v-chip>
-              </template>
-            </v-list-item>
-          </template>
-        </v-select>
-
-        <v-alert
-          v-if="assignedCollectorIds.length > 0"
-          type="info"
-          variant="tonal"
-          density="compact"
-          class="mt-4"
-        >
-          <template #text>
-            <span class="text-caption">
-              {{ assignedCollectorIds.length }} collector{{
-                assignedCollectorIds.length > 1 ? "s are" : " is"
-              }}
-              currently assigned to active requests
-            </span>
-          </template>
-        </v-alert>
+        />
       </v-card-text>
 
       <v-card-actions class="px-6 pb-4">

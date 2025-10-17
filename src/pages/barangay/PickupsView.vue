@@ -148,16 +148,14 @@ const assignCollector = async (collectorId: string) => {
       .from("collections")
       .update({
         collector_assign: collectorId,
-        status: "in_progress",
+        // Status remains pending until collector accepts
+        // status: "in_progress",
       })
       .eq("id", selectedCollection.value.id);
 
     if (error) throw error;
 
-    console.log(
-      "Collector assigned successfully - Status updated to in_progress"
-    );
-    toast.success("Collector assigned successfully - Status: In Progress");
+    toast.success("Collector assigned successfully - Awaiting acceptance");
     assignCollectorDialog.value = false;
     await fetchCollections();
   } catch (error: any) {
@@ -317,7 +315,6 @@ onMounted(() => {
           v-model="assignCollectorDialog"
           :collection="selectedCollection"
           :collectors="collectors"
-          :collections="collections"
           :loading="assigningCollector"
           @assign="assignCollector"
         />

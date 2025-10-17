@@ -15,15 +15,28 @@ interface Collection {
   garbage_type: string;
 }
 
+interface Collector {
+  id: string;
+  username: string;
+  email: string;
+}
+
 // Composables
 const toast = useToast();
 
 // State
 const loading = ref(false);
 const collections = ref<Collection[]>([]);
+const collectors = ref<Collector[]>([]);
 const search = ref("");
 const statusFilter = ref<string | null>(null);
 const garbageTypeFilter = ref<string | null>(null);
+
+// Modal state
+const assignCollectorDialog = ref(false);
+const selectedCollection = ref<Collection | null>(null);
+const selectedCollectorId = ref<string | null>(null);
+const assigningCollector = ref(false);
 
 // Computed
 const filteredCollections = computed(() => {
@@ -65,6 +78,13 @@ const garbageTypeOptions = computed(() => {
     ...new Set(collections.value.map((item) => item.garbage_type)),
   ];
   return types.map((type) => ({ title: type, value: type }));
+});
+
+const collectorOptions = computed(() => {
+  return collectors.value.map((collector) => ({
+    title: `${collector.username} (${collector.email})`,
+    value: collector.id,
+  }));
 });
 
 const statusColor = (status: string) => {
@@ -127,6 +147,115 @@ const fetchCollections = async () => {
   }
 };
 
+const fetchCollectors = async () => {
+  try {
+    // Fetch users with collector role (role_id = 3 based on your database)
+    const { data, error } = await supabase
+      .from("user_profiles")
+      .select("id, username, email")
+      .eq("role_id", 3);
+
+    if (error) throw error;
+
+    collectors.value = data || [];
+  } catch (error: any) {
+    console.error("Error fetching collectors:", error);
+    toast.error("Failed to load collectors");
+  }
+};
+
+const openAssignCollectorDialog = (collection: Collection) => {
+  selectedCollection.value = collection;
+  selectedCollectorId.value = collection.collector_assign;
+  assignCollectorDialog.value = true;
+};
+
+const assignCollector = async () => {
+  if (!selectedCollection.value || !selectedCollectorId.value) {
+    toast.error("Please select a collector");
+    return;
+  }
+
+  try {
+    assigningCollector.value = true;
+
+    const { error } = await supabase
+      .from("collections")
+      .update({
+        collector_assign: selectedCollectorId.value,
+        status: "in_progress",
+      })
+      .eq("id", selectedCollection.value.id);
+
+    if (error) throw error;
+
+    toast.success("Collector assigned successfully");
+    assignCollectorDialog.value = false;
+    await fetchCollections();
+  } catch (error: any) {
+    console.error("Error assigning collector:", error);
+    toast.error("Failed to assign collector");
+  } finally {
+    assigningCollector.value = false;
+  }
+};
+
+const acceptRequest = (collection: Collection) => {
+  openAssignCollectorDialog(collection);
+};
+
+const rejectRequest = async (collection: Collection) => {
+  if (!confirm("Are you sure you want to reject this pickup request?")) {
+    return;
+  }
+
+  try {
+    const { error } = await supabase
+      .from("collections")
+      .update({ status: "cancelled" })
+      .eq("id", collection.id);
+
+    if (error) throw error;
+
+    toast.success("Pickup request rejected");
+    await fetchCollections();
+  } catch (error: any) {
+    console.error("Error rejecting request:", error);
+    toast.error("Failed to reject pickup request");
+  }
+};
+
+const deleteRequest = async (collection: Collection) => {
+  if (
+    !confirm(
+      "Are you sure you want to delete this pickup request? This action cannot be undone."
+    )
+  ) {
+    return;
+  }
+
+  try {
+    const { error } = await supabase
+      .from("collections")
+      .delete()
+      .eq("id", collection.id);
+
+    if (error) throw error;
+
+    toast.success("Pickup request deleted");
+    await fetchCollections();
+  } catch (error: any) {
+    console.error("Error deleting request:", error);
+    toast.error("Failed to delete pickup request");
+  }
+};
+
+const getCollectorName = (collectorId: string | null) => {
+  if (!collectorId) return "Unassigned";
+  const collector = collectors.value.find((c) => c.id === collectorId);
+  return collector ? collector.username : "Unknown";
+};
+
 const clearFilters = () => {
   search.value = "";
   statusFilter.value = null;
@@ -135,6 +264,7 @@ const clearFilters = () => {
 
 onMounted(() => {
   fetchCollections();
+  fetchCollectors();
 });
 </script>
 
@@ -296,7 +426,18 @@ onMounted(() => {
                     width: '150px',
                   },
                   { title: 'Status', key: 'status', width: '150px' },
+                  {
+                    title: 'Assigned Collector',
+                    key: 'collector_assign',
+                    width: '180px',
+                  },
                   { title: 'Requested On', key: 'created_at', width: '200px' },
+                  {
+                    title: 'Actions',
+                    key: 'actions',
+                    width: '200px',
+                    sortable: false,
+                  },
                 ]"
                 :items="filteredCollections"
                 :loading="loading"
@@ -336,9 +477,78 @@ onMounted(() => {
                   </v-chip>
                 </template>
 
+                <template #item.collector_assign="{ item }">
+                  <div class="d-flex align-center">
+                    <v-icon
+                      size="small"
+                      class="mr-2"
+                      :color="item.collector_assign ? 'success' : 'grey'"
+                      >mdi-account</v-icon
+                    >
+                    <span
+                      :class="
+                        item.collector_assign ? '' : 'text-medium-emphasis'
+                      "
+                    >
+                      {{ getCollectorName(item.collector_assign) }}
+                    </span>
+                  </div>
+                </template>
+
                 <template #item.created_at="{ item }">
                   <div class="text-body-2">
                     {{ formatDate(item.created_at) }}
+                  </div>
+                </template>
+
+                <template #item.actions="{ item }">
+                  <div class="d-flex ga-1">
+                    <v-tooltip text="Accept & Assign" location="top">
+                      <template #activator="{ props }">
+                        <v-btn
+                          v-bind="props"
+                          icon="mdi-check"
+                          size="small"
+                          color="success"
+                          variant="tonal"
+                          @click="acceptRequest(item)"
+                          :disabled="
+                            item.status === 'completed' ||
+                            item.status === 'cancelled'
+                          "
+                        />
+                      </template>
+                    </v-tooltip>
+
+                    <v-tooltip text="Reject Request" location="top">
+                      <template #activator="{ props }">
+                        <v-btn
+                          v-bind="props"
+                          icon="mdi-close"
+                          size="small"
+                          color="warning"
+                          variant="tonal"
+                          @click="rejectRequest(item)"
+                          :disabled="
+                            item.status === 'completed' ||
+                            item.status === 'cancelled'
+                          "
+                        />
+                      </template>
+                    </v-tooltip>
+
+                    <v-tooltip text="Delete Request" location="top">
+                      <template #activator="{ props }">
+                        <v-btn
+                          v-bind="props"
+                          icon="mdi-delete"
+                          size="small"
+                          color="error"
+                          variant="tonal"
+                          @click="deleteRequest(item)"
+                        />
+                      </template>
+                    </v-tooltip>
                   </div>
                 </template>
 
@@ -363,6 +573,76 @@ onMounted(() => {
             </v-card>
           </v-col>
         </v-row>
+
+        <!-- Assign Collector Dialog -->
+        <v-dialog v-model="assignCollectorDialog" max-width="500px" persistent>
+          <v-card>
+            <v-card-title class="text-h6 font-weight-bold bg-primary">
+              <v-icon class="mr-2">mdi-account-plus</v-icon>
+              Assign Collector
+            </v-card-title>
+
+            <v-card-text class="pt-6">
+              <div v-if="selectedCollection" class="mb-4">
+                <div class="text-subtitle-2 text-medium-emphasis mb-2">
+                  Request Details:
+                </div>
+                <div class="d-flex align-center mb-1">
+                  <v-icon size="small" class="mr-2">mdi-map-marker</v-icon>
+                  <span class="text-body-2">{{
+                    selectedCollection.address
+                  }}</span>
+                </div>
+                <div class="d-flex align-center mb-1">
+                  <v-icon size="small" class="mr-2">mdi-delete</v-icon>
+                  <span class="text-body-2">{{
+                    selectedCollection.garbage_type
+                  }}</span>
+                </div>
+                <div class="d-flex align-center">
+                  <v-icon size="small" class="mr-2">mdi-calendar</v-icon>
+                  <span class="text-body-2">{{
+                    formatDate(selectedCollection.created_at)
+                  }}</span>
+                </div>
+              </div>
+
+              <v-divider class="my-4" />
+
+              <v-select
+                v-model="selectedCollectorId"
+                :items="collectorOptions"
+                label="Select Collector"
+                variant="outlined"
+                density="comfortable"
+                prepend-inner-icon="mdi-account"
+                :rules="[(v) => !!v || 'Please select a collector']"
+                hint="Choose a collector to assign to this pickup request"
+                persistent-hint
+              />
+            </v-card-text>
+
+            <v-card-actions class="px-6 pb-4">
+              <v-spacer />
+              <v-btn
+                variant="text"
+                @click="assignCollectorDialog = false"
+                :disabled="assigningCollector"
+              >
+                Cancel
+              </v-btn>
+              <v-btn
+                color="primary"
+                variant="elevated"
+                @click="assignCollector"
+                :loading="assigningCollector"
+                :disabled="!selectedCollectorId"
+              >
+                Assign Collector
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </v-container>
     </template>
   </InnerLayoutWrapper>

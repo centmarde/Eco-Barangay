@@ -144,6 +144,8 @@ const assignCollector = async (collectorId: string) => {
   try {
     assigningCollector.value = true;
 
+    const isReassignment = selectedCollection.value.collector_assign !== null;
+
     const { error } = await supabase
       .from("collections")
       .update({
@@ -155,7 +157,11 @@ const assignCollector = async (collectorId: string) => {
 
     if (error) throw error;
 
-    toast.success("Collector assigned successfully - Awaiting acceptance");
+    const message = isReassignment
+      ? "Collector reassigned successfully - Awaiting acceptance"
+      : "Collector assigned successfully - Awaiting acceptance";
+
+    toast.success(message);
     assignCollectorDialog.value = false;
     await fetchCollections();
   } catch (error: any) {

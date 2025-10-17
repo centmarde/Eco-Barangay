@@ -105,9 +105,19 @@ const handleDelete = (collection: Collection) => {
       </template>
 
       <template #item.status="{ item }">
-        <v-chip :color="statusColor(item.status)" size="small" variant="flat">
-          {{ item.status.replace("_", " ") }}
-        </v-chip>
+        <div class="d-flex flex-column ga-1">
+          <v-chip :color="statusColor(item.status)" size="small" variant="flat">
+            {{ item.status.replace("_", " ") }}
+          </v-chip>
+          <v-chip
+            v-if="item.status === 'pending' && item.collector_assign"
+            color="info"
+            size="x-small"
+            variant="tonal"
+          >
+            Awaiting Response
+          </v-chip>
+        </div>
       </template>
 
       <template #item.collector_assign="{ item }">
@@ -132,11 +142,20 @@ const handleDelete = (collection: Collection) => {
 
       <template #item.actions="{ item }">
         <div class="d-flex ga-1">
-          <v-tooltip text="Accept & Assign" location="top">
+          <v-tooltip
+            :text="
+              item.collector_assign
+                ? 'Reassign Collector'
+                : 'Accept & Assign Collector'
+            "
+            location="top"
+          >
             <template #activator="{ props }">
               <v-btn
                 v-bind="props"
-                icon="mdi-check"
+                :icon="
+                  item.collector_assign ? 'mdi-account-switch' : 'mdi-check'
+                "
                 size="small"
                 color="success"
                 variant="tonal"

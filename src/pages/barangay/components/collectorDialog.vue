@@ -37,6 +37,14 @@ const emit = defineEmits<{
 const selectedCollectorId = ref<string | null>(null);
 
 // Computed
+const isReassignment = computed(() => {
+  return props.collection?.collector_assign !== null;
+});
+
+const dialogTitle = computed(() => {
+  return isReassignment.value ? "Reassign Collector" : "Assign Collector";
+});
+
 const collectorOptions = computed(() => {
   return props.collectors.map((collector) => ({
     title: `${collector.username} (${collector.email})`,
@@ -72,8 +80,10 @@ const handleAssign = () => {
   <v-dialog :model-value="modelValue" max-width="500px" persistent>
     <v-card>
       <v-card-title class="text-h6 font-weight-bold bg-primary">
-        <v-icon class="mr-2">mdi-account-plus</v-icon>
-        Assign Collector
+        <v-icon class="mr-2">{{
+          isReassignment ? "mdi-account-switch" : "mdi-account-plus"
+        }}</v-icon>
+        {{ dialogTitle }}
       </v-card-title>
 
       <v-card-text class="pt-6">
@@ -107,9 +117,28 @@ const handleAssign = () => {
           density="comfortable"
           prepend-inner-icon="mdi-account"
           :rules="[(v) => !!v || 'Please select a collector']"
-          hint="Choose a collector to assign to this pickup request"
+          :hint="
+            isReassignment
+              ? 'Choose a new collector to reassign this pickup request'
+              : 'Choose a collector to assign to this pickup request'
+          "
           persistent-hint
         />
+
+        <v-alert
+          v-if="isReassignment"
+          type="warning"
+          variant="tonal"
+          density="compact"
+          class="mt-4"
+        >
+          <template #text>
+            <span class="text-caption">
+              This request is currently assigned. Selecting a new collector will
+              reassign the request.
+            </span>
+          </template>
+        </v-alert>
       </v-card-text>
 
       <v-card-actions class="px-6 pb-4">
@@ -124,7 +153,7 @@ const handleAssign = () => {
           :loading="loading"
           :disabled="!selectedCollectorId"
         >
-          Assign Collector
+          {{ isReassignment ? "Reassign Collector" : "Assign Collector" }}
         </v-btn>
       </v-card-actions>
     </v-card>

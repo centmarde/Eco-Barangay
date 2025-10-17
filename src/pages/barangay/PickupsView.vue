@@ -317,6 +317,7 @@ onMounted(() => {
           v-model="assignCollectorDialog"
           :collection="selectedCollection"
           :collectors="collectors"
+          :collections="collections"
           :loading="assigningCollector"
           @assign="assignCollector"
         />

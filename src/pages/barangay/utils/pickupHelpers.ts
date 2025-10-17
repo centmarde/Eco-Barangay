@@ -50,6 +50,7 @@ export const formatDate = (dateString: string): string => {
 
 /**
  * Get collector name from collector ID
+ * Returns the full name from user_metadata if available
  */
 export const getCollectorName = (
   collectorId: string | null,
@@ -57,5 +58,8 @@ export const getCollectorName = (
 ): string => {
   if (!collectorId) return "Unassigned";
   const collector = collectors.find((c) => c.id === collectorId);
-  return collector ? collector.username : "Unknown";
+  if (!collector) return "Unknown";
+
+  // Return the username which contains the full_name from user_metadata
+  return collector.username || collector.email?.split("@")[0] || "Unknown";
 };

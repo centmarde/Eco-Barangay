@@ -123,6 +123,7 @@ const fetchCollectors = async () => {
       }));
 
     collectors.value = collectorUsers;
+    console.log("Fetched collectors with full names:", collectorUsers);
   } catch (error: any) {
     console.error("Error fetching collectors:", error);
     toast.error("Failed to load collectors");
@@ -153,7 +154,10 @@ const assignCollector = async (collectorId: string) => {
 
     if (error) throw error;
 
-    toast.success("Collector assigned successfully");
+    console.log(
+      "Collector assigned successfully - Status updated to in_progress"
+    );
+    toast.success("Collector assigned successfully - Status: In Progress");
     assignCollectorDialog.value = false;
     await fetchCollections();
   } catch (error: any) {

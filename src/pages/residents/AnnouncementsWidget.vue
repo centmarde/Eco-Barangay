@@ -321,15 +321,15 @@ const getTimeAgo = (dateString: string) => {
             <div class="d-flex align-center mb-2">
               <v-icon
                 icon="mdi-recycle"
-                color="white"
+
                 size="large"
                 class="mr-3"
               />
-              <v-card-title class="text-h5 font-weight-bold text-white pa-0">
+              <v-card-title class="text-h5 font-weight-bold  pa-0">
                 About the System
               </v-card-title>
             </div>
-            <v-card-subtitle class="text-white pa-0 my-2" style="opacity: 0.9;">
+            <v-card-subtitle class=" pa-0 my-2" style="opacity: 0.9;">
               {{ systemInfo.subtitle }}
             </v-card-subtitle>
 

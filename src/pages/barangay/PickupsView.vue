@@ -3,6 +3,12 @@ import { ref, onMounted, computed } from "vue";
 import InnerLayoutWrapper from "@/layouts/InnerLayoutWrapper.vue";
 import { supabase, supabaseAdmin } from "@/lib/supabase";
 import { useToast } from "vue-toastification";
+import {
+  statusColor,
+  garbageTypeColor,
+  formatDate,
+  getCollectorName,
+} from "./utils/pickupHelpers";
 
 // Types
 interface Collection {
@@ -86,45 +92,6 @@ const collectorOptions = computed(() => {
     value: collector.id,
   }));
 });
-
-const statusColor = (status: string) => {
-  switch (status.toLowerCase()) {
-    case "completed":
-      return "success";
-    case "in_progress":
-      return "info";
-    case "pending":
-      return "warning";
-    case "cancelled":
-      return "error";
-    default:
-      return "default";
-  }
-};
-
-const garbageTypeColor = (type: string) => {
-  switch (type.toLowerCase()) {
-    case "organic":
-      return "success";
-    case "recyclable":
-      return "info";
-    case "hazardous":
-      return "error";
-    default:
-      return "default";
-  }
-};
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
 
 // Methods
 const fetchCollections = async () => {
@@ -257,12 +224,6 @@ const deleteRequest = async (collection: Collection) => {
     console.error("Error deleting request:", error);
     toast.error("Failed to delete pickup request");
   }
-};
-
-const getCollectorName = (collectorId: string | null) => {
-  if (!collectorId) return "Unassigned";
-  const collector = collectors.value.find((c) => c.id === collectorId);
-  return collector ? collector.username : "Unknown";
 };
 
 const clearFilters = () => {
@@ -499,7 +460,7 @@ onMounted(() => {
                         item.collector_assign ? '' : 'text-medium-emphasis'
                       "
                     >
-                      {{ getCollectorName(item.collector_assign) }}
+                      {{ getCollectorName(item.collector_assign, collectors) }}
                     </span>
                   </div>
                 </template>

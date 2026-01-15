@@ -22,11 +22,6 @@ export const navigationConfig: NavigationGroup[] = [
         title: "Home",
         icon: "mdi-home",
         route: "/account/home",
-      },
-      {
-        title: "Announcements",
-        icon: "mdi-bullhorn",
-        route: "/announcements",
       }
     ],
   },

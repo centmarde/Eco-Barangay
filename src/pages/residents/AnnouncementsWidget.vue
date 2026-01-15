@@ -42,42 +42,43 @@ const getTimeAgo = (dateString: string) => {
 </script>
 
 <template>
-  <v-container fluid class="pa-4">
+  <v-container fluid :class="xs ? 'pa-2' : sm ? 'pa-3' : 'pa-4'">
     <!-- Header Section -->
-    <v-row class="mb-6">
+    <v-row :class="xs ? 'mb-3' : sm ? 'mb-4' : 'mb-6'">
       <v-col cols="12">
         <v-sheet
           color="green-darken-2"
           elevation="4"
           rounded="lg"
-          :class="xs ? 'pa-4' : 'pa-6'"
+          :class="xs ? 'pa-3' : sm ? 'pa-4' : 'pa-6'"
         >
           <v-row align="center" justify="space-between" no-gutters>
             <v-col cols="12" md="auto">
-              <div :class="xs ? 'd-flex flex-column align-center text-center' : 'd-flex align-center'">
+              <div :class="xs ? 'd-flex align-center' : 'd-flex align-center'">
                 <v-avatar
                   color="white"
-                  :size="xs ? 48 : sm ? 56 : 64"
-                  :class="xs ? 'mb-3' : 'mr-4'"
+                  :size="xs ? 32 : sm ? 40 : 64"
+                  :class="xs ? 'mr-3' : sm ? 'mr-3' : 'mr-4'"
                 >
                   <v-icon
                     icon="mdi-bullhorn"
-                    :size="xs ? 30 : sm ? 35 : 40"
+                    :size="xs ? 18 : sm ? 24 : 40"
                     color="green-darken-2"
                   />
                 </v-avatar>
                 <div>
                   <v-card-title
                     :class="[
-                      xs ? 'text-h5' : sm ? 'text-h4' : 'text-h4',
+                      xs ? 'text-subtitle-1' : sm ? 'text-h6' : 'text-h4',
                       'font-weight-bold text-white pa-0'
                     ]"
                   >
-                    Community Announcements
+                    {{ xs ? 'Announcements' : 'Community Announcements' }}
                   </v-card-title>
                   <v-card-subtitle
+                    v-if="!xs"
                     :class="[
-                      xs ? 'text-caption' : 'text-subtitle-1',
+                      sm ? 'text-body-2' : 'text-subtitle-1',
                       'text-white pa-0 mt-1'
                     ]"
                   >
@@ -89,16 +90,20 @@ const getTimeAgo = (dateString: string) => {
             <v-col
               cols="12"
               md="auto"
-              :class="xs ? 'mt-3 d-flex justify-center' : sm ? 'mt-3 d-flex justify-center' : 'mt-4 mt-md-0'"
+              :class="xs ? 'mt-2 d-flex justify-start' : sm ? 'mt-3 d-flex justify-center' : 'mt-4 mt-md-0'"
             >
               <v-chip
                 v-if="announcements.length"
                 color="white"
-                :size="xs ? 'default' : 'large'"
-                class="font-weight-bold"
+                :size="xs ? 'small' : sm ? 'default' : 'large'"
+                :class="xs ? 'font-weight-medium text-caption' : 'font-weight-bold'"
               >
-                <v-icon icon="mdi-bell-ring" start />
-                {{ announcements.length }} New
+                <v-icon
+                  icon="mdi-bell-ring"
+                  start
+                  :size="xs ? 'small' : 'default'"
+                />
+                {{ announcements.length }} {{ xs ? '' : 'New' }}
               </v-chip>
             </v-col>
           </v-row>
@@ -321,15 +326,15 @@ const getTimeAgo = (dateString: string) => {
             <div class="d-flex align-center mb-2">
               <v-icon
                 icon="mdi-recycle"
-                color="white"
+
                 size="large"
                 class="mr-3"
               />
-              <v-card-title class="text-h5 font-weight-bold text-white pa-0">
+              <v-card-title class="text-h5 font-weight-bold  pa-0">
                 About the System
               </v-card-title>
             </div>
-            <v-card-subtitle class="text-white pa-0 my-2" style="opacity: 0.9;">
+            <v-card-subtitle class=" pa-0 my-2" style="opacity: 0.9;">
               {{ systemInfo.subtitle }}
             </v-card-subtitle>
 

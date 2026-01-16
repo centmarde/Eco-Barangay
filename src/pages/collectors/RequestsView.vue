@@ -204,7 +204,7 @@ onMounted(async () => {
 
             <v-divider />
 
-            <v-card-text class="pa-6">
+            <v-card-text class="pa-0 mt-2">
               <RequestsWidget />
             </v-card-text>
           </v-col>

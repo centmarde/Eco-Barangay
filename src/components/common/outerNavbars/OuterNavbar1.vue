@@ -160,7 +160,12 @@
           size="large"
         />
       </template>
-      <span class="text-h6 font-weight-bold">{{ navbarConfig?.title }}</span>
+      <span
+        class="text-h6 font-weight-bold text-truncate"
+        style="max-width: 200px;"
+      >
+        {{ navbarConfig?.title }}
+      </span>
     </div>
 
     <v-divider />
@@ -256,7 +261,12 @@
           />
         </template>
 
-        <span class="text-h6 font-weight-bold ms-2">{{ navbarConfig?.title }}</span>
+        <span
+          :class="mobile ? 'text-subtitle-1 font-weight-bold ms-2 text-truncate navbar-title' : 'text-h6 font-weight-bold ms-2 navbar-title'"
+          style="max-width: 150px;"
+        >
+          {{ navbarConfig?.title }}
+        </span>
       </div>
     </template>
 
@@ -303,5 +313,35 @@
     </template>
   </v-toolbar>
 </template>
+
+<style scoped>
+/* Mobile responsive title adjustments */
+@media (max-width: 599px) {
+  /* Extra small screens - very short titles */
+  .navbar-title {
+    max-width: 120px !important;
+    font-size: 0.9rem !important;
+  }
+}
+
+@media (max-width: 959px) {
+  /* Small screens - moderate title length */
+  .navbar-title {
+    max-width: 140px !important;
+  }
+
+  /* Ensure drawer title doesn't overflow */
+  .v-navigation-drawer .text-h6 {
+    font-size: 1.1rem !important;
+  }
+}
+
+/* Text truncation utility for long titles */
+.text-truncate {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+</style>
 
 

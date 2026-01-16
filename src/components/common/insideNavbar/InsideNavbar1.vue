@@ -105,6 +105,7 @@ async function handleLogout() {
     :color="navbarConfig.color"
     width="280"
     :elevation="navbarConfig.elevation"
+    fixed
   >
     <!-- Drawer Header with Logo/Title -->
     <div class="pa-4 d-flex align-center">
@@ -335,6 +336,7 @@ async function handleLogout() {
 /* Mobile drawer responsive positioning */
 @media (max-width: 959px) {
   .v-navigation-drawer {
+    position: fixed !important; /* Ensure drawer is fixed to viewport */
     z-index: 1005 !important; /* Ensure mobile drawer is above toolbar */
   }
 }

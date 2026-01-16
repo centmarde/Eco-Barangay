@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
+import { storeToRefs } from "pinia";
 import InnerLayoutWrapper from "@/layouts/InnerLayoutWrapper.vue";
-import { supabase, supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 import { useToast } from "vue-toastification";
+import { useCollectionsStore } from "@/stores/collectionsData";
 import RequestsTable from "./components/requestsTable.vue";
 import CollectorDialog from "./components/collectorDialog.vue";
 import StatCards from "./components/statCards.vue";
@@ -26,10 +28,10 @@ interface Collector {
 
 // Composables
 const toast = useToast();
+const collectionsStore = useCollectionsStore();
+const { collections, loading } = storeToRefs(collectionsStore);
 
 // State
-const loading = ref(false);
-const collections = ref<Collection[]>([]);
 const collectors = ref<Collector[]>([]);
 const search = ref("");
 const statusFilter = ref<string | null>(null);
@@ -84,23 +86,7 @@ const garbageTypeOptions = computed(() => {
 
 // Methods
 const fetchCollections = async () => {
-  try {
-    loading.value = true;
-
-    const { data, error } = await supabase
-      .from("collections")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    collections.value = data || [];
-  } catch (error: any) {
-    console.error("Error fetching collections:", error);
-    toast.error("Failed to load pickup requests");
-  } finally {
-    loading.value = false;
-  }
+  await collectionsStore.fetchCollections();
 };
 
 const fetchCollectors = async () => {
@@ -144,29 +130,16 @@ const assignCollector = async (collectorId: string) => {
   try {
     assigningCollector.value = true;
 
-    const isReassignment = selectedCollection.value.collector_assign !== null;
+    const success = await collectionsStore.assignCollector(
+      selectedCollection.value.id,
+      collectorId
+    );
 
-    const { error } = await supabase
-      .from("collections")
-      .update({
-        collector_assign: collectorId,
-        // Status remains pending until collector accepts
-        // status: "in_progress",
-      })
-      .eq("id", selectedCollection.value.id);
-
-    if (error) throw error;
-
-    const message = isReassignment
-      ? "Collector reassigned successfully - Awaiting acceptance"
-      : "Collector assigned successfully - Awaiting acceptance";
-
-    toast.success(message);
-    assignCollectorDialog.value = false;
-    await fetchCollections();
+    if (success) {
+      assignCollectorDialog.value = false;
+    }
   } catch (error: any) {
     console.error("Error assigning collector:", error);
-    toast.error("Failed to assign collector");
   } finally {
     assigningCollector.value = false;
   }
@@ -177,20 +150,7 @@ const rejectRequest = async (collection: Collection) => {
     return;
   }
 
-  try {
-    const { error } = await supabase
-      .from("collections")
-      .update({ status: "cancelled" })
-      .eq("id", collection.id);
-
-    if (error) throw error;
-
-    toast.success("Pickup request rejected");
-    await fetchCollections();
-  } catch (error: any) {
-    console.error("Error rejecting request:", error);
-    toast.error("Failed to reject pickup request");
-  }
+  await collectionsStore.updateCollectionStatus(collection.id, "cancelled");
 };
 
 const deleteRequest = async (collection: Collection) => {
@@ -202,20 +162,7 @@ const deleteRequest = async (collection: Collection) => {
     return;
   }
 
-  try {
-    const { error } = await supabase
-      .from("collections")
-      .delete()
-      .eq("id", collection.id);
-
-    if (error) throw error;
-
-    toast.success("Pickup request deleted");
-    await fetchCollections();
-  } catch (error: any) {
-    console.error("Error deleting request:", error);
-    toast.error("Failed to delete pickup request");
-  }
+  await collectionsStore.deleteCollection(collection.id);
 };
 
 const clearFilters = () => {

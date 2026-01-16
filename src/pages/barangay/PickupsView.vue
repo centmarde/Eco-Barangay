@@ -5,26 +5,10 @@ import InnerLayoutWrapper from "@/layouts/InnerLayoutWrapper.vue";
 import { supabaseAdmin } from "@/lib/supabase";
 import { useToast } from "vue-toastification";
 import { useCollectionsStore } from "@/stores/collectionsData";
+import type { Collection, Collector } from "@/stores/collectionsData";
 import RequestsTable from "./components/requestsTable.vue";
 import CollectorDialog from "./components/collectorDialog.vue";
 import StatCards from "./components/statCards.vue";
-
-// Types
-interface Collection {
-  id: number;
-  created_at: string;
-  address: string;
-  request_by: string;
-  collector_assign: string | null;
-  status: string;
-  garbage_type: string;
-}
-
-interface Collector {
-  id: string;
-  username: string;
-  email: string;
-}
 
 // Composables
 const toast = useToast();

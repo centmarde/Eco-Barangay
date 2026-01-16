@@ -9,10 +9,16 @@ export type Collection = {
   created_at: string;
   address: string;
   request_by: string;
-  collector_assign: string;
+  collector_assign: string | null;
   status: string;
   garbage_type: string;
   notes?: string;
+};
+
+export type Collector = {
+  id: string;
+  username: string;
+  email: string;
 };
 
 export type CollectionWithEmails = Collection & {

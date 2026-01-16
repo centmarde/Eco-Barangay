@@ -2,7 +2,6 @@
 import { ref, onMounted, computed } from "vue";
 import { storeToRefs } from "pinia";
 import InnerLayoutWrapper from "@/layouts/InnerLayoutWrapper.vue";
-import { supabaseAdmin } from "@/lib/supabase";
 import { useToast } from "vue-toastification";
 import { useCollectionsStore } from "@/stores/collectionsData";
 import type { Collection, Collector } from "@/stores/collectionsData";
@@ -13,10 +12,9 @@ import StatCards from "./components/statCards.vue";
 // Composables
 const toast = useToast();
 const collectionsStore = useCollectionsStore();
-const { collections, loading } = storeToRefs(collectionsStore);
+const { collections, collectors, loading } = storeToRefs(collectionsStore);
 
 // State
-const collectors = ref<Collector[]>([]);
 const search = ref("");
 const statusFilter = ref<string | null>(null);
 const garbageTypeFilter = ref<string | null>(null);
@@ -74,30 +72,7 @@ const fetchCollections = async () => {
 };
 
 const fetchCollectors = async () => {
-  try {
-    // Fetch all auth users using admin client
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers();
-
-    if (error) throw error;
-
-    // Filter users with collector role (role = 4) from user_metadata
-    const collectorUsers = (data.users || [])
-      .filter((user) => user.user_metadata?.role === 4)
-      .map((user) => ({
-        id: user.id,
-        username:
-          user.user_metadata?.full_name ||
-          user.email?.split("@")[0] ||
-          "Unknown",
-        email: user.email || "",
-      }));
-
-    collectors.value = collectorUsers;
-    console.log("Fetched collectors with full names:", collectorUsers);
-  } catch (error: any) {
-    console.error("Error fetching collectors:", error);
-    toast.error("Failed to load collectors");
-  }
+  await collectionsStore.fetchCollectors();
 };
 
 const acceptRequest = (collection: Collection) => {

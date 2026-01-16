@@ -138,6 +138,7 @@ function scrollToSection(sectionId: string) {
 </script>
 
 <template>
+  <!-- Mobile Navigation Drawer -->
   <v-navigation-drawer
     v-if="mobile && config?.showNavbar && navbarConfig"
     v-model="mobileDrawer"
@@ -147,15 +148,16 @@ function scrollToSection(sectionId: string) {
     width="280"
     :elevation="navbarConfig.elevation"
   >
+    <!-- Drawer Header with Logo/Title -->
     <div class="pa-4 d-flex align-center">
       <template v-if="navbarConfig?.logo?.src">
         <v-img
           :src="navbarConfig.logo.src"
           :alt="navbarConfig.logo.alt"
-          width="50"
-          height="50"
-          class="me-2 rounded-circle"
-          cover
+          :width="navbarConfig.logo.width"
+          :height="navbarConfig.logo.height"
+          class="me-2"
+          contain
         >
           <template #error>
             <v-icon class="me-2" :icon="navbarConfig.icon" size="large" />
@@ -165,11 +167,17 @@ function scrollToSection(sectionId: string) {
       <template v-else>
         <v-icon class="me-2" :icon="navbarConfig?.icon" size="large" />
       </template>
-      <span class="text-h6 font-weight-bold">{{ navbarConfig?.title }}</span>
+      <span
+        class="text-h6 font-weight-bold text-truncate"
+        style="max-width: 200px"
+      >
+        {{ navbarConfig?.title }}
+      </span>
     </div>
 
     <v-divider />
 
+    <!-- Navigation Items -->
     <v-list>
       <v-list-item
         v-for="item in navbarConfig.navigationItems"
@@ -182,7 +190,9 @@ function scrollToSection(sectionId: string) {
 
     <v-divider />
 
+    <!-- Mobile Actions -->
     <div class="pa-4">
+      <!-- Theme Toggle -->
       <v-btn
         :loading="isLoadingTheme"
         variant="outlined"
@@ -194,6 +204,7 @@ function scrollToSection(sectionId: string) {
         {{ themeTooltip }}
       </v-btn>
 
+      <!-- CTA Button -->
       <v-btn
         v-if="navbarConfig.ctaButton"
         :color="navbarConfig.ctaButton.color"
@@ -206,16 +217,16 @@ function scrollToSection(sectionId: string) {
     </div>
   </v-navigation-drawer>
 
+  <!-- Main Toolbar -->
   <v-toolbar
     v-if="config?.showNavbar && navbarConfig"
     app
-    height="75"
     :color="navbarConfig.color"
     :density="navbarConfig.density"
     :elevation="navbarConfig.elevation"
-    class="px-6"
   >
     <template #prepend>
+      <!-- Mobile Hamburger Menu -->
       <v-btn
         v-if="mobile"
         icon
@@ -225,35 +236,48 @@ function scrollToSection(sectionId: string) {
         <v-icon icon="mdi-menu" />
       </v-btn>
 
+      <!-- Logo and Title -->
       <div class="d-flex align-center">
+        <!-- Logo Image with Icon Fallback -->
         <template v-if="navbarConfig?.logo?.src">
           <v-img
             :src="navbarConfig.logo.src"
             :alt="navbarConfig.logo.alt"
-            width="50"
-            height="50"
-            class="me-2 rounded-circle"
-            cover
+            :width="navbarConfig.logo.width"
+            :height="navbarConfig.logo.height"
+            class="me-2"
+            contain
           >
             <template #error>
+              <!-- Fallback to icon if image fails to load -->
               <v-icon class="me-2" :icon="navbarConfig.icon" size="large" />
             </template>
           </v-img>
         </template>
 
         <template v-else>
+          <!-- Default icon when no logo is configured -->
           <v-icon class="me-2" :icon="navbarConfig?.icon" size="large" />
         </template>
 
-        <span class="text-h6 font-weight-bold ms-2">{{
-          navbarConfig?.title
-        }}</span>
+        <span
+          :class="
+            mobile
+              ? 'text-subtitle-1 font-weight-bold ms-2 text-truncate navbar-title'
+              : 'text-h6 font-weight-bold ms-2 navbar-title'
+          "
+          style="max-width: 150px"
+        >
+          {{ navbarConfig?.title }}
+        </span>
       </div>
     </template>
 
     <v-spacer />
 
+    <!-- Desktop Navigation -->
     <template #append>
+      <!-- Navigation Items - Hidden on Mobile -->
       <template v-if="!mobile">
         <v-btn
           v-for="item in navbarConfig.navigationItems"
@@ -266,6 +290,7 @@ function scrollToSection(sectionId: string) {
         </v-btn>
       </template>
 
+      <!-- Theme Toggle Button -->
       <v-btn
         :loading="isLoadingTheme"
         size="small"
@@ -277,6 +302,47 @@ function scrollToSection(sectionId: string) {
           {{ themeTooltip }}
         </v-tooltip>
       </v-btn>
+
+      <!-- CTA Button - Hidden on Mobile -->
+      <v-btn
+        v-if="navbarConfig.ctaButton && !mobile"
+        class="ms-2"
+        :color="navbarConfig.ctaButton.color"
+        :variant="navbarConfig.ctaButton.variant"
+        @click="handleCTAAction(navbarConfig.ctaButton)"
+      >
+        {{ navbarConfig.ctaButton.label }}
+      </v-btn>
     </template>
   </v-toolbar>
 </template>
+
+<style scoped>
+/* Mobile responsive title adjustments */
+@media (max-width: 599px) {
+  /* Extra small screens - very short titles */
+  .navbar-title {
+    max-width: 120px !important;
+    font-size: 0.9rem !important;
+  }
+}
+
+@media (max-width: 959px) {
+  /* Small screens - moderate title length */
+  .navbar-title {
+    max-width: 140px !important;
+  }
+
+  /* Ensure drawer title doesn't overflow */
+  .v-navigation-drawer .text-h6 {
+    font-size: 1.1rem !important;
+  }
+}
+
+/* Text truncation utility for long titles */
+.text-truncate {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+</style>

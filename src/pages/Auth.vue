@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
@@ -14,7 +13,12 @@ const router = useRouter();
 const route = useRoute();
 const authStore = useAuthUserStore();
 const theme = useTheme();
-const { data: authPageData, loading: authPageLoading, error: authPageError, fetchAuthPageData } = useAuthPageController();
+const {
+  data: authPageData,
+  loading: authPageLoading,
+  error: authPageError,
+  fetchAuthPageData,
+} = useAuthPageController();
 
 // Reactive state
 const isLoginMode = ref(true);
@@ -23,7 +27,7 @@ const themeError = ref<string | null>(null);
 
 // Computed properties for layout
 const isQuoteOnLeft = computed(() => {
-  return authPageData.value?.layout?.quotePosition === 'left';
+  return authPageData.value?.layout?.quotePosition === "left";
 });
 
 const formSectionOrder = computed(() => {
@@ -39,20 +43,23 @@ const leftPanelStyle = computed(() => {
   const bg = authPageData.value?.backgroundImage;
   if (!bg || !bg.src) return {};
   return {
-   /*  backgroundImage: `url(${bg.src})`, */
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat'
+    /*  backgroundImage: `url(${bg.src})`, */
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
   } as Record<string, string>;
 });
 
 const leftOverlayStyle = computed(() => {
   const overlay = authPageData.value?.backgroundImage?.overlay;
-  if (!overlay || !overlay.enabled) return { backgroundColor: 'transparent' };
-  const color = overlay.color || 'rgba(0,0,0,0.3)';
-  const opacity = typeof overlay.opacity === 'number' ? overlay.opacity : 0.5;
+  if (!overlay || !overlay.enabled) return { backgroundColor: "transparent" };
+  const color = overlay.color || "rgba(0,0,0,0.3)";
+  const opacity = typeof overlay.opacity === "number" ? overlay.opacity : 0.5;
   // If color already has rgba, assume it includes alpha; otherwise apply opacity
-  return { backgroundColor: color.includes('rgba') ? color : color, opacity: String(opacity) } as Record<string, string>;
+  return {
+    backgroundColor: color.includes("rgba") ? color : color,
+    opacity: String(opacity),
+  } as Record<string, string>;
 });
 
 // Methods
@@ -92,10 +99,11 @@ const loadDynamicTheme = async () => {
     theme.themes.value.light = themeConfig.themes.light;
     theme.themes.value.dark = themeConfig.themes.dark;
 
-    console.log('Dynamic theme loaded successfully');
+    console.log("Dynamic theme loaded successfully");
   } catch (error) {
-    console.error('Failed to load dynamic theme:', error);
-    themeError.value = error instanceof Error ? error.message : 'Failed to load theme';
+    console.error("Failed to load dynamic theme:", error);
+    themeError.value =
+      error instanceof Error ? error.message : "Failed to load theme";
   } finally {
     themeLoading.value = false;
   }
@@ -121,19 +129,15 @@ onMounted(async () => {
 // This page uses the default layout and doesn't require authentication
 </script>
 
-
-
 <template>
-
   <!-- Theme Loading State -->
-  <v-overlay v-if="themeLoading || authPageLoading" class="d-flex align-center justify-center">
-    <v-progress-circular
-      indeterminate
-      size="64"
-      color="primary"
-    />
+  <v-overlay
+    v-if="themeLoading || authPageLoading"
+    class="d-flex align-center justify-center"
+  >
+    <v-progress-circular indeterminate size="64" color="primary" />
     <div class="text-h6 ml-4">
-      {{ themeLoading ? 'Loading theme...' : 'Loading page data...' }}
+      {{ themeLoading ? "Loading theme..." : "Loading page data..." }}
     </div>
   </v-overlay>
 
@@ -150,60 +154,113 @@ onMounted(async () => {
   </v-alert>
 
   <!-- Full-page Background with Overlay -->
-  <div v-if="!themeLoading && !authPageLoading && authPageData" class="auth-page-wrapper" :style="leftPanelStyle">
+  <div
+    v-if="!themeLoading && !authPageLoading && authPageData"
+    class="auth-page-wrapper"
+    :style="leftPanelStyle"
+  >
     <div class="overlay" :style="leftOverlayStyle"></div>
 
     <!-- Centered Card -->
-    <v-container fluid class="fill-height d-flex align-center justify-center" style="position:relative; z-index:1;">
-      <v-card class="auth-card" elevation="12" max-width="1000" style="width: 95%;">
+    <v-container
+      fluid
+      class="fill-height d-flex align-center justify-center"
+      style="position: relative; z-index: 1"
+    >
+      <v-card
+        class="auth-card bg-surface"
+        elevation="12"
+        max-width="1000"
+        style="width: 95%; background-color: #fff"
+      >
         <v-row no-gutters>
-          <!-- Left: Illustration / Quote -->
-          <v-col cols="12" md="6" class="pa-8 d-flex align-center bg-surface" :order="quoteSectionOrder">
-            <div class="text-center w-100">
-              <v-icon size="56" color="primary" class="mb-6">mdi-format-quote-open</v-icon>
-              <div class="text-h5 font-weight-light mb-4 text-primary">
-                {{ authPageData?.quote?.text }}
-              </div>
-              <div class="text-subtitle-1 text-primary opacity-75 mb-4">
-                — {{ authPageData?.quote?.author }}
-              </div>
-              <div v-if="authPageData?.quote?.motivationalText" class="text-body-2 text-primary opacity-70">
-                {{ authPageData?.quote?.motivationalText }}
-              </div>
+          <!-- Right: Illustration / Image -->
+          <v-col
+            cols="12"
+            md="6"
+            class="pa-8 d-flex align-center justify-center bg-surface hide-on-small"
+            :order="quoteSectionOrder"
+          >
+            <div class="w-100 d-flex align-center justify-center">
+              <img
+                src="../assets/loginImage.jpg"
+                alt="Login Illustration"
+                style="
+                  max-width: 100%;
+                  max-height: 520px;
+                  object-fit: contain;
+                  border-radius: 16px;
+                  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+                "
+              />
             </div>
           </v-col>
 
-          <!-- Right: Auth Form -->
-          <v-col cols="12" md="6" class="pa-8 d-flex align-center justify-center" :order="formSectionOrder">
-            <div style="width:100%; max-width:480px;">
+          <!-- Left: Auth Form -->
+          <v-col
+            cols="12"
+            md="6"
+            class="pa-8 d-flex align-center justify-center auth-card-border"
+            :order="formSectionOrder"
+          >
+            <div style="width: 100%; max-width: 480px">
               <!-- Back to Home -->
-              <v-btn variant="text"  size="small" class="mb-4" @click="navigateHome">
+              <v-btn
+                variant="text"
+                size="small"
+                class="mb-4"
+                @click="navigateHome"
+              >
                 <v-icon start size="16">mdi-arrow-left</v-icon>
                 Back to Home
               </v-btn>
 
               <v-sheet elevation="0" class="pa-0">
-                <v-fade-transition mode="out-in">
-                  <div v-if="isLoginMode" key="login">
-                    <LoginForm @switch-to-register="switchToRegister" />
-                  </div>
-                  <div v-else key="register">
-                    <RegisterForm @switch-to-login="switchToLogin" />
-                  </div>
-                </v-fade-transition>
+                <div v-if="isLoginMode" key="login">
+                  <LoginForm @switch-to-register="switchToRegister" />
+                </div>
+                <div v-else key="register">
+                  <RegisterForm @switch-to-login="switchToLogin" />
+                </div>
               </v-sheet>
 
               <!-- Social / Toggle -->
               <div class="mt-6 text-center">
-                <div class="text-body-2 text-medium-emphasis mb-3">Or continue with</div>
+                <div class="text-body-2 text-medium-emphasis mb-3">
+                  Or continue with
+                </div>
                 <v-row no-gutters justify="center">
-                  <v-col cols="auto"><v-btn variant="outlined" color="light" size="small" disabled class="mx-1"><v-icon start>mdi-google</v-icon>Google</v-btn></v-col>
-                  <v-col cols="auto"><v-btn variant="outlined" color="light" size="small" disabled class="mx-1"><v-icon start>mdi-github</v-icon>GitHub</v-btn></v-col>
+                  <v-col cols="auto"
+                    ><v-btn
+                      variant="outlined"
+                      color="light"
+                      size="small"
+                      disabled
+                      class="mx-1"
+                      ><v-icon start>mdi-google</v-icon>Google</v-btn
+                    ></v-col
+                  >
+                  <v-col cols="auto"
+                    ><v-btn
+                      variant="outlined"
+                      color="light"
+                      size="small"
+                      disabled
+                      class="mx-1"
+                      ><v-icon start>mdi-github</v-icon>GitHub</v-btn
+                    ></v-col
+                  >
                 </v-row>
 
-                <v-btn variant="text" color="light" size="small" class="mt-4" @click="toggleMode">
+                <v-btn
+                  variant="text"
+                  color="light"
+                  size="small"
+                  class="mt-4"
+                  @click="toggleMode"
+                >
                   <v-icon start>mdi-swap-horizontal</v-icon>
-                  Switch to {{ isLoginMode ? 'Register' : 'Login' }}
+                  Switch to {{ isLoginMode ? "Register" : "Login" }}
                 </v-btn>
               </div>
             </div>
@@ -212,7 +269,6 @@ onMounted(async () => {
       </v-card>
     </v-container>
   </div>
-
 </template>
 
 <style scoped>
@@ -240,5 +296,18 @@ onMounted(async () => {
   backdrop-filter: blur(8px);
 }
 
+.auth-card-border {
+  background-color: #fff;
+  border-radius: 0 48px 48px 0;
+  height: 100%;
+}
 
+@media (max-width: 959px) {
+  .hide-on-small {
+    display: none !important;
+  }
+  .auth-card-border {
+    border-radius: 0 !important;
+  }
+}
 </style>

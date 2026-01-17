@@ -1,41 +1,238 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import InnerLayoutWrapper from '@/layouts/InnerLayoutWrapper.vue'
+import { ref, onMounted, computed } from "vue";
+import { storeToRefs } from "pinia";
+import InnerLayoutWrapper from "@/layouts/InnerLayoutWrapper.vue";
+import { useToast } from "vue-toastification";
+import { useCollectionsStore } from "@/stores/collectionsData";
+import type { Collection, Collector } from "@/stores/collectionsData";
+import RequestsTable from "./components/requestsTable.vue";
+import CollectorDialog from "./components/collectorDialog.vue";
+import StatCards from "./components/statCards.vue";
 
-const loading = ref(false)
+// Composables
+const toast = useToast();
+const collectionsStore = useCollectionsStore();
+const { collections, collectors, loading } = storeToRefs(collectionsStore);
+
+// State
+const search = ref("");
+const statusFilter = ref<string | null>(null);
+const garbageTypeFilter = ref<string | null>(null);
+
+// Modal state
+const assignCollectorDialog = ref(false);
+const selectedCollection = ref<Collection | null>(null);
+const assigningCollector = ref(false);
+
+// Computed
+const filteredCollections = computed(() => {
+  let filtered = collections.value;
+
+  // Search filter
+  if (search.value) {
+    const searchLower = search.value.toLowerCase();
+    filtered = filtered.filter(
+      (item) =>
+        item.address.toLowerCase().includes(searchLower) ||
+        item.status.toLowerCase().includes(searchLower) ||
+        item.garbage_type.toLowerCase().includes(searchLower)
+    );
+  }
+
+  // Status filter
+  if (statusFilter.value) {
+    filtered = filtered.filter((item) => item.status === statusFilter.value);
+  }
+
+  // Garbage type filter
+  if (garbageTypeFilter.value) {
+    filtered = filtered.filter(
+      (item) => item.garbage_type === garbageTypeFilter.value
+    );
+  }
+
+  return filtered;
+});
+
+const statusOptions = computed(() => {
+  const statuses = [...new Set(collections.value.map((item) => item.status))];
+  return statuses.map((status) => ({ title: status, value: status }));
+});
+
+const garbageTypeOptions = computed(() => {
+  const types = [
+    ...new Set(collections.value.map((item) => item.garbage_type)),
+  ];
+  return types.map((type) => ({ title: type, value: type }));
+});
+
+// Methods
+const fetchCollections = async () => {
+  await collectionsStore.fetchCollections();
+};
+
+const fetchCollectors = async () => {
+  await collectionsStore.fetchCollectors();
+};
+
+const acceptRequest = (collection: Collection) => {
+  selectedCollection.value = collection;
+  assignCollectorDialog.value = true;
+};
+
+const assignCollector = async (collectorId: string) => {
+  if (!selectedCollection.value || !collectorId) {
+    toast.error("Please select a collector");
+    return;
+  }
+
+  try {
+    assigningCollector.value = true;
+
+    const success = await collectionsStore.assignCollector(
+      selectedCollection.value.id,
+      collectorId
+    );
+
+    if (success) {
+      assignCollectorDialog.value = false;
+    }
+  } catch (error: any) {
+    console.error("Error assigning collector:", error);
+  } finally {
+    assigningCollector.value = false;
+  }
+};
+
+const rejectRequest = async (collection: Collection) => {
+  if (!confirm("Are you sure you want to reject this pickup request?")) {
+    return;
+  }
+
+  await collectionsStore.updateCollectionStatus(collection.id, "cancelled");
+};
+
+const deleteRequest = async (collection: Collection) => {
+  if (
+    !confirm(
+      "Are you sure you want to delete this pickup request? This action cannot be undone."
+    )
+  ) {
+    return;
+  }
+
+  await collectionsStore.deleteCollection(collection.id);
+};
+
+const clearFilters = () => {
+  search.value = "";
+  statusFilter.value = null;
+  garbageTypeFilter.value = null;
+};
 
 onMounted(() => {
-  // Initialize component
-})
+  fetchCollections();
+  fetchCollectors();
+});
 </script>
 
 <template>
   <InnerLayoutWrapper>
     <template #content>
       <v-container fluid class="pa-6">
-        <v-row>
+        <!-- Header -->
+        <v-row class="mb-4">
           <v-col cols="12">
-            <v-card>
-              <v-card-title class="text-h5 font-weight-bold">
-                <v-icon left>mdi-truck-delivery</v-icon>
-                Waste Pickups
-              </v-card-title>
-              <v-card-text>
-                <v-row>
-                  <v-col cols="12">
-                    <p class="text-body-1">
-                      Manage and schedule waste pickups here.
-                    </p>
-                  </v-col>
-                </v-row>
-              </v-card-text>
-            </v-card>
+            <div class="d-flex align-center justify-space-between">
+              <div>
+                <h1 class="text-h4 font-weight-bold mb-2">Pickup Requests</h1>
+                <p class="text-body-2 text-medium-emphasis">
+                  Monitor and manage all waste collection requests
+                </p>
+              </div>
+              <v-btn
+                color="primary"
+                prepend-icon="mdi-refresh"
+                variant="tonal"
+                @click="fetchCollections"
+                :loading="loading"
+              >
+                Refresh
+              </v-btn>
+            </div>
           </v-col>
         </v-row>
+
+        <!-- Filters -->
+        <v-row class="mb-4">
+          <v-col cols="12" md="4">
+            <v-text-field
+              v-model="search"
+              prepend-inner-icon="mdi-magnify"
+              label="Search by address, status, or type"
+              variant="outlined"
+              density="comfortable"
+              clearable
+              hide-details
+            />
+          </v-col>
+          <v-col cols="12" md="3">
+            <v-select
+              v-model="statusFilter"
+              :items="statusOptions"
+              label="Filter by Status"
+              variant="outlined"
+              density="comfortable"
+              clearable
+              hide-details
+            />
+          </v-col>
+          <v-col cols="12" md="3">
+            <v-select
+              v-model="garbageTypeFilter"
+              :items="garbageTypeOptions"
+              label="Filter by Type"
+              variant="outlined"
+              density="comfortable"
+              clearable
+              hide-details
+            />
+          </v-col>
+          <v-col cols="12" md="2">
+            <v-btn block variant="outlined" @click="clearFilters" height="40">
+              Clear Filters
+            </v-btn>
+          </v-col>
+        </v-row>
+
+        <!-- Stats Cards -->
+        <StatCards :collections="collections" />
+
+        <!-- Collections Table -->
+        <v-row>
+          <v-col cols="12">
+            <RequestsTable
+              :collections="filteredCollections"
+              :collectors="collectors"
+              :loading="loading"
+              @accept="acceptRequest"
+              @reject="rejectRequest"
+              @delete="deleteRequest"
+            />
+          </v-col>
+        </v-row>
+
+        <!-- Assign Collector Dialog -->
+        <CollectorDialog
+          v-model="assignCollectorDialog"
+          :collection="selectedCollection"
+          :collectors="collectors"
+          :loading="assigningCollector"
+          @assign="assignCollector"
+        />
       </v-container>
     </template>
   </InnerLayoutWrapper>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

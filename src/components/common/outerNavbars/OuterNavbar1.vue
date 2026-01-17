@@ -1,125 +1,140 @@
 <script lang="ts" setup>
-  import type { CTAButton, NavigationItem, UIConfig, LogoConfig } from '@/controller/landingController'
-  import { computed, ref, onMounted, onUnmounted } from 'vue'
-  import { useRouter } from 'vue-router'
-  import { useTheme } from '@/composables/useTheme'
-  import { useDisplay } from 'vuetify'
+import type {
+  CTAButton,
+  NavigationItem,
+  UIConfig,
+  LogoConfig,
+} from "@/controller/landingController";
+import { computed, ref, onMounted, onUnmounted } from "vue";
+import { useRouter } from "vue-router";
+import { useTheme } from "@/composables/useTheme";
+import { useDisplay } from "vuetify";
 
-  interface Props {
-    config?: UIConfig | null
+interface Props {
+  config?: UIConfig | null;
+}
+
+const props = defineProps<Props>();
+const router = useRouter();
+
+// Responsive breakpoints
+const { mobile } = useDisplay();
+
+// Mobile drawer state
+const mobileDrawer = ref(false);
+
+// Theme management
+const {
+  toggleTheme: handleToggleTheme,
+  getCurrentTheme,
+  isLoadingTheme,
+} = useTheme();
+
+// Scroll detection for mobile drawer auto-close
+let lastScrollY = ref(0);
+let ticking = ref(false);
+
+const handleScroll = () => {
+  if (!ticking.value) {
+    requestAnimationFrame(() => {
+      const currentScrollY = window.scrollY;
+
+      // Close mobile drawer when scrolling down
+      if (
+        mobile.value &&
+        mobileDrawer.value &&
+        currentScrollY > lastScrollY.value
+      ) {
+        mobileDrawer.value = false;
+      }
+
+      lastScrollY.value = currentScrollY;
+      ticking.value = false;
+    });
+    ticking.value = true;
+  }
+};
+
+// Add scroll listener on mount, remove on unmount
+onMounted(() => {
+  window.addEventListener("scroll", handleScroll, { passive: true });
+  lastScrollY.value = window.scrollY;
+});
+
+onUnmounted(() => {
+  window.removeEventListener("scroll", handleScroll);
+});
+
+const navbarConfig = computed(() => props.config?.navbar);
+
+// Theme toggle computed properties
+const currentTheme = computed(() => getCurrentTheme());
+const themeIcon = computed(() => {
+  return currentTheme.value === "dark"
+    ? "mdi-white-balance-sunny"
+    : "mdi-weather-night";
+});
+const themeTooltip = computed(() => {
+  return `Switch to ${currentTheme.value === "dark" ? "light" : "dark"} theme`;
+});
+
+function toggleTheme() {
+  handleToggleTheme();
+}
+
+function handleNavigation(item: NavigationItem) {
+  // Close mobile drawer when navigating
+  if (mobile.value) {
+    mobileDrawer.value = false;
   }
 
-  const props = defineProps<Props>()
-  const router = useRouter()
-
-  // Responsive breakpoints
-  const { mobile } = useDisplay()
-
-  // Mobile drawer state
-  const mobileDrawer = ref(false)
-
-  // Theme management
-  const { toggleTheme: handleToggleTheme, getCurrentTheme, isLoadingTheme } = useTheme()
-
-  // Scroll detection for mobile drawer auto-close
-  let lastScrollY = ref(0)
-  let ticking = ref(false)
-
-  const handleScroll = () => {
-    if (!ticking.value) {
-      requestAnimationFrame(() => {
-        const currentScrollY = window.scrollY
-
-        // Close mobile drawer when scrolling down
-        if (mobile.value && mobileDrawer.value && currentScrollY > lastScrollY.value) {
-          mobileDrawer.value = false
-        }
-
-        lastScrollY.value = currentScrollY
-        ticking.value = false
-      })
-      ticking.value = true
+  switch (item.action) {
+    case "scroll": {
+      scrollToSection(item.target);
+      break;
+    }
+    case "navigate": {
+      router.push(item.target);
+      break;
+    }
+    case "external": {
+      window.open(item.target, "_blank", "noopener,noreferrer");
+      break;
     }
   }
+}
 
-  // Add scroll listener on mount, remove on unmount
-  onMounted(() => {
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    lastScrollY.value = window.scrollY
-  })
-
-  onUnmounted(() => {
-    window.removeEventListener('scroll', handleScroll)
-  })
-
-  const navbarConfig = computed(() => props.config?.navbar)
-
-  // Theme toggle computed properties
-  const currentTheme = computed(() => getCurrentTheme())
-  const themeIcon = computed(() => {
-    return currentTheme.value === 'dark' ? 'mdi-white-balance-sunny' : 'mdi-weather-night'
-  })
-  const themeTooltip = computed(() => {
-    return `Switch to ${currentTheme.value === 'dark' ? 'light' : 'dark'} theme`
-  })
-
-  function toggleTheme () {
-    handleToggleTheme()
+function handleCTAAction(button: CTAButton) {
+  // Close mobile drawer when using CTA
+  if (mobile.value) {
+    mobileDrawer.value = false;
   }
 
-  function handleNavigation (item: NavigationItem) {
-    // Close mobile drawer when navigating
-    if (mobile.value) {
-      mobileDrawer.value = false
+  switch (button.action) {
+    case "scroll": {
+      scrollToSection(button.target);
+      break;
     }
-
-    switch (item.action) {
-      case 'scroll': {
-        scrollToSection(item.target)
-        break
-      }
-      case 'navigate': {
-        router.push(item.target)
-        break
-      }
-      case 'external': {
-        window.open(item.target, '_blank', 'noopener,noreferrer')
-        break
-      }
+    case "navigate": {
+      router.push(button.target);
+      break;
+    }
+    case "external": {
+      window.open(button.target, "_blank", "noopener,noreferrer");
+      break;
     }
   }
+}
 
-  function handleCTAAction (button: CTAButton) {
-    // Close mobile drawer when using CTA
-    if (mobile.value) {
-      mobileDrawer.value = false
-    }
-
-    switch (button.action) {
-      case 'scroll': {
-        scrollToSection(button.target)
-        break
-      }
-      case 'navigate': {
-        router.push(button.target)
-        break
-      }
-      case 'external': {
-        window.open(button.target, '_blank', 'noopener,noreferrer')
-        break
-      }
-    }
+function scrollToSection(sectionId: string) {
+  const element = document.querySelector(`#${sectionId}`);
+  if (element) {
+    element.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   }
-
-  function scrollToSection (sectionId: string) {
-    const element = document.querySelector(`#${sectionId}`)
-    if (element) {
-      element.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      })
-    }
-  }
+}
 </script>
 
 <template>
@@ -145,24 +160,16 @@
           contain
         >
           <template #error>
-            <v-icon
-              class="me-2"
-              :icon="navbarConfig.icon"
-              size="large"
-            />
+            <v-icon class="me-2" :icon="navbarConfig.icon" size="large" />
           </template>
         </v-img>
       </template>
       <template v-else>
-        <v-icon
-          class="me-2"
-          :icon="navbarConfig?.icon"
-          size="large"
-        />
+        <v-icon class="me-2" :icon="navbarConfig?.icon" size="large" />
       </template>
       <span
         class="text-h6 font-weight-bold text-truncate"
-        style="max-width: 200px;"
+        style="max-width: 200px"
       >
         {{ navbarConfig?.title }}
       </span>
@@ -243,27 +250,23 @@
           >
             <template #error>
               <!-- Fallback to icon if image fails to load -->
-              <v-icon
-                class="me-2"
-                :icon="navbarConfig.icon"
-                size="large"
-              />
+              <v-icon class="me-2" :icon="navbarConfig.icon" size="large" />
             </template>
           </v-img>
         </template>
 
         <template v-else>
           <!-- Default icon when no logo is configured -->
-          <v-icon
-            class="me-2"
-            :icon="navbarConfig?.icon"
-            size="large"
-          />
+          <v-icon class="me-2" :icon="navbarConfig?.icon" size="large" />
         </template>
 
         <span
-          :class="mobile ? 'text-subtitle-1 font-weight-bold ms-2 text-truncate navbar-title' : 'text-h6 font-weight-bold ms-2 navbar-title'"
-          style="max-width: 150px;"
+          :class="
+            mobile
+              ? 'text-subtitle-1 font-weight-bold ms-2 text-truncate navbar-title'
+              : 'text-h6 font-weight-bold ms-2 navbar-title'
+          "
+          style="max-width: 150px"
         >
           {{ navbarConfig?.title }}
         </span>
@@ -343,5 +346,3 @@
   text-overflow: ellipsis !important;
 }
 </style>
-
-

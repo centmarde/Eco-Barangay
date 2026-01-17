@@ -1,7 +1,9 @@
 <template>
-  <v-card-title class="text-h5 text-center py-6"> Sign In </v-card-title>
+  <v-card-title class="text-h5 text-center py-6" style="background-color: #fff">
+    Sign In
+  </v-card-title>
 
-  <v-card-text class="px-6 pb-6">
+  <v-card-text class="px-6 pb-6" style="background-color: #fff">
     <v-form ref="formRef" v-model="formValid" @submit.prevent="handleLogin">
       <v-container class="pa-0">
         <v-row no-gutters>
@@ -134,10 +136,7 @@ const handleLogin = async () => {
   clearErrors();
 
   try {
-    const result = await authStore.signIn(
-      loginForm.email,
-      loginForm.password
-    );
+    const result = await authStore.signIn(loginForm.email, loginForm.password);
 
     if (result.error) {
       const errorMessage = getErrorMessage(result.error);

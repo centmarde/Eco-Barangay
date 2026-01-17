@@ -9,10 +9,16 @@ export type Collection = {
   created_at: string;
   address: string;
   request_by: string;
-  collector_assign: string;
+  collector_assign: string | null;
   status: string;
   garbage_type: string;
   notes?: string;
+};
+
+export type Collector = {
+  id: string;
+  username: string;
+  email: string;
 };
 
 export type CollectionWithEmails = Collection & {
@@ -76,6 +82,7 @@ export const useCollectionsStore = defineStore("collections", () => {
 
   // State
   const collections = ref<Collection[]>([]);
+  const collectors = ref<Collector[]>([]);
   const currentCollection = ref<Collection | undefined>(undefined);
   const loading = ref(false);
   const error = ref<string | undefined>(undefined);
@@ -98,6 +105,39 @@ export const useCollectionsStore = defineStore("collections", () => {
       error.value =
         err instanceof Error ? err.message : "Failed to fetch collections";
       toast.error("Failed to fetch collections");
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const fetchCollectors = async () => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      // Fetch all auth users using admin client
+      const { data, error: fetchError } =
+        await supabaseAdmin.auth.admin.listUsers();
+
+      if (fetchError) throw fetchError;
+
+      // Filter users with collector role (role = 4) from user_metadata
+      const collectorUsers = (data.users || [])
+        .filter((user) => user.user_metadata?.role === 4)
+        .map((user) => ({
+          id: user.id,
+          username:
+            user.user_metadata?.full_name ||
+            user.email?.split("@")[0] ||
+            "Unknown",
+          email: user.email || "",
+        }));
+
+      collectors.value = collectorUsers;
+    } catch (err) {
+      error.value =
+        err instanceof Error ? err.message : "Failed to fetch collectors";
+      toast.error("Failed to fetch collectors");
     } finally {
       loading.value = false;
     }
@@ -830,11 +870,13 @@ export const useCollectionsStore = defineStore("collections", () => {
   return {
     // State
     collections,
+    collectors,
     currentCollection,
     loading,
     error,
     // Actions
     fetchCollections,
+    fetchCollectors,
     fetchCollectionById,
     fetchCollectionsByRequestBy,
     fetchCollectionsByCollectorAssign,

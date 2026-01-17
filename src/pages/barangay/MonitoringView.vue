@@ -9,7 +9,10 @@ import FeedbackAnnouncementTabs from "./components/FeedbackAnnouncementTabs.vue"
   <InnerLayoutWrapper>
     <template #content>
       <v-container fluid class="pa-6">
-        <h1 class="text-h4 font-weight-bold mb-6">Barangay Monitoring</h1>
+        <h1 class="text-h4 font-weight-bold mb-2">Barangay Monitoring</h1>
+        <p class="text-body-2 text-medium-emphasis mb-6">
+          Monitor and manage e-waste and feedback from your barangay
+        </p>
 
         <v-row>
           <!-- E-Waste Monitoring Section (Left/Top) -->

@@ -35,13 +35,7 @@ export const navigationConfig: NavigationGroup[] = [
         icon: "mdi-clipboard-text",
         route: "/collectors/requests",
         permission: "collectors.requests.view",
-      },
-      {
-        title: "Admin Requests History",
-        icon: "mdi-history",
-        route: "/collectors/requests-history",
-        permission: "collectors.requests.history",
-      },
+      }
     ],
   },
   {
@@ -85,6 +79,12 @@ export const navigationConfig: NavigationGroup[] = [
         icon: "mdi-account-key",
         route: "/admin/user-roles",
         permission: "admin.roles.manage",
+      },
+       {
+        title: "Admin Requests History",
+        icon: "mdi-history",
+        route: "/collectors/requests-history",
+        permission: "collectors.requests.history",
       },
        {
         title: "Dashboard",

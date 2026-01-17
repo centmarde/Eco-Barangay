@@ -91,56 +91,70 @@ const handleOpenDialog = (collection: any) => {
   <div class="requests-widget">
     <!-- Filter Section -->
     <v-card class="mb-4">
-      <v-card-text class="pa-2">
-        <div class="d-flex align-center mb-3 px-2">
-          <v-icon color="primary" class="mr-2">mdi-filter</v-icon>
-          <span class="text-subtitle-2 font-weight-bold">Status Filters</span>
+      <v-card-text :class="smAndDown ? 'pa-2' : 'pa-4'">
+        <div class="d-flex align-center mb-3" :class="smAndDown ? 'px-1' : 'px-2'">
+          <v-icon color="primary" :class="smAndDown ? 'mr-1' : 'mr-2'" :size="smAndDown ? 'small' : 'default'">mdi-filter</v-icon>
+          <span :class="smAndDown ? 'text-body-2 font-weight-bold' : 'text-subtitle-2 font-weight-bold'">Status Filters</span>
         </div>
 
-        <v-divider class="mb-2" />
+        <v-divider :class="smAndDown ? 'mb-2' : 'mb-3'" />
 
         <!-- Status Filter Tabs -->
         <v-chip-group
           v-model="selectedStatus"
           mandatory
           selected-class="text-primary"
-          class="d-flex flex-wrap"
+          :class="smAndDown ? 'd-flex flex-wrap justify-center' : 'd-flex flex-wrap'"
+          :column="smAndDown"
         >
-          <v-chip value="all" :size="smAndDown ? 'small' : 'default'">
-            <v-icon start>mdi-format-list-bulleted</v-icon>
-            All ({{ statusCounts.all }})
+          <v-chip
+            value="all"
+            :size="smAndDown ? 'small' : 'default'"
+            :class="smAndDown ? 'ma-1 flex-fill' : ''"
+            style="min-width: fit-content;"
+          >
+            <v-icon start :size="smAndDown ? 'x-small' : 'small'">mdi-format-list-bulleted</v-icon>
+            <span :class="smAndDown ? 'text-caption' : ''">All ({{ statusCounts.all }})</span>
           </v-chip>
           <v-chip
             value="pending"
             color="warning"
             :size="smAndDown ? 'small' : 'default'"
+            :class="smAndDown ? 'ma-1 flex-fill' : ''"
+            style="min-width: fit-content;"
           >
-            <v-icon start>mdi-clock-outline</v-icon>
-            Pending ({{ statusCounts.pending }})
+            <v-icon start :size="smAndDown ? 'x-small' : 'small'">mdi-clock-outline</v-icon>
+            <span :class="smAndDown ? 'text-caption' : ''">Pending ({{ statusCounts.pending }})</span>
           </v-chip>
           <v-chip
             value="in_progress"
             color="info"
             :size="smAndDown ? 'small' : 'default'"
+            :class="smAndDown ? 'ma-1 flex-fill' : ''"
+            style="min-width: fit-content;"
           >
-            <v-icon start>mdi-truck-delivery</v-icon>
-            In Progress ({{ statusCounts.in_progress }})
+            <v-icon start :size="smAndDown ? 'x-small' : 'small'">mdi-truck-delivery</v-icon>
+            <span :class="smAndDown ? 'text-caption' : ''">Progress ({{ statusCounts.in_progress }})</span>
           </v-chip>
           <v-chip
             value="completed"
             color="success"
             :size="smAndDown ? 'small' : 'default'"
+            :class="smAndDown ? 'ma-1 flex-fill' : ''"
+            style="min-width: fit-content;"
           >
-            <v-icon start>mdi-check-circle</v-icon>
-            Completed ({{ statusCounts.completed }})
+            <v-icon start :size="smAndDown ? 'x-small' : 'small'">mdi-check-circle</v-icon>
+            <span :class="smAndDown ? 'text-caption' : ''">Done ({{ statusCounts.completed }})</span>
           </v-chip>
           <v-chip
             value="cancelled"
             color="error"
             :size="smAndDown ? 'small' : 'default'"
+            :class="smAndDown ? 'ma-1 flex-fill' : ''"
+            style="min-width: fit-content;"
           >
-            <v-icon start>mdi-close-circle</v-icon>
-            Cancelled ({{ statusCounts.cancelled }})
+            <v-icon start :size="smAndDown ? 'x-small' : 'small'">mdi-close-circle</v-icon>
+            <span :class="smAndDown ? 'text-caption' : ''">Cancelled ({{ statusCounts.cancelled }})</span>
           </v-chip>
         </v-chip-group>
       </v-card-text>
@@ -398,5 +412,59 @@ const handleOpenDialog = (collection: any) => {
 
 .collection-card .v-card-text {
   padding-top: 48px;
+}
+
+/* Mobile responsive filter styles */
+@media (max-width: 599px) {
+  /* Extra small screens - stack chips in 2-3 columns */
+  :deep(.v-chip-group) {
+    gap: 4px !important;
+  }
+
+  :deep(.v-chip) {
+    flex: 1 1 calc(50% - 8px) !important;
+    max-width: calc(50% - 8px) !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  :deep(.v-chip .v-chip__content) {
+    font-size: 0.7rem !important;
+    padding: 0 4px !important;
+  }
+
+  /* Adjust icon and text sizes on very small screens */
+  :deep(.v-chip .v-icon) {
+    font-size: 12px !important;
+  }
+}
+
+@media (max-width: 959px) {
+  /* Small to medium screens */
+  :deep(.v-chip-group) {
+    justify-content: center !important;
+    gap: 6px !important;
+  }
+
+  :deep(.v-chip) {
+    margin: 2px !important;
+    min-width: fit-content !important;
+  }
+
+  /* Reduce padding on mobile filter section */
+  .v-card-text {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+}
+
+/* Ensure chips don't get too small on larger mobile screens */
+@media (min-width: 600px) and (max-width: 959px) {
+  :deep(.v-chip) {
+    flex: 1 1 auto !important;
+    max-width: none !important;
+  }
 }
 </style>

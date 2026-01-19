@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseAdmin } from "@/lib/supabase";
 import { useToast } from "vue-toastification";
 import { useAuthUserStore } from "./authUser";
 
@@ -99,7 +99,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
             description,
             is_read
           )
-        `
+        `,
         )
         .eq("user_id", targetUserId)
         .order("created_at", { ascending: false });
@@ -131,7 +131,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
     try {
       // Find the notification to get the notification_id
       const notification = notifications.value.find(
-        (n) => n.id === notificationId
+        (n) => n.id === notificationId,
       );
 
       if (!notification) {
@@ -184,7 +184,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
 
       if (userNotifications && userNotifications.length > 0) {
         const notificationIds = userNotifications.map(
-          (un) => un.notification_id
+          (un) => un.notification_id,
         );
 
         // Update is_read in the notifications table for all these IDs
@@ -220,7 +220,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
 
       // Update local state
       notifications.value = notifications.value.filter(
-        (n) => n.id !== notificationId
+        (n) => n.id !== notificationId,
       );
 
       toast.success("Notification deleted");
@@ -256,8 +256,9 @@ export const useNotificationsStore = defineStore("notifications", () => {
 
   // Create a notification (admin function)
   const createNotification = async (
-    notificationData: CreateNotificationData
+    notificationData: CreateNotificationData,
   ) => {
+    console.log("createNotification called with:", notificationData);
     try {
       // First create the notification in the notifications table
       const { data: notificationRecord, error: notificationError } =
@@ -273,7 +274,15 @@ export const useNotificationsStore = defineStore("notifications", () => {
           .select()
           .single();
 
-      if (notificationError) throw notificationError;
+      if (notificationError) {
+        console.error(
+          "Error inserting into notifications table:",
+          notificationError,
+        );
+        throw notificationError;
+      }
+
+      console.log("Notification record created:", notificationRecord);
 
       // Then create the user_notification entry (without is_read)
       const { data: userNotification, error: userNotificationError } =
@@ -288,9 +297,17 @@ export const useNotificationsStore = defineStore("notifications", () => {
           .select()
           .single();
 
-      if (userNotificationError) throw userNotificationError;
+      if (userNotificationError) {
+        console.error(
+          "Error inserting into user_notifications table:",
+          userNotificationError,
+        );
+        throw userNotificationError;
+      }
 
-      toast.success("Notification created successfully");
+      console.log("User notification created:", userNotification);
+
+      toast.success("Notification sent successfully");
       return userNotification;
     } catch (err) {
       console.error("Error creating notification:", err);
@@ -323,10 +340,10 @@ export const useNotificationsStore = defineStore("notifications", () => {
           } else if (payload.eventType === "DELETE") {
             // Remove the notification from local state
             notifications.value = notifications.value.filter(
-              (n) => n.id !== (payload.old as any).id
+              (n) => n.id !== (payload.old as any).id,
             );
           }
-        }
+        },
       )
       .subscribe();
 

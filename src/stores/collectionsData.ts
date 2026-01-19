@@ -2,6 +2,8 @@ import { supabase, supabaseAdmin } from "@/lib/supabase";
 import { useToast } from "vue-toastification";
 import { defineStore } from "pinia";
 import { ref } from "vue";
+import { useNotificationsStore } from "./notifications";
+import { useAuthUserStore } from "./authUser";
 
 // Type definitions
 export type Collection = {
@@ -289,7 +291,7 @@ export const useCollectionsStore = defineStore("collections", () => {
             description,
             user_id
           )
-        `
+        `,
         )
         .eq("id", collectionId)
         .single();
@@ -326,7 +328,7 @@ export const useCollectionsStore = defineStore("collections", () => {
             description,
             user_id
           )
-        `
+        `,
         )
         .order("created_at", { ascending: false });
 
@@ -360,12 +362,12 @@ export const useCollectionsStore = defineStore("collections", () => {
 
       // Fetch requester details
       const { data: requester } = await supabase.auth.admin.getUserById(
-        collectionData.request_by
+        collectionData.request_by,
       );
 
       // Fetch collector details
       const { data: collector } = await supabase.auth.admin.getUserById(
-        collectionData.collector_assign
+        collectionData.collector_assign,
       );
 
       return {
@@ -505,7 +507,7 @@ export const useCollectionsStore = defineStore("collections", () => {
 
   const updateCollection = async (
     id: number,
-    collectionData: UpdateCollectionData
+    collectionData: UpdateCollectionData,
   ) => {
     loading.value = true;
     error.value = undefined;
@@ -540,11 +542,78 @@ export const useCollectionsStore = defineStore("collections", () => {
   };
 
   const updateCollectionStatus = async (id: number, status: string) => {
-    return await updateCollection(id, { status });
+    const result = await updateCollection(id, { status });
+
+    if (result) {
+      const notificationsStore = useNotificationsStore();
+
+      // Notify requester
+      await notificationsStore.createNotification({
+        user_id: result.request_by,
+        title: "Pickup Request Status Updated",
+        message: `Your pickup request at ${result.address} is now ${status}.`,
+        type: "info",
+      });
+
+      // Notify Admins (Barangay Officials)
+      try {
+        const { data: usersData, error: usersError } =
+          await supabaseAdmin.auth.admin.listUsers();
+
+        if (!usersError && usersData?.users) {
+          const admins = usersData.users.filter(
+            (user: any) => user.user_metadata?.role === 1,
+          );
+
+          await Promise.all(
+            admins.map((admin: any) =>
+              notificationsStore.createNotification({
+                user_id: admin.id,
+                title: "Pickup Status Update",
+                message: `Request at ${result.address} has been updated to ${status}.`,
+                type: "info",
+              }),
+            ),
+          );
+        }
+      } catch (err) {
+        console.error("Error notifying admins:", err);
+      }
+    }
+
+    return result;
   };
 
   const assignCollector = async (id: number, collectorId: string) => {
-    return await updateCollection(id, { collector_assign: collectorId });
+    const result = await updateCollection(id, {
+      collector_assign: collectorId,
+    });
+
+    if (result) {
+      const notificationsStore = useNotificationsStore();
+      const authStore = useAuthUserStore();
+      const currentUserId = authStore.userData?.id;
+
+      // Notify collector
+      await notificationsStore.createNotification({
+        user_id: collectorId,
+        title: "New Pickup Assignment",
+        message: `You have been assigned to a pickup request at ${result.address}.`,
+        type: "info",
+      });
+
+      // Notify requester (only if the requester is NOT the one assigning)
+      if (result.request_by !== currentUserId) {
+        await notificationsStore.createNotification({
+          user_id: result.request_by,
+          title: "Collector Assigned",
+          message: `A collector has been assigned to your pickup request at ${result.address}.`,
+          type: "success",
+        });
+      }
+    }
+
+    return result;
   };
 
   const deleteCollection = async (id: number) => {
@@ -585,7 +654,7 @@ export const useCollectionsStore = defineStore("collections", () => {
       if (deleteError) throw deleteError;
 
       collections.value = collections.value.filter(
-        (c) => c.request_by !== userId && c.collector_assign !== userId
+        (c) => c.request_by !== userId && c.collector_assign !== userId,
       );
       toast.success("User collections deleted successfully");
       return true;
@@ -602,7 +671,7 @@ export const useCollectionsStore = defineStore("collections", () => {
   };
 
   const getUserEmail = async (
-    userId: string
+    userId: string,
   ): Promise<{ email?: string; full_name?: string } | null> => {
     try {
       const {
@@ -659,7 +728,7 @@ export const useCollectionsStore = defineStore("collections", () => {
           if (userData) {
             userDataMap.set(userId, userData);
           }
-        })
+        }),
       );
 
       // Enrich collections with user emails and names
@@ -675,7 +744,7 @@ export const useCollectionsStore = defineStore("collections", () => {
             collector_email: collectorData?.email,
             collector_name: collectorData?.full_name,
           };
-        }
+        },
       );
 
       return collectionsWithEmails;
@@ -766,7 +835,7 @@ export const useCollectionsStore = defineStore("collections", () => {
           if (userData) {
             userDataMap.set(userId, userData);
           }
-        })
+        }),
       );
 
       // Enrich collections with user emails and names
@@ -782,7 +851,7 @@ export const useCollectionsStore = defineStore("collections", () => {
             collector_email: collectorData?.email,
             collector_name: collectorData?.full_name,
           };
-        }
+        },
       );
 
       return collectionsWithEmails;
@@ -804,7 +873,7 @@ export const useCollectionsStore = defineStore("collections", () => {
    * @returns Object with counts for each status
    */
   const getStatusCounts = async (
-    collectorId?: string
+    collectorId?: string,
   ): Promise<StatusCounts> => {
     loading.value = true;
     error.value = undefined;
@@ -856,7 +925,7 @@ export const useCollectionsStore = defineStore("collections", () => {
    * @returns Object with counts for each status
    */
   const getStatusCountsFromArray = (
-    collections: Collection[] | CollectionWithEmails[]
+    collections: Collection[] | CollectionWithEmails[],
   ): StatusCounts => {
     return {
       all: collections.length,

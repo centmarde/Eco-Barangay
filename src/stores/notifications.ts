@@ -257,6 +257,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
   // Create a notification (admin function)
   const createNotification = async (
     notificationData: CreateNotificationData,
+    showToast: boolean = true,
   ) => {
     console.log("createNotification called with:", notificationData);
     try {
@@ -307,11 +308,15 @@ export const useNotificationsStore = defineStore("notifications", () => {
 
       console.log("User notification created:", userNotification);
 
-      toast.success("Notification sent successfully");
+      if (showToast) {
+        toast.success("Notification sent successfully");
+      }
       return userNotification;
     } catch (err) {
       console.error("Error creating notification:", err);
-      toast.error("Failed to create notification");
+      if (showToast) {
+        toast.error("Failed to create notification");
+      }
       return null;
     }
   };

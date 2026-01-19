@@ -548,12 +548,15 @@ export const useCollectionsStore = defineStore("collections", () => {
       const notificationsStore = useNotificationsStore();
 
       // Notify requester
-      await notificationsStore.createNotification({
-        user_id: result.request_by,
-        title: "Pickup Request Status Updated",
-        message: `Your pickup request at ${result.address} is now ${status}.`,
-        type: "info",
-      });
+      await notificationsStore.createNotification(
+        {
+          user_id: result.request_by,
+          title: "Pickup Request Status Updated",
+          message: `Your pickup request at ${result.address} is now ${status}.`,
+          type: "info",
+        },
+        false,
+      );
 
       // Notify Admins (Barangay Officials)
       try {
@@ -567,12 +570,15 @@ export const useCollectionsStore = defineStore("collections", () => {
 
           await Promise.all(
             admins.map((admin: any) =>
-              notificationsStore.createNotification({
-                user_id: admin.id,
-                title: "Pickup Status Update",
-                message: `Request at ${result.address} has been updated to ${status}.`,
-                type: "info",
-              }),
+              notificationsStore.createNotification(
+                {
+                  user_id: admin.id,
+                  title: "Pickup Status Update",
+                  message: `Request at ${result.address} has been updated to ${status}.`,
+                  type: "info",
+                },
+                false,
+              ),
             ),
           );
         }
@@ -595,21 +601,27 @@ export const useCollectionsStore = defineStore("collections", () => {
       const currentUserId = authStore.userData?.id;
 
       // Notify collector
-      await notificationsStore.createNotification({
-        user_id: collectorId,
-        title: "New Pickup Assignment",
-        message: `You have been assigned to a pickup request at ${result.address}.`,
-        type: "info",
-      });
+      await notificationsStore.createNotification(
+        {
+          user_id: collectorId,
+          title: "New Pickup Assignment",
+          message: `You have been assigned to a pickup request at ${result.address}.`,
+          type: "info",
+        },
+        false,
+      );
 
       // Notify requester (only if the requester is NOT the one assigning)
       if (result.request_by !== currentUserId) {
-        await notificationsStore.createNotification({
-          user_id: result.request_by,
-          title: "Collector Assigned",
-          message: `A collector has been assigned to your pickup request at ${result.address}.`,
-          type: "success",
-        });
+        await notificationsStore.createNotification(
+          {
+            user_id: result.request_by,
+            title: "Collector Assigned",
+            message: `A collector has been assigned to your pickup request at ${result.address}.`,
+            type: "success",
+          },
+          false,
+        );
       }
     }
 

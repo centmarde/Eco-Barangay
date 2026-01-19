@@ -186,6 +186,7 @@ const submitRequest = async () => {
     const collectionData: CreateCollectionData = {
       address: formData.value.address,
       request_by: userResult.user.id,
+      collector_assign: null, // Explicitly set to null for new requests
       status: 'pending',
       garbage_type: formData.value.garbage_type,
       notes: formData.value.notes || undefined, // Only include if notes are provided

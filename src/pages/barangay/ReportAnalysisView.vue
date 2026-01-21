@@ -13,6 +13,7 @@ const {
   categoryData,
   totalCollected,
   filteredCollections,
+  purokData,
 } = useReportAnalysis();
 
 // Helper for period labels
@@ -163,6 +164,71 @@ const periodLabel = computed(() => {
                       <v-progress-linear
                         :model-value="item.percentage"
                         :color="getGarbageTypeColor(item.type)"
+                        height="12"
+                        rounded
+                        striped
+                      ></v-progress-linear>
+                    </div>
+                  </v-col>
+                </v-row>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+
+        <!-- Purok Analysis Section -->
+        <v-row class="mt-6">
+          <v-col cols="12">
+            <v-card elevation="2" class="rounded-lg">
+              <v-card-title class="pa-4 d-flex align-center">
+                <v-icon class="mr-2" color="primary">mdi-map-marker-multiple</v-icon>
+                Purok Collection Analysis
+              </v-card-title>
+              <v-divider></v-divider>
+
+              <v-card-text class="pa-6">
+                <div v-if="loading" class="d-flex justify-center pa-8">
+                  <v-progress-circular
+                    indeterminate
+                    color="primary"
+                  ></v-progress-circular>
+                </div>
+
+                <div
+                  v-else-if="purokData.every(p => p.count === 0)"
+                  class="text-center pa-8 text-medium-emphasis"
+                >
+                  <v-icon size="64" class="mb-4">mdi-map-marker-off</v-icon>
+                  <p>No purok data available for this period.</p>
+                </div>
+
+                <v-row v-else>
+                  <v-col cols="12">
+                    <div
+                      v-for="item in purokData"
+                      :key="item.name"
+                      class="mb-6"
+                    >
+                      <div class="d-flex justify-space-between mb-1">
+                        <div class="d-flex align-center">
+                          <v-icon
+                            color="primary"
+                            size="small"
+                            class="mr-2"
+                          >
+                            mdi-map-marker
+                          </v-icon>
+                          <span class="font-weight-medium text-body-2">{{
+                            item.name
+                          }}</span>
+                        </div>
+                        <span class="text-caption font-weight-bold">
+                          {{ item.count }} ({{ item.percentage.toFixed(1) }}%)
+                        </span>
+                      </div>
+                      <v-progress-linear
+                        :model-value="item.percentage"
+                        color="primary"
                         height="12"
                         rounded
                         striped

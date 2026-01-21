@@ -92,11 +92,48 @@ export const useReportAnalysis = () => {
      return Object.entries(dailyCounts).map(([date, count]) => ({ date, count }));
   });
 
+  // Computed: Aggregate data by Purok
+  const purokData = computed(() => {
+    const counts: Record<string, number> = {};
+    let total = 0;
+
+    // Initialize counts for all known puroks from monitoring
+    collectionsStore.purokMonitoring.forEach((p) => {
+      counts[p.name] = 0;
+    });
+
+    // Count occurrences in filtered collections
+    filteredCollections.value.forEach((c) => {
+      const name = c.purok;
+      if (name) {
+        // If the purok exists in our monitoring list (initialized above), increment
+        // Or if we want to capture unknown puroks too:
+        if (counts[name] === undefined) {
+             counts[name] = 0;
+        }
+        counts[name]++;
+        total++;
+      }
+    });
+
+    // Transform to array for display, sorted by count desc
+    return Object.entries(counts)
+      .map(([name, count]) => ({
+        name,
+        count,
+        percentage: total > 0 ? (count / total) * 100 : 0,
+      }))
+      .sort((a, b) => b.count - a.count);
+  });
+
   const totalCollected = computed(() => filteredCollections.value.length);
 
   const fetchData = async () => {
     loading.value = true;
-    await collectionsStore.fetchCollectionsWithEmails(); // Ensure we have data
+    await Promise.all([
+      collectionsStore.fetchCollectionsWithEmails(), // Ensure we have data
+      collectionsStore.fetchPurokMonitoring(), // Ensure we have purok list
+    ]);
     loading.value = false;
   };
 
@@ -110,6 +147,7 @@ export const useReportAnalysis = () => {
     filteredCollections,
     categoryData,
     trendData,
+    purokData,
     totalCollected,
     fetchData
   };

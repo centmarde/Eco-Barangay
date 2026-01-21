@@ -39,6 +39,7 @@ const formData = ref({
   address: "",
   garbage_type: "",
   notes: "",
+  is_hazardous: false,
 });
 
 // Garbage Types Options - Use helper function for electronic waste types
@@ -76,6 +77,7 @@ const resetForm = () => {
     address: "",
     garbage_type: "",
     notes: "",
+    is_hazardous: false,
   };
   formRef.value?.reset();
 };
@@ -110,6 +112,7 @@ const submitRequest = async () => {
       status: "pending",
       garbage_type: formData.value.garbage_type,
       notes: formData.value.notes || undefined, // Only include if notes are provided
+      is_hazardous: formData.value.is_hazardous,
     };
 
     const result = await collectionsStore.createCollection(collectionData);
@@ -206,6 +209,17 @@ watch(
                   </v-list-item>
                 </template>
               </v-select>
+            </v-col>
+
+            <!-- Hazardous Checkbox -->
+            <v-col cols="12" class="py-0">
+              <v-checkbox
+                v-model="formData.is_hazardous"
+                label="Is this item hazardous? (e.g., leaking batteries, broken screens)"
+                color="error"
+                hide-details
+                density="compact"
+              ></v-checkbox>
             </v-col>
 
             <!-- Additional Notes (Optional) -->

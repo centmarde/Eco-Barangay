@@ -16,6 +16,7 @@ export type Collection = {
   status: string;
   garbage_type: string;
   notes?: string;
+  is_hazardous?: boolean;
 };
 
 export type Collector = {
@@ -62,6 +63,7 @@ export type CreateCollectionData = {
   status: string;
   garbage_type: string;
   notes?: string;
+  is_hazardous?: boolean;
 };
 
 export type UpdateCollectionData = {
@@ -72,6 +74,7 @@ export type UpdateCollectionData = {
   status?: string;
   garbage_type?: string;
   notes?: string;
+  is_hazardous?: boolean;
 };
 
 export type StatusCounts = {

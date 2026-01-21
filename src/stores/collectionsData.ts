@@ -82,17 +82,139 @@ export type StatusCounts = {
   cancelled: number;
 };
 
+export type PurokStatus =
+  | "pending"
+  | "clean"
+  | "needs_pickup"
+  | "pickup_scheduled";
+
+export type PurokMonitoring = {
+  id: number;
+  name: string;
+  status: PurokStatus;
+  last_surveyed?: string;
+  collection_id?: number;
+  notes?: string;
+};
+
 export const useCollectionsStore = defineStore("collections", () => {
   const toast = useToast();
 
   // State
   const collections = ref<Collection[]>([]);
   const collectors = ref<Collector[]>([]);
+  const purokMonitoring = ref<PurokMonitoring[]>([]);
   const currentCollection = ref<Collection | undefined>(undefined);
   const loading = ref(false);
   const error = ref<string | undefined>(undefined);
 
   // Actions
+  const fetchPurokMonitoring = async () => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from("purok_monitoring")
+        .select("*")
+        .order("id", { ascending: true });
+
+      if (fetchError) throw fetchError;
+
+      purokMonitoring.value = data || [];
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : "Failed to fetch purok monitoring data";
+      toast.error("Failed to fetch purok monitoring data");
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const updatePurokStatus = async (
+    id: number,
+    status: PurokStatus,
+    notes?: string,
+  ) => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      const updates: any = {
+        status,
+        last_surveyed: new Date().toISOString(),
+      };
+
+      if (notes !== undefined) {
+        updates.notes = notes;
+      }
+
+      if (status === "clean" || status === "needs_pickup") {
+        updates.collection_id = null; // Reset collection link if status changes
+      }
+
+      const { data, error: updateError } = await supabase
+        .from("purok_monitoring")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      const index = purokMonitoring.value.findIndex((p) => p.id === id);
+      if (index !== -1 && data) {
+        purokMonitoring.value[index] = data;
+      }
+
+      return data;
+    } catch (err) {
+      error.value =
+        err instanceof Error ? err.message : "Failed to update purok status";
+      toast.error("Failed to update purok status");
+      return undefined;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const linkPurokCollection = async (id: number, collectionId: number) => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      const { data, error: updateError } = await supabase
+        .from("purok_monitoring")
+        .update({
+          status: "pickup_scheduled",
+          collection_id: collectionId,
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      const index = purokMonitoring.value.findIndex((p) => p.id === id);
+      if (index !== -1 && data) {
+        purokMonitoring.value[index] = data;
+      }
+
+      return data;
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : "Failed to link purok to collection";
+      toast.error("Failed to link purok to collection");
+      return undefined;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const fetchCollections = async () => {
     loading.value = true;
     error.value = undefined;
@@ -955,6 +1077,7 @@ export const useCollectionsStore = defineStore("collections", () => {
     // State
     collections,
     collectors,
+    purokMonitoring,
     currentCollection,
     loading,
     error,
@@ -986,5 +1109,9 @@ export const useCollectionsStore = defineStore("collections", () => {
     // Status count functions
     getStatusCounts,
     getStatusCountsFromArray,
+    // Purok Monitoring
+    fetchPurokMonitoring,
+    updatePurokStatus,
+    linkPurokCollection,
   };
 });

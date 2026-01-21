@@ -1,38 +1,19 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
+import { storeToRefs } from "pinia";
 import { useCollectionsStore } from "@/stores/collectionsData";
 import { useAuthUserStore } from "@/stores/authUser";
 import { useToast } from "vue-toastification";
-
-// Types
-type PurokStatus = "pending" | "clean" | "needs_pickup" | "pickup_scheduled";
-
-interface Purok {
-  id: number;
-  name: string;
-  status: PurokStatus;
-  lastSurveyed?: Date;
-  collectionId?: number;
-}
+import type { PurokStatus, PurokMonitoring } from "@/stores/collectionsData";
 
 // Stores and Composables
 const collectionsStore = useCollectionsStore();
+const { purokMonitoring: puroks } = storeToRefs(collectionsStore);
 const authStore = useAuthUserStore();
 const toast = useToast();
 
-// State
-const puroks = ref<Purok[]>([
-  { id: 1, name: "Purok 1", status: "pending" },
-  { id: 2, name: "Purok 2", status: "pending" },
-  { id: 3, name: "Purok 3", status: "pending" },
-  { id: 4, name: "Purok 4", status: "pending" },
-  { id: 5, name: "Purok 5", status: "pending" },
-  { id: 6, name: "Purok 6", status: "pending" },
-  { id: 7, name: "Purok 7", status: "pending" },
-]);
-
 const dialog = ref(false);
-const selectedPurok = ref<Purok | null>(null);
+const selectedPurok = ref<PurokMonitoring | null>(null);
 const loading = ref(false);
 const surveyNotes = ref("");
 
@@ -42,9 +23,13 @@ const hasNeedsPickup = computed(() => {
 });
 
 // Methods
-const openSurveyDialog = (purok: Purok) => {
+onMounted(async () => {
+  await collectionsStore.fetchPurokMonitoring();
+});
+
+const openSurveyDialog = (purok: PurokMonitoring) => {
   selectedPurok.value = purok;
-  surveyNotes.value = "";
+  surveyNotes.value = purok.notes || "";
   dialog.value = true;
 };
 
@@ -53,22 +38,28 @@ const closeDialog = () => {
   selectedPurok.value = null;
 };
 
-const submitSurvey = (hasWaste: boolean) => {
+const submitSurvey = async (hasWaste: boolean) => {
   if (!selectedPurok.value) return;
 
-  selectedPurok.value.lastSurveyed = new Date();
-
-  if (hasWaste) {
-    selectedPurok.value.status = "needs_pickup";
-  } else {
-    selectedPurok.value.status = "clean";
+  loading.value = true;
+  try {
+    const status = hasWaste ? "needs_pickup" : "clean";
+    await collectionsStore.updatePurokStatus(
+      selectedPurok.value.id,
+      status,
+      surveyNotes.value,
+    );
+    closeDialog();
+    toast.success(`Survey submitted for ${selectedPurok.value.name}`);
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to submit survey");
+  } finally {
+    loading.value = false;
   }
-
-  closeDialog();
-  toast.success(`Survey submitted for ${selectedPurok.value.name}`);
 };
 
-const schedulePickup = async (purok: Purok) => {
+const schedulePickup = async (purok: PurokMonitoring) => {
   if (!authStore.userData?.id) {
     toast.error("User not authenticated");
     return;
@@ -82,11 +73,11 @@ const schedulePickup = async (purok: Purok) => {
       status: "pending",
       garbage_type: "E-Waste",
       notes: "Scheduled from E-Waste Monitoring Survey",
+      purok: purok.name, // Link collection to purok name
     });
 
     if (newCollection) {
-      purok.status = "pickup_scheduled";
-      purok.collectionId = newCollection.id;
+      await collectionsStore.linkPurokCollection(purok.id, newCollection.id);
       toast.success(`Pickup scheduled for ${purok.name}`);
     }
   } catch (error) {
@@ -176,8 +167,8 @@ const getStatusText = (status: PurokStatus) => {
             </td>
             <td class="text-medium-emphasis">
               {{
-                purok.lastSurveyed
-                  ? purok.lastSurveyed.toLocaleTimeString([], {
+                purok.last_surveyed
+                  ? new Date(purok.last_surveyed).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                     })

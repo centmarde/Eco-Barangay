@@ -47,16 +47,20 @@ const closeDialog = () => {
 const submitSurvey = async (hasWaste: boolean) => {
   if (!selectedPurok.value) return;
 
+  const purokName = selectedPurok.value.name;
   loading.value = true;
   try {
     const status = hasWaste ? "needs_pickup" : "clean";
-    await collectionsStore.updatePurokStatus(
+    const result = await collectionsStore.updatePurokStatus(
       selectedPurok.value.id,
       status,
       surveyNotes.value,
     );
-    closeDialog();
-    toast.success(`Survey submitted for ${selectedPurok.value.name}`);
+
+    if (result) {
+      closeDialog();
+      toast.success(`Survey submitted for ${purokName}`);
+    }
   } catch (error) {
     console.error(error);
     toast.error("Failed to submit survey");

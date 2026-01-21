@@ -1,112 +1,3 @@
-<template>
-  <v-dialog v-model="internalDialog" max-width="600px" persistent scrollable>
-    <v-card>
-      <v-card-title class="text-h5 pa-4 bg-primary">
-        <span class="text-white">Request Collection</span>
-      </v-card-title>
-
-      <v-divider></v-divider>
-
-      <v-card-text class="pa-6">
-        <v-form ref="formRef" v-model="isFormValid">
-          <v-row>
-            <!-- Purok Field -->
-            <v-col cols="12">
-              <v-select
-                v-model="formData.purok"
-                label="Purok"
-                :items="PUROK_OPTIONS"
-                placeholder="Select Purok"
-                :rules="[rules.required]"
-                required
-                outlined
-                dense
-              ></v-select>
-            </v-col>
-
-            <!-- Address Field -->
-            <v-col cols="12">
-              <v-textarea
-                v-model="formData.address"
-                label="Pickup Address"
-                placeholder="Enter the complete address for garbage collection"
-                rows="3"
-                :rules="[rules.required]"
-                required
-                outlined
-                dense
-              ></v-textarea>
-            </v-col>
-
-            <!-- Garbage Type Field -->
-            <v-col cols="12">
-              <v-select
-                v-model="formData.garbage_type"
-                label="Garbage Type"
-                :items="garbageTypesWithIcons"
-                item-title="text"
-                item-value="value"
-                :rules="[rules.required]"
-                required
-                outlined
-                dense
-              >
-                <template v-slot:selection="{ item }">
-                  <v-icon
-                    :icon="item.raw.icon"
-                    size="small"
-                    class="mr-2"
-                  ></v-icon>
-                  {{ item.raw.text }}
-                </template>
-                <template v-slot:item="{ props, item }">
-                  <v-list-item v-bind="props" :prepend-icon="item.raw.icon">
-                  </v-list-item>
-                </template>
-              </v-select>
-            </v-col>
-
-            <!-- Additional Notes (Optional) -->
-            <v-col cols="12">
-              <v-textarea
-                v-model="formData.notes"
-                label="Additional Notes (Optional)"
-                placeholder="Any special instructions or details"
-                rows="2"
-                outlined
-                dense
-              ></v-textarea>
-            </v-col>
-          </v-row>
-        </v-form>
-      </v-card-text>
-
-      <v-divider></v-divider>
-
-      <v-card-actions class="pa-4">
-        <v-spacer></v-spacer>
-        <v-btn
-          color="grey"
-          variant="text"
-          @click="closeDialog"
-          :disabled="loading"
-        >
-          Cancel
-        </v-btn>
-        <v-btn
-          color="primary"
-          variant="flat"
-          @click="submitRequest"
-          :loading="loading"
-          :disabled="!isFormValid || loading"
-        >
-          Submit Request
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
-</template>
-
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { useCollectionsStore } from "@/stores/collectionsData";
@@ -240,6 +131,115 @@ watch(
   },
 );
 </script>
+
+<template>
+  <v-dialog v-model="internalDialog" max-width="600px" persistent scrollable>
+    <v-card>
+      <v-card-title class="text-h5 pa-4 bg-primary">
+        <span class="text-white">Request Collection</span>
+      </v-card-title>
+
+      <v-divider></v-divider>
+
+      <v-card-text class="pa-6">
+        <v-form ref="formRef" v-model="isFormValid">
+          <v-row>
+            <!-- Purok Field -->
+            <v-col cols="12">
+              <v-select
+                v-model="formData.purok"
+                label="Purok"
+                :items="PUROK_OPTIONS"
+                placeholder="Select Purok"
+                :rules="[rules.required]"
+                required
+                outlined
+                dense
+              ></v-select>
+            </v-col>
+
+            <!-- Address Field -->
+            <v-col cols="12">
+              <v-textarea
+                v-model="formData.address"
+                label="Pickup Address"
+                placeholder="Enter the complete address for garbage collection"
+                rows="3"
+                :rules="[rules.required]"
+                required
+                outlined
+                dense
+              ></v-textarea>
+            </v-col>
+
+            <!-- Garbage Type Field -->
+            <v-col cols="12">
+              <v-select
+                v-model="formData.garbage_type"
+                label="Garbage Type"
+                :items="garbageTypesWithIcons"
+                item-title="text"
+                item-value="value"
+                :rules="[rules.required]"
+                required
+                outlined
+                dense
+              >
+                <template v-slot:selection="{ item }">
+                  <v-icon
+                    :icon="item.raw.icon"
+                    size="small"
+                    class="mr-2"
+                  ></v-icon>
+                  {{ item.raw.text }}
+                </template>
+                <template v-slot:item="{ props, item }">
+                  <v-list-item v-bind="props" :prepend-icon="item.raw.icon">
+                  </v-list-item>
+                </template>
+              </v-select>
+            </v-col>
+
+            <!-- Additional Notes (Optional) -->
+            <v-col cols="12">
+              <v-textarea
+                v-model="formData.notes"
+                label="Additional Notes (Optional)"
+                placeholder="Any special instructions or details"
+                rows="2"
+                outlined
+                dense
+              ></v-textarea>
+            </v-col>
+          </v-row>
+        </v-form>
+      </v-card-text>
+
+      <v-divider></v-divider>
+
+      <v-card-actions class="pa-4">
+        <v-spacer></v-spacer>
+        <v-btn
+          color="grey"
+          variant="text"
+          @click="closeDialog"
+          :disabled="loading"
+        >
+          Cancel
+        </v-btn>
+        <v-btn
+          color="primary"
+          variant="flat"
+          @click="submitRequest"
+          :loading="loading"
+          :disabled="!isFormValid || loading"
+        >
+          Submit Request
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+</template>
 
 <style scoped lang="scss">
 .v-card-title {

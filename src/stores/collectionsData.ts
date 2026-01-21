@@ -623,7 +623,8 @@ export const useCollectionsStore = defineStore("collections", () => {
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to create collection";
-      toast.error("Failed to create collection");
+      console.error("Create collection error:", err);
+      toast.error(`Failed to create collection: ${error.value}`);
       return undefined;
     } finally {
       loading.value = false;
@@ -670,6 +671,61 @@ export const useCollectionsStore = defineStore("collections", () => {
     const result = await updateCollection(id, { status });
 
     if (result) {
+      // Update Purok Monitoring status if linked
+      try {
+        if (status === "completed") {
+          // If collection is completed, the purok is now clean
+          const { error: purokError } = await supabase
+            .from("purok_monitoring")
+            .update({
+              status: "clean",
+              collection_id: null,
+              last_surveyed: new Date().toISOString(),
+            })
+            .eq("collection_id", id);
+
+          if (!purokError) {
+            // Update local state if it exists
+            const index = purokMonitoring.value.findIndex(
+              (p) => p.collection_id === id,
+            );
+            if (index !== -1) {
+              purokMonitoring.value[index] = {
+                ...purokMonitoring.value[index],
+                status: "clean",
+                collection_id: undefined,
+                last_surveyed: new Date().toISOString(),
+              };
+            }
+          }
+        } else if (status === "cancelled") {
+          // If collection is cancelled, the purok still needs pickup
+          const { error: purokError } = await supabase
+            .from("purok_monitoring")
+            .update({
+              status: "needs_pickup",
+              collection_id: null,
+            })
+            .eq("collection_id", id);
+
+          if (!purokError) {
+            // Update local state if it exists
+            const index = purokMonitoring.value.findIndex(
+              (p) => p.collection_id === id,
+            );
+            if (index !== -1) {
+              purokMonitoring.value[index] = {
+                ...purokMonitoring.value[index],
+                status: "needs_pickup",
+                collection_id: undefined,
+              };
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error updating related purok status:", err);
+      }
+
       const notificationsStore = useNotificationsStore();
 
       // Notify requester
@@ -758,6 +814,23 @@ export const useCollectionsStore = defineStore("collections", () => {
     error.value = undefined;
 
     try {
+      // Find linked purok first (before deleting)
+      let linkedPurokId: number | null = null;
+      if (purokMonitoring.value.length === 0) {
+        // Fetch if not loaded
+        const { data } = await supabase
+          .from("purok_monitoring")
+          .select("id")
+          .eq("collection_id", id)
+          .single();
+        if (data) linkedPurokId = data.id;
+      } else {
+        const found = purokMonitoring.value.find((p) => p.collection_id === id);
+        if (found) linkedPurokId = found.id;
+      }
+
+      // Delete the collection
+      // Note: Foreign key is ON DELETE SET NULL, so this will succeed even if linked
       const { error: deleteError } = await supabase
         .from("collections")
         .delete()
@@ -765,13 +838,41 @@ export const useCollectionsStore = defineStore("collections", () => {
 
       if (deleteError) throw deleteError;
 
+      // Collection deleted successfully
       collections.value = collections.value.filter((c) => c.id !== id);
+
+      // Now update the purok status if it was linked
+      if (linkedPurokId) {
+        // Update local state
+        const index = purokMonitoring.value.findIndex(
+          (p) => p.id === linkedPurokId,
+        );
+        if (index !== -1) {
+          purokMonitoring.value[index] = {
+            ...purokMonitoring.value[index],
+            status: "needs_pickup",
+            collection_id: undefined,
+          };
+        }
+
+        // Update DB
+        // We update by Purok ID since collection_id is now NULL
+        await supabase
+          .from("purok_monitoring")
+          .update({
+            status: "needs_pickup",
+            collection_id: null,
+          })
+          .eq("id", linkedPurokId);
+      }
+
       toast.success("Collection deleted successfully");
       return true;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to delete collection";
-      toast.error("Failed to delete collection");
+      console.error("Delete collection error:", err);
+      toast.error(`Failed to delete collection: ${error.value}`);
       return false;
     } finally {
       loading.value = false;

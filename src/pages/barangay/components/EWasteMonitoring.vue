@@ -5,6 +5,7 @@ import { useCollectionsStore } from "@/stores/collectionsData";
 import { useAuthUserStore } from "@/stores/authUser";
 import { useToast } from "vue-toastification";
 import type { PurokStatus, PurokMonitoring } from "@/stores/collectionsData";
+import CollectionSenderDialog from "@/pages/residents/dialogs/CollectionSenderDialog.vue";
 
 // Stores and Composables
 const collectionsStore = useCollectionsStore();
@@ -16,6 +17,11 @@ const dialog = ref(false);
 const selectedPurok = ref<PurokMonitoring | null>(null);
 const loading = ref(false);
 const surveyNotes = ref("");
+
+// Collection Dialog State
+const collectionDialog = ref(false);
+const schedulingPurok = ref<PurokMonitoring | null>(null);
+const prefilledData = ref({});
 
 // Computed
 const hasNeedsPickup = computed(() => {
@@ -59,32 +65,38 @@ const submitSurvey = async (hasWaste: boolean) => {
   }
 };
 
-const schedulePickup = async (purok: PurokMonitoring) => {
+const schedulePickup = (purok: PurokMonitoring) => {
   if (!authStore.userData?.id) {
     toast.error("User not authenticated");
     return;
   }
 
-  loading.value = true;
-  try {
-    const newCollection = await collectionsStore.createCollection({
-      address: `E-Waste Pickup - ${purok.name}`,
-      request_by: authStore.userData.id,
-      status: "pending",
-      garbage_type: "E-Waste",
-      notes: "Scheduled from E-Waste Monitoring Survey",
-      purok: purok.name, // Link collection to purok name
-    });
+  schedulingPurok.value = purok;
+  prefilledData.value = {
+    purok: purok.name,
+    notes:
+      "Scheduled from E-Waste Monitoring Survey" +
+      (purok.notes ? `: ${purok.notes}` : ""),
+  };
+  collectionDialog.value = true;
+};
 
-    if (newCollection) {
-      await collectionsStore.linkPurokCollection(purok.id, newCollection.id);
-      toast.success(`Pickup scheduled for ${purok.name}`);
-    }
+const handleCollectionCreated = async (collection: any) => {
+  if (!schedulingPurok.value || !collection) return;
+
+  try {
+    loading.value = true;
+    await collectionsStore.linkPurokCollection(
+      schedulingPurok.value.id,
+      collection.id,
+    );
+    toast.success(`Pickup scheduled for ${schedulingPurok.value.name}`);
   } catch (error) {
-    console.error(error);
-    toast.error("Failed to schedule pickup");
+    console.error("Error linking collection:", error);
+    toast.error("Pickup created but failed to update monitoring status");
   } finally {
     loading.value = false;
+    schedulingPurok.value = null;
   }
 };
 
@@ -254,5 +266,12 @@ const getStatusText = (status: PurokStatus) => {
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Collection Sender Dialog -->
+    <CollectionSenderDialog
+      v-model="collectionDialog"
+      :initial-data="prefilledData"
+      @collection-created="handleCollectionCreated"
+    />
   </v-card>
 </template>

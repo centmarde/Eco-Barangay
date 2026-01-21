@@ -13,11 +13,15 @@ import {
 // Props & Emits
 const props = defineProps<{
   modelValue: boolean;
+  initialData?: {
+    purok?: string;
+    notes?: string;
+  };
 }>();
 
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
-  "collection-created": [];
+  "collection-created": [collection: any];
 }>();
 
 // Stores
@@ -111,7 +115,7 @@ const submitRequest = async () => {
     const result = await collectionsStore.createCollection(collectionData);
 
     if (result) {
-      emit("collection-created");
+      emit("collection-created", result);
       closeDialog();
     }
   } catch (error) {
@@ -127,6 +131,10 @@ watch(
   (newValue) => {
     if (!newValue) {
       resetForm();
+    } else if (props.initialData) {
+      // Pre-fill form if initialData is provided
+      formData.value.purok = props.initialData.purok || "";
+      // Only purok is pre-filled as requested
     }
   },
 );

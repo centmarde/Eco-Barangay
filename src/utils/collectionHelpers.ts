@@ -74,7 +74,7 @@ export const getGarbageTypeColor = (type: string): string => {
     hazardous: "warning",
     "computers & laptops": "primary",
     "mobile phones & tablets": "info",
-    "televisions & monitors": "secondary",
+    "televisions & monitors": "deep-orange",
     "printers & scanners": "accent",
     "kitchen appliances": "success",
     "batteries & chargers": "warning",

@@ -1,10 +1,27 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
 import { useDisplay } from "vuetify";
 import { useAuthUserStore } from "@/stores/authUser";
+import { useUserRolesStore } from "@/stores/roles";
 
 const authStore = useAuthUserStore();
+const rolesStore = useUserRolesStore();
 const { mobile } = useDisplay();
+
+onMounted(async () => {
+    // Ensure we have roles loaded to map the ID
+    if (rolesStore.roles.length === 0) {
+        await rolesStore.fetchRoles();
+    }
+});
+
+const roleTitle = computed(() => {
+    const roleId = authStore.userRole;
+    if (!roleId) return "Administrator"; // Fallback
+    
+    const role = rolesStore.roles.find(r => r.id === roleId);
+    return role?.title || "Administrator";
+});
 </script>
 
 <template>
@@ -37,7 +54,7 @@ const { mobile } = useDisplay();
           prepend-icon="mdi-shield-check"
           :size="mobile ? 'default' : 'large'"
         >
-          Administrator
+          {{ roleTitle }}
         </v-chip>
       </div>
     </v-col>

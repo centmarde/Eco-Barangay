@@ -2,15 +2,15 @@
  * Electronic waste classifications
  */
 export const ELECTRONIC_WASTE_TYPES = [
-  'Computers & Laptops',
-  'Mobile Phones & Tablets',
-  'Televisions & Monitors',
-  'Printers & Scanners',
-  'Kitchen Appliances',
-  'Batteries & Chargers',
-  'Audio & Video Equipment',
-  'Gaming Consoles',
-  'Other Electronics',
+  "Computers & Laptops",
+  "Mobile Phones & Tablets",
+  "Televisions & Monitors",
+  "Printers & Scanners",
+  "Kitchen Appliances",
+  "Batteries & Chargers",
+  "Audio & Video Equipment",
+  "Gaming Consoles",
+  "Other Electronics",
 ] as const;
 
 /**
@@ -115,13 +115,21 @@ export const getGarbageTypeIcon = (type: string): string => {
  * @param garbageType - The garbage type
  * @returns Validation result with error message if invalid
  */
-export const validateCollectionRequest = (address: string, garbageType: string): { valid: boolean; error?: string } => {
+export const validateCollectionRequest = (
+  purok: string,
+  address: string,
+  garbageType: string,
+): { valid: boolean; error?: string } => {
+  if (!purok || purok.trim().length === 0) {
+    return { valid: false, error: "Purok is required" };
+  }
+
   if (!address || address.trim().length === 0) {
-    return { valid: false, error: 'Pickup address is required' };
+    return { valid: false, error: "Pickup address is required" };
   }
 
   if (!garbageType || garbageType.trim().length === 0) {
-    return { valid: false, error: 'Garbage type is required' };
+    return { valid: false, error: "Garbage type is required" };
   }
 
   return { valid: true };

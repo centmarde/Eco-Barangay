@@ -10,6 +10,7 @@ export type Collection = {
   id: number;
   created_at: string;
   address: string;
+  purok?: string;
   request_by: string;
   collector_assign: string | null;
   status: string;
@@ -55,6 +56,7 @@ export type CollectionWithUsers = Collection & {
 
 export type CreateCollectionData = {
   address: string;
+  purok?: string;
   request_by: string;
   collector_assign?: string | null;
   status: string;
@@ -64,6 +66,7 @@ export type CreateCollectionData = {
 
 export type UpdateCollectionData = {
   address?: string;
+  purok?: string;
   request_by?: string;
   collector_assign?: string;
   status?: string;

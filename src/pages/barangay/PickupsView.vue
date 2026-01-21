@@ -59,7 +59,10 @@ const filteredCollections = computed(() => {
     );
   }
 
-  return filtered;
+  return filtered.map((item) => ({
+    ...item,
+    purok: item.purok || "",
+  })) as Collection[];
 });
 
 const statusOptions = computed(() => {

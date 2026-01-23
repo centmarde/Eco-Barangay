@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "vue-toastification";
 
 // Type definitions
 export type Feedback = {
@@ -31,8 +30,6 @@ export type UpdateFeedbackData = {
 };
 
 export const useFeedbackStore = defineStore("feedback", () => {
-  const toast = useToast();
-
   // State
   const feedbacks = ref<Feedback[]>([]);
   const currentFeedback = ref<Feedback | undefined>(undefined);
@@ -56,7 +53,6 @@ export const useFeedbackStore = defineStore("feedback", () => {
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to fetch feedbacks";
-      toast.error("Failed to fetch feedbacks");
     } finally {
       loading.value = false;
     }
@@ -112,7 +108,6 @@ export const useFeedbackStore = defineStore("feedback", () => {
         err instanceof Error
           ? err.message
           : "Failed to fetch feedbacks with users";
-      toast.error("Failed to fetch feedbacks with users");
       return [];
     } finally {
       loading.value = false;
@@ -137,7 +132,6 @@ export const useFeedbackStore = defineStore("feedback", () => {
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to fetch feedback";
-      toast.error("Failed to fetch feedback");
       return undefined;
     } finally {
       loading.value = false;
@@ -163,7 +157,6 @@ export const useFeedbackStore = defineStore("feedback", () => {
         err instanceof Error
           ? err.message
           : "Failed to fetch feedbacks by user";
-      toast.error("Failed to fetch feedbacks by user");
       return [];
     } finally {
       loading.value = false;
@@ -189,7 +182,6 @@ export const useFeedbackStore = defineStore("feedback", () => {
         err instanceof Error
           ? err.message
           : "Failed to fetch feedbacks by collection";
-      toast.error("Failed to fetch feedbacks by collection");
       return [];
     } finally {
       loading.value = false;
@@ -222,7 +214,6 @@ export const useFeedbackStore = defineStore("feedback", () => {
         err instanceof Error
           ? err.message
           : "Failed to fetch feedbacks by rating";
-      toast.error("Failed to fetch feedbacks by rating");
       return [];
     } finally {
       loading.value = false;
@@ -252,7 +243,6 @@ export const useFeedbackStore = defineStore("feedback", () => {
         err instanceof Error
           ? err.message
           : "Failed to calculate average rating";
-      toast.error("Failed to calculate average rating");
       return 0;
     } finally {
       loading.value = false;
@@ -276,12 +266,10 @@ export const useFeedbackStore = defineStore("feedback", () => {
         feedbacks.value.unshift(data);
       }
 
-      toast.success("Feedback created successfully");
       return data;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to create feedback";
-      toast.error("Failed to create feedback");
       return undefined;
     } finally {
       loading.value = false;
@@ -312,12 +300,10 @@ export const useFeedbackStore = defineStore("feedback", () => {
         }
       }
 
-      toast.success("Feedback updated successfully");
       return data;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to update feedback";
-      toast.error("Failed to update feedback");
       return undefined;
     } finally {
       loading.value = false;
@@ -337,12 +323,10 @@ export const useFeedbackStore = defineStore("feedback", () => {
       if (deleteError) throw deleteError;
 
       feedbacks.value = feedbacks.value.filter((f) => f.id !== id);
-      toast.success("Feedback deleted successfully");
       return true;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to delete feedback";
-      toast.error("Failed to delete feedback");
       return false;
     } finally {
       loading.value = false;
@@ -362,12 +346,10 @@ export const useFeedbackStore = defineStore("feedback", () => {
       if (deleteError) throw deleteError;
 
       feedbacks.value = feedbacks.value.filter((f) => f.user_id !== userId);
-      toast.success("User feedbacks deleted successfully");
       return true;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to delete user feedbacks";
-      toast.error("Failed to delete user feedbacks");
       return false;
     } finally {
       loading.value = false;
@@ -389,14 +371,12 @@ export const useFeedbackStore = defineStore("feedback", () => {
       feedbacks.value = feedbacks.value.filter(
         (f) => f.collection_id !== collectionId
       );
-      toast.success("Collection feedbacks deleted successfully");
       return true;
     } catch (err) {
       error.value =
         err instanceof Error
           ? err.message
           : "Failed to delete collection feedbacks";
-      toast.error("Failed to delete collection feedbacks");
       return false;
     } finally {
       loading.value = false;

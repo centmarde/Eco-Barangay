@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { supabase, supabaseAdmin } from "@/lib/supabase";
-import { useToast } from "vue-toastification";
 
 // Type definitions
 export interface DashboardStats {
@@ -31,8 +30,6 @@ export interface QuickAction {
 }
 
 export const useDashboardStore = defineStore("dashboard", () => {
-  const toast = useToast();
-
   // State
   const dashboardStats = ref<DashboardStats>({
     totalUsers: 0,
@@ -110,7 +107,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
       if (usersError) throw usersError;
 
       const totalUsers = usersData?.users?.length || 0;
-      
+
       // Filter collectors (assuming role 4 is collector)
       // Note: Adjust the role check if your metadata structure is different
       const activeCollectors = usersData?.users?.filter(
@@ -123,7 +120,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         .from("collections")
         .select("*", { count: "exact", head: true })
         .eq("status", "pending");
-      
+
       if (pendingError) console.error("Error fetching pending requests:", pendingError);
 
       // Completed
@@ -158,7 +155,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
       console.error("Error loading dashboard data:", err);
       error.value =
         err instanceof Error ? err.message : "Failed to load dashboard data";
-      toast.error("Failed to load dashboard data");
     } finally {
       loading.value = false;
     }

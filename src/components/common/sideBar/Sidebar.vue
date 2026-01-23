@@ -38,6 +38,9 @@ const collectorsGroupExpanded = ref(true)
 // Control barangay officials group expansion - make it persistent
 const barangayGroupExpanded = ref(true)
 
+// Control residents group expansion - make it persistent
+const residentsGroupExpanded = ref(true)
+
 // Watch for route changes and keep admin group expanded if we're on an admin route
 watch(
   () => route.path,
@@ -56,6 +59,9 @@ watch(
     }
     if (newPath.startsWith('/barangay')) {
       barangayGroupExpanded.value = true
+    }
+    if (newPath.startsWith('/residents')) {
+      residentsGroupExpanded.value = true
     }
   },
   { immediate: true }
@@ -96,6 +102,7 @@ const getGroupExpansion = (groupTitle: string) => {
   if (groupTitle === 'My Account') return myAccountGroupExpanded
   if (groupTitle === 'Collectors') return collectorsGroupExpanded
   if (groupTitle === 'Barangay Officials') return barangayGroupExpanded
+  if (groupTitle === 'Residents') return residentsGroupExpanded
   return ref(true)
 }
 

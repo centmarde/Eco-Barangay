@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "vue-toastification";
 
 // Type definitions
 export type Announcement = {
@@ -25,8 +24,6 @@ export type UpdateAnnouncementData = {
 };
 
 export const useAnnouncementsStore = defineStore("announcements", () => {
-  const toast = useToast();
-
   // State
   const announcements = ref<Announcement[]>([]);
   const currentAnnouncement = ref<Announcement | undefined>(undefined);
@@ -50,7 +47,6 @@ export const useAnnouncementsStore = defineStore("announcements", () => {
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to fetch announcements";
-      toast.error("Failed to fetch announcements");
     } finally {
       loading.value = false;
     }
@@ -74,7 +70,6 @@ export const useAnnouncementsStore = defineStore("announcements", () => {
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to fetch announcement";
-      toast.error("Failed to fetch announcement");
       return undefined;
     } finally {
       loading.value = false;
@@ -100,7 +95,6 @@ export const useAnnouncementsStore = defineStore("announcements", () => {
         err instanceof Error
           ? err.message
           : "Failed to fetch recent announcements";
-      toast.error("Failed to fetch recent announcements");
       return [];
     } finally {
       loading.value = false;
@@ -124,7 +118,6 @@ export const useAnnouncementsStore = defineStore("announcements", () => {
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to search announcements";
-      toast.error("Failed to search announcements");
       return [];
     } finally {
       loading.value = false;
@@ -150,12 +143,10 @@ export const useAnnouncementsStore = defineStore("announcements", () => {
         announcements.value.unshift(data);
       }
 
-      toast.success("Announcement created successfully");
       return data;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to create announcement";
-      toast.error("Failed to create announcement");
       return undefined;
     } finally {
       loading.value = false;
@@ -186,12 +177,10 @@ export const useAnnouncementsStore = defineStore("announcements", () => {
         }
       }
 
-      toast.success("Announcement updated successfully");
       return data;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to update announcement";
-      toast.error("Failed to update announcement");
       return undefined;
     } finally {
       loading.value = false;
@@ -211,12 +200,10 @@ export const useAnnouncementsStore = defineStore("announcements", () => {
       if (deleteError) throw deleteError;
 
       announcements.value = announcements.value.filter((a) => a.id !== id);
-      toast.success("Announcement deleted successfully");
       return true;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to delete announcement";
-      toast.error("Failed to delete announcement");
       return false;
     } finally {
       loading.value = false;
@@ -238,12 +225,10 @@ export const useAnnouncementsStore = defineStore("announcements", () => {
       announcements.value = announcements.value.filter(
         (a) => !ids.includes(a.id)
       );
-      toast.success(`${ids.length} announcements deleted successfully`);
       return true;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to delete announcements";
-      toast.error("Failed to delete announcements");
       return false;
     } finally {
       loading.value = false;

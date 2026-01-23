@@ -54,9 +54,12 @@ declare module 'vue-router/auto-routes' {
     '/HomeView': RouteRecordInfo<'/HomeView', '/HomeView', Record<never, never>, Record<never, never>>,
     '/NotFound': RouteRecordInfo<'/NotFound', '/NotFound', Record<never, never>, Record<never, never>>,
     '/residents/AnnouncementsWidget': RouteRecordInfo<'/residents/AnnouncementsWidget', '/residents/AnnouncementsWidget', Record<never, never>, Record<never, never>>,
+    '/residents/CollectionRequestWidget': RouteRecordInfo<'/residents/CollectionRequestWidget', '/residents/CollectionRequestWidget', Record<never, never>, Record<never, never>>,
     '/residents/CollectionSender': RouteRecordInfo<'/residents/CollectionSender', '/residents/CollectionSender', Record<never, never>, Record<never, never>>,
     '/residents/DailyAnnouncement': RouteRecordInfo<'/residents/DailyAnnouncement', '/residents/DailyAnnouncement', Record<never, never>, Record<never, never>>,
     '/residents/dialogs/AnnouncementDetailDialog': RouteRecordInfo<'/residents/dialogs/AnnouncementDetailDialog', '/residents/dialogs/AnnouncementDetailDialog', Record<never, never>, Record<never, never>>,
     '/residents/dialogs/CollectionSenderDialog': RouteRecordInfo<'/residents/dialogs/CollectionSenderDialog', '/residents/dialogs/CollectionSenderDialog', Record<never, never>, Record<never, never>>,
+    '/residents/dialogs/MyCollectionsDialog': RouteRecordInfo<'/residents/dialogs/MyCollectionsDialog', '/residents/dialogs/MyCollectionsDialog', Record<never, never>, Record<never, never>>,
+    '/residents/MyCollectionsWidget': RouteRecordInfo<'/residents/MyCollectionsWidget', '/residents/MyCollectionsWidget', Record<never, never>, Record<never, never>>,
   }
 }

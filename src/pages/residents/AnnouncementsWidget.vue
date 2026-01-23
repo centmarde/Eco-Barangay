@@ -42,140 +42,122 @@ const getTimeAgo = (dateString: string) => {
 </script>
 
 <template>
-  <v-container fluid :class="xs ? 'pa-2' : sm ? 'pa-3' : 'pa-4'">
+  <div>
     <!-- Header Section -->
-    <v-row :class="xs ? 'mb-3' : sm ? 'mb-4' : 'mb-6'">
-      <v-col cols="12">
-        <v-sheet
-          color="green-darken-2"
-          elevation="4"
-          rounded="lg"
-          :class="xs ? 'pa-3' : sm ? 'pa-4' : 'pa-6'"
-        >
-          <v-row align="center" justify="space-between" no-gutters>
-            <v-col cols="12" md="auto">
-              <div :class="xs ? 'd-flex align-center' : 'd-flex align-center'">
-                <v-avatar
-                  color="white"
-                  :size="xs ? 32 : sm ? 40 : 64"
-                  :class="xs ? 'mr-3' : sm ? 'mr-3' : 'mr-4'"
-                >
-                  <v-icon
-                    icon="mdi-bullhorn"
-                    :size="xs ? 18 : sm ? 24 : 40"
-                    color="green-darken-2"
-                  />
-                </v-avatar>
-                <div>
-                  <v-card-title
-                    :class="[
-                      xs ? 'text-subtitle-1' : sm ? 'text-h6' : 'text-h4',
-                      'font-weight-bold text-white pa-0'
-                    ]"
-                  >
-                    {{ xs ? 'Announcements' : 'Community Announcements' }}
-                  </v-card-title>
-                  <v-card-subtitle
-                    v-if="!xs"
-                    :class="[
-                      sm ? 'text-body-2' : 'text-subtitle-1',
-                      'text-white pa-0 mt-1'
-                    ]"
-                  >
-                    Stay updated with the latest news from your barangay
-                  </v-card-subtitle>
-                </div>
-              </div>
-            </v-col>
-            <v-col
-              cols="12"
-              md="auto"
-              :class="xs ? 'mt-2 d-flex justify-start' : sm ? 'mt-3 d-flex justify-center' : 'mt-4 mt-md-0'"
+    <div class="mb-6">
+      <div class="d-flex align-center justify-space-between mb-4">
+        <div class="d-flex align-center">
+          <v-avatar
+            color="green-darken-2"
+            :size="xs ? 40 : sm ? 48 : 56"
+            class="mr-4"
+          >
+            <v-icon
+              icon="mdi-bullhorn"
+              :size="xs ? 20 : sm ? 24 : 28"
+              color="white"
+            />
+          </v-avatar>
+          <div>
+            <h2
+              :class="[
+                xs ? 'text-h6' : sm ? 'text-h5' : 'text-h4',
+                'font-weight-bold text-green-darken-2 mb-1'
+              ]"
             >
-              <v-chip
-                v-if="announcements.length"
-                color="white"
-                :size="xs ? 'small' : sm ? 'default' : 'large'"
-                :class="xs ? 'font-weight-medium text-caption' : 'font-weight-bold'"
-              >
-                <v-icon
-                  icon="mdi-bell-ring"
-                  start
-                  :size="xs ? 'small' : 'default'"
-                />
-                {{ announcements.length }} {{ xs ? '' : 'New' }}
-              </v-chip>
-            </v-col>
-          </v-row>
-        </v-sheet>
-      </v-col>
-    </v-row>
+              {{ xs ? 'Announcements' : 'Community Announcements' }}
+            </h2>
+            <p
+              v-if="!xs"
+              :class="[
+                sm ? 'text-body-2' : 'text-body-1',
+                'text-grey-darken-1 ma-0'
+              ]"
+            >
+              Stay updated with the latest news from your barangay
+            </p>
+          </div>
+        </div>
+        <v-chip
+          v-if="announcements.length"
+          color="green-darken-2"
+          :size="xs ? 'small' : sm ? 'default' : 'large'"
+          class="font-weight-bold"
+        >
+          <v-icon
+            icon="mdi-bell-ring"
+            start
+            :size="xs ? 'small' : 'default'"
+          />
+          {{ announcements.length }} {{ xs ? '' : 'New' }}
+        </v-chip>
+      </div>
+      <v-divider class="border-opacity-25"></v-divider>
+    </div>
 
     <!-- Loading State -->
-    <v-row v-if="loading">
-      <v-col v-for="i in 6" :key="i" cols="12" sm="6" md="4">
-        <v-skeleton-loader
-          type="card, article"
-          elevation="2"
-          rounded="lg"
-        />
-      </v-col>
-    </v-row>
+    <div v-if="loading" class="d-flex flex-wrap ga-4 mb-6">
+      <v-skeleton-loader
+        v-for="i in 6"
+        :key="i"
+        type="card, article"
+        elevation="2"
+        rounded="lg"
+        class="flex-grow-1"
+        style="min-width: 300px;"
+      />
+    </div>
 
     <!-- Error State -->
-    <v-row v-else-if="error">
-      <v-col cols="12">
-        <v-alert
-          type="error"
-          variant="tonal"
-          prominent
-          border="start"
-          icon="mdi-alert-circle"
-        >
-          <v-alert-title class="text-h6 mb-2">Error Loading Announcements</v-alert-title>
-          {{ error }}
-        </v-alert>
-      </v-col>
-    </v-row>
+    <div v-else-if="error" class="mb-6">
+      <v-alert
+        type="error"
+        variant="tonal"
+        prominent
+        border="start"
+        icon="mdi-alert-circle"
+      >
+        <v-alert-title class="text-h6 mb-2">Error Loading Announcements</v-alert-title>
+        {{ error }}
+      </v-alert>
+    </div>
 
     <!-- Empty State -->
-    <v-row v-else-if="!announcements.length">
-      <v-col cols="12">
-        <v-sheet
-          color="grey-lighten-4"
-          rounded="lg"
-          border
-          class="pa-12 text-center"
+    <div v-else-if="!announcements.length" class="mb-6">
+      <v-sheet
+        color="grey-lighten-4"
+        rounded="lg"
+        border
+        class="pa-12 text-center"
+      >
+        <v-avatar
+          color="grey-lighten-3"
+          size="120"
+          class="mb-6"
         >
-          <v-avatar
-            color="grey-lighten-3"
-            size="120"
-            class="mb-6"
-          >
-            <v-icon icon="mdi-bullhorn-outline" size="80" color="grey-darken-1" />
-          </v-avatar>
-          <v-card-title class="text-h5 font-weight-bold mb-3 justify-center">
-            No Announcements Yet
-          </v-card-title>
-          <v-card-subtitle class="text-body-1 text-grey-darken-1 mb-4">
-            Check back later for important updates and news from your barangay
-          </v-card-subtitle>
-          <v-btn
-            color="primary"
-            variant="tonal"
-            size="large"
-            prepend-icon="mdi-refresh"
-            @click="announcementsStore.fetchAnnouncements()"
-          >
-            Refresh
-          </v-btn>
-        </v-sheet>
-      </v-col>
-    </v-row>
+          <v-icon icon="mdi-bullhorn-outline" size="80" color="grey-darken-1" />
+        </v-avatar>
+        <h3 class="text-h5 font-weight-bold mb-3">
+          No Announcements Yet
+        </h3>
+        <p class="text-body-1 text-grey-darken-1 mb-4">
+          Check back later for important updates and news from your barangay
+        </p>
+        <v-btn
+          color="primary"
+          variant="tonal"
+          size="large"
+          prepend-icon="mdi-refresh"
+          @click="announcementsStore.fetchAnnouncements()"
+        >
+          Refresh
+        </v-btn>
+      </v-sheet>
+    </div>
 
     <!-- Announcements Carousel -->
-    <v-row v-else>
-      <v-col cols="12" md="8">
+    <div v-else class="d-flex flex-column flex-md-row ga-6">
+      <div class="flex-grow-1" style="flex-basis: 65%;">
         <v-carousel
           v-model="carouselModel"
           cycle
@@ -302,25 +284,21 @@ const getTimeAgo = (dateString: string) => {
         </v-carousel>
 
         <!-- Carousel Info -->
-        <v-row class="mt-4" justify="center">
-          <v-col cols="auto">
-            <v-chip
-              color="green-darken-2"
-              variant="tonal"
-              size="large"
-            >
-              <v-icon icon="mdi-image-multiple" start />
-              {{ carouselModel + 1 }} / {{ announcements.length }}
-            </v-chip>
-          </v-col>
-        </v-row>
-      </v-col>
+        <div class="mt-4 text-center">
+          <v-chip
+            color="green-darken-2"
+            variant="tonal"
+            size="large"
+          >
+            <v-icon icon="mdi-image-multiple" start />
+            {{ carouselModel + 1 }} / {{ announcements.length }}
+          </v-chip>
+        </div>
+      </div>
 
       <!-- System Introduction Column -->
-      <v-col v-if="systemInfo" cols="12" md="4">
-        <div
-
-        >
+      <div v-if="systemInfo" class="flex-shrink-0" style="flex-basis: 35%; min-width: 300px;">
+        <div class="pa-4 bg-grey-lighten-5 rounded-lg">
           <!-- Header -->
 
             <div class="d-flex align-center mb-2">
@@ -420,15 +398,15 @@ const getTimeAgo = (dateString: string) => {
             </div>
 
         </div>
-      </v-col>
-    </v-row>
+      </div>
+    </div>
 
     <!-- Announcement Detail Dialog -->
     <AnnouncementDetailDialog
       v-model="dialog"
       :selected-announcement="selectedAnnouncement"
     />
-  </v-container>
+  </div>
 </template>
 
 <style scoped>

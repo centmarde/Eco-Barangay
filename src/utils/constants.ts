@@ -33,3 +33,22 @@ export const FEEDBACK_RATING_THRESHOLDS = {
   FAIR: 2,
   POOR: 1,
 } as const;
+
+// ========================================
+// ADDRESS CONSTANTS
+// ========================================
+
+/**
+ * List of Puroks
+ */
+export const PUROK_OPTIONS = [
+  "Purok 1",
+  "Purok 2",
+  "Purok 3",
+  "Purok 4",
+  "Purok 5",
+  "Purok 6",
+  "Purok 7",
+  "Purok 8",
+  "Purok 9",
+];

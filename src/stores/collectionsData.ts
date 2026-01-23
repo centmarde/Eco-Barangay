@@ -2,17 +2,21 @@ import { supabase, supabaseAdmin } from "@/lib/supabase";
 import { useToast } from "vue-toastification";
 import { defineStore } from "pinia";
 import { ref } from "vue";
+import { useNotificationsStore } from "./notifications";
+import { useAuthUserStore } from "./authUser";
 
 // Type definitions
 export type Collection = {
   id: number;
   created_at: string;
   address: string;
+  purok?: string;
   request_by: string;
   collector_assign: string | null;
   status: string;
   garbage_type: string;
   notes?: string;
+  is_hazardous?: boolean;
 };
 
 export type Collector = {
@@ -53,20 +57,24 @@ export type CollectionWithUsers = Collection & {
 
 export type CreateCollectionData = {
   address: string;
+  purok?: string;
   request_by: string;
   collector_assign?: string | null;
   status: string;
   garbage_type: string;
   notes?: string;
+  is_hazardous?: boolean;
 };
 
 export type UpdateCollectionData = {
   address?: string;
+  purok?: string;
   request_by?: string;
   collector_assign?: string;
   status?: string;
   garbage_type?: string;
   notes?: string;
+  is_hazardous?: boolean;
 };
 
 export type StatusCounts = {
@@ -77,17 +85,139 @@ export type StatusCounts = {
   cancelled: number;
 };
 
+export type PurokStatus =
+  | "pending"
+  | "clean"
+  | "needs_pickup"
+  | "pickup_scheduled";
+
+export type PurokMonitoring = {
+  id: number;
+  name: string;
+  status: PurokStatus;
+  last_surveyed?: string;
+  collection_id?: number;
+  notes?: string;
+};
+
 export const useCollectionsStore = defineStore("collections", () => {
   const toast = useToast();
 
   // State
-  const collections = ref<Collection[]>([]);
+  const collections = ref<CollectionWithEmails[]>([]);
   const collectors = ref<Collector[]>([]);
+  const purokMonitoring = ref<PurokMonitoring[]>([]);
   const currentCollection = ref<Collection | undefined>(undefined);
   const loading = ref(false);
   const error = ref<string | undefined>(undefined);
 
   // Actions
+  const fetchPurokMonitoring = async () => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from("purok_monitoring")
+        .select("*")
+        .order("id", { ascending: true });
+
+      if (fetchError) throw fetchError;
+
+      purokMonitoring.value = data || [];
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : "Failed to fetch purok monitoring data";
+      toast.error("Failed to fetch purok monitoring data");
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const updatePurokStatus = async (
+    id: number,
+    status: PurokStatus,
+    notes?: string,
+  ) => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      const updates: any = {
+        status,
+        last_surveyed: new Date().toISOString(),
+      };
+
+      if (notes !== undefined) {
+        updates.notes = notes;
+      }
+
+      if (status === "clean" || status === "needs_pickup") {
+        updates.collection_id = null; // Reset collection link if status changes
+      }
+
+      const { data, error: updateError } = await supabase
+        .from("purok_monitoring")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      const index = purokMonitoring.value.findIndex((p) => p.id === id);
+      if (index !== -1 && data) {
+        purokMonitoring.value[index] = data;
+      }
+
+      return data;
+    } catch (err) {
+      error.value =
+        err instanceof Error ? err.message : "Failed to update purok status";
+      toast.error("Failed to update purok status");
+      return undefined;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const linkPurokCollection = async (id: number, collectionId: number) => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      const { data, error: updateError } = await supabase
+        .from("purok_monitoring")
+        .update({
+          status: "pickup_scheduled",
+          collection_id: collectionId,
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      const index = purokMonitoring.value.findIndex((p) => p.id === id);
+      if (index !== -1 && data) {
+        purokMonitoring.value[index] = data;
+      }
+
+      return data;
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : "Failed to link purok to collection";
+      toast.error("Failed to link purok to collection");
+      return undefined;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const fetchCollections = async () => {
     loading.value = true;
     error.value = undefined;
@@ -100,7 +230,9 @@ export const useCollectionsStore = defineStore("collections", () => {
 
       if (fetchError) throw fetchError;
 
-      collections.value = data || [];
+      // Cast to any to satisfy the type since we know it's compatible base type
+      // but might lack the email fields initially if using this generic fetch
+      collections.value = (data as any) || [];
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to fetch collections";
@@ -289,7 +421,7 @@ export const useCollectionsStore = defineStore("collections", () => {
             description,
             user_id
           )
-        `
+        `,
         )
         .eq("id", collectionId)
         .single();
@@ -326,7 +458,7 @@ export const useCollectionsStore = defineStore("collections", () => {
             description,
             user_id
           )
-        `
+        `,
         )
         .order("created_at", { ascending: false });
 
@@ -360,12 +492,12 @@ export const useCollectionsStore = defineStore("collections", () => {
 
       // Fetch requester details
       const { data: requester } = await supabase.auth.admin.getUserById(
-        collectionData.request_by
+        collectionData.request_by,
       );
 
       // Fetch collector details
       const { data: collector } = await supabase.auth.admin.getUserById(
-        collectionData.collector_assign
+        collectionData.collector_assign,
       );
 
       return {
@@ -487,16 +619,21 @@ export const useCollectionsStore = defineStore("collections", () => {
 
       if (createError) throw createError;
 
-      if (data) {
-        collections.value.unshift(data);
-      }
+      // Note: we don't need to manually update state here as realtime subscription will catch it
+      // but for immediate feedback we can optimistic update or let the sub handle it.
+      // Optimistic update:
+      // collections.value.unshift(data); 
+      // But we lack email data, so better let realtime fetch it or sub handle it.
+      // For now, keeping legacy behavior (unshift) but casting.
+      // collections.value.unshift(data as CollectionWithEmails);
 
       toast.success("Collection created successfully");
       return data;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to create collection";
-      toast.error("Failed to create collection");
+      console.error("Create collection error:", err);
+      toast.error(`Failed to create collection: ${error.value}`);
       return undefined;
     } finally {
       loading.value = false;
@@ -505,7 +642,7 @@ export const useCollectionsStore = defineStore("collections", () => {
 
   const updateCollection = async (
     id: number,
-    collectionData: UpdateCollectionData
+    collectionData: UpdateCollectionData,
   ) => {
     loading.value = true;
     error.value = undefined;
@@ -520,13 +657,8 @@ export const useCollectionsStore = defineStore("collections", () => {
 
       if (updateError) throw updateError;
 
-      if (data) {
-        const index = collections.value.findIndex((c) => c.id === id);
-        if (index !== -1) {
-          collections.value[index] = data;
-        }
-      }
-
+      // Realtime will handle the update
+      
       toast.success("Collection updated successfully");
       return data;
     } catch (err) {
@@ -540,11 +672,145 @@ export const useCollectionsStore = defineStore("collections", () => {
   };
 
   const updateCollectionStatus = async (id: number, status: string) => {
-    return await updateCollection(id, { status });
+    const result = await updateCollection(id, { status });
+
+    if (result) {
+      // Update Purok Monitoring status if linked
+      try {
+        if (status === "completed") {
+          // If collection is completed, the purok is now clean
+          const { error: purokError } = await supabase
+            .from("purok_monitoring")
+            .update({
+              status: "clean",
+              collection_id: null,
+              last_surveyed: new Date().toISOString(),
+            })
+            .eq("collection_id", id);
+
+          if (!purokError) {
+            // Update local state if it exists
+            const index = purokMonitoring.value.findIndex(
+              (p) => p.collection_id === id,
+            );
+            if (index !== -1) {
+              purokMonitoring.value[index] = {
+                ...purokMonitoring.value[index],
+                status: "clean",
+                collection_id: undefined,
+                last_surveyed: new Date().toISOString(),
+              };
+            }
+          }
+        } else if (status === "cancelled") {
+          // If collection is cancelled, the purok still needs pickup
+          const { error: purokError } = await supabase
+            .from("purok_monitoring")
+            .update({
+              status: "needs_pickup",
+              collection_id: null,
+            })
+            .eq("collection_id", id);
+
+          if (!purokError) {
+            // Update local state if it exists
+            const index = purokMonitoring.value.findIndex(
+              (p) => p.collection_id === id,
+            );
+            if (index !== -1) {
+              purokMonitoring.value[index] = {
+                ...purokMonitoring.value[index],
+                status: "needs_pickup",
+                collection_id: undefined,
+              };
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error updating related purok status:", err);
+      }
+
+      const notificationsStore = useNotificationsStore();
+
+      // Notify requester
+      await notificationsStore.createNotification(
+        {
+          user_id: result.request_by,
+          title: "Pickup Request Status Updated",
+          message: `Your pickup request at ${result.address} is now ${status}.`,
+          type: "info",
+        },
+        false,
+      );
+
+      // Notify Admins (Barangay Officials)
+      try {
+        const { data: usersData, error: usersError } =
+          await supabaseAdmin.auth.admin.listUsers();
+
+        if (!usersError && usersData?.users) {
+          const admins = usersData.users.filter(
+            (user: any) => user.user_metadata?.role === 1,
+          );
+
+          await Promise.all(
+            admins.map((admin: any) =>
+              notificationsStore.createNotification(
+                {
+                  user_id: admin.id,
+                  title: "Pickup Status Update",
+                  message: `Request at ${result.address} has been updated to ${status}.`,
+                  type: "info",
+                },
+                false,
+              ),
+            ),
+          );
+        }
+      } catch (err) {
+        console.error("Error notifying admins:", err);
+      }
+    }
+
+    return result;
   };
 
   const assignCollector = async (id: number, collectorId: string) => {
-    return await updateCollection(id, { collector_assign: collectorId });
+    const result = await updateCollection(id, {
+      collector_assign: collectorId,
+    });
+
+    if (result) {
+      const notificationsStore = useNotificationsStore();
+      const authStore = useAuthUserStore();
+      const currentUserId = authStore.userData?.id;
+
+      // Notify collector
+      await notificationsStore.createNotification(
+        {
+          user_id: collectorId,
+          title: "New Pickup Assignment",
+          message: `You have been assigned to a pickup request at ${result.address}.`,
+          type: "info",
+        },
+        false,
+      );
+
+      // Notify requester (only if the requester is NOT the one assigning)
+      if (result.request_by !== currentUserId) {
+        await notificationsStore.createNotification(
+          {
+            user_id: result.request_by,
+            title: "Collector Assigned",
+            message: `A collector has been assigned to your pickup request at ${result.address}.`,
+            type: "success",
+          },
+          false,
+        );
+      }
+    }
+
+    return result;
   };
 
   const deleteCollection = async (id: number) => {
@@ -552,6 +818,23 @@ export const useCollectionsStore = defineStore("collections", () => {
     error.value = undefined;
 
     try {
+      // Find linked purok first (before deleting)
+      let linkedPurokId: number | null = null;
+      if (purokMonitoring.value.length === 0) {
+        // Fetch if not loaded
+        const { data } = await supabase
+          .from("purok_monitoring")
+          .select("id")
+          .eq("collection_id", id)
+          .single();
+        if (data) linkedPurokId = data.id;
+      } else {
+        const found = purokMonitoring.value.find((p) => p.collection_id === id);
+        if (found) linkedPurokId = found.id;
+      }
+
+      // Delete the collection
+      // Note: Foreign key is ON DELETE SET NULL, so this will succeed even if linked
       const { error: deleteError } = await supabase
         .from("collections")
         .delete()
@@ -559,13 +842,42 @@ export const useCollectionsStore = defineStore("collections", () => {
 
       if (deleteError) throw deleteError;
 
-      collections.value = collections.value.filter((c) => c.id !== id);
+      // Realtime will handle removal
+      // But we can optimistic update:
+      // collections.value = collections.value.filter((c) => c.id !== id);
+
+      // Now update the purok status if it was linked
+      if (linkedPurokId) {
+        // Update local state
+        const index = purokMonitoring.value.findIndex(
+          (p) => p.id === linkedPurokId,
+        );
+        if (index !== -1) {
+          purokMonitoring.value[index] = {
+            ...purokMonitoring.value[index],
+            status: "needs_pickup",
+            collection_id: undefined,
+          };
+        }
+
+        // Update DB
+        // We update by Purok ID since collection_id is now NULL
+        await supabase
+          .from("purok_monitoring")
+          .update({
+            status: "needs_pickup",
+            collection_id: null,
+          })
+          .eq("id", linkedPurokId);
+      }
+
       toast.success("Collection deleted successfully");
       return true;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to delete collection";
-      toast.error("Failed to delete collection");
+      console.error("Delete collection error:", err);
+      toast.error(`Failed to delete collection: ${error.value}`);
       return false;
     } finally {
       loading.value = false;
@@ -585,7 +897,7 @@ export const useCollectionsStore = defineStore("collections", () => {
       if (deleteError) throw deleteError;
 
       collections.value = collections.value.filter(
-        (c) => c.request_by !== userId && c.collector_assign !== userId
+        (c) => c.request_by !== userId && c.collector_assign !== userId,
       );
       toast.success("User collections deleted successfully");
       return true;
@@ -602,16 +914,29 @@ export const useCollectionsStore = defineStore("collections", () => {
   };
 
   const getUserEmail = async (
-    userId: string
+    userId: string,
   ): Promise<{ email?: string; full_name?: string } | null> => {
     try {
+      // First try to fetch from profiles table
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('email, full_name')
+        .eq('id', userId)
+        .single();
+        
+      if (!error && data) {
+        return data;
+      }
+      
+      // Fallback to admin API if available (e.g. for super admins)
+      // or if profiles table is not yet populated
       const {
         data: { user },
-        error,
+        error: adminError,
       } = await supabaseAdmin.auth.admin.getUserById(userId);
 
-      if (error || !user) {
-        console.error("Error fetching user email:", error);
+      if (adminError || !user) {
+        console.error("Error fetching user email:", adminError);
         return null;
       }
 
@@ -625,11 +950,41 @@ export const useCollectionsStore = defineStore("collections", () => {
     }
   };
 
-  const fetchCollectionsWithEmails = async () => {
-    loading.value = true;
+  // Improved fetch with view
+  const fetchCollectionsWithEmails = async (background: boolean = false) => {
+    if (!background) loading.value = true;
     error.value = undefined;
 
     try {
+      // Use the new view to get data + user info in one go
+      const { data, error: fetchError } = await supabase
+        .from("collections_with_user_info")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (fetchError) {
+        // Fallback to old method if view doesn't exist yet
+        console.warn("View collections_with_user_info not found, falling back...", fetchError);
+        return await fetchCollectionsWithEmailsLegacy();
+      }
+
+      collections.value = data as CollectionWithEmails[];
+      return data as CollectionWithEmails[];
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : "Failed to fetch collections with emails";
+      toast.error("Failed to fetch collections with emails");
+      return [];
+    } finally {
+      if (!background) loading.value = false;
+    }
+  };
+  
+  // Legacy method for fallback
+  const fetchCollectionsWithEmailsLegacy = async () => {
+     try {
       const { data, error: fetchError } = await supabase
         .from("collections")
         .select("*")
@@ -659,7 +1014,7 @@ export const useCollectionsStore = defineStore("collections", () => {
           if (userData) {
             userDataMap.set(userId, userData);
           }
-        })
+        }),
       );
 
       // Enrich collections with user emails and names
@@ -675,50 +1030,34 @@ export const useCollectionsStore = defineStore("collections", () => {
             collector_email: collectorData?.email,
             collector_name: collectorData?.full_name,
           };
-        }
+        },
       );
+      
+      collections.value = collectionsWithEmails;
 
       return collectionsWithEmails;
     } catch (err) {
-      error.value =
-        err instanceof Error
-          ? err.message
-          : "Failed to fetch collections with emails";
-      toast.error("Failed to fetch collections with emails");
+      console.error("Legacy fetch error", err);
       return [];
-    } finally {
-      loading.value = false;
     }
-  };
+  }
 
   const fetchCollectionWithEmails = async (collectionId: number) => {
     loading.value = true;
     error.value = undefined;
 
     try {
+      // Use the view
       const { data, error: fetchError } = await supabase
-        .from("collections")
+        .from("collections_with_user_info")
         .select("*")
         .eq("id", collectionId)
         .single();
 
       if (fetchError) throw fetchError;
+      
+      return data as CollectionWithEmails;
 
-      if (!data) return undefined;
-
-      // Fetch user emails for requester and collector
-      const requesterData = await getUserEmail(data.request_by);
-      const collectorData = await getUserEmail(data.collector_assign);
-
-      const collectionWithEmails: CollectionWithEmails = {
-        ...data,
-        requester_email: requesterData?.email,
-        requester_name: requesterData?.full_name,
-        collector_email: collectorData?.email,
-        collector_name: collectorData?.full_name,
-      };
-
-      return collectionWithEmails;
     } catch (err) {
       error.value =
         err instanceof Error
@@ -737,55 +1076,14 @@ export const useCollectionsStore = defineStore("collections", () => {
 
     try {
       const { data, error: fetchError } = await supabase
-        .from("collections")
+        .from("collections_with_user_info")
         .select("*")
         .eq("status", status)
         .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;
 
-      if (!data) return [];
-
-      // Fetch user emails for all unique user IDs
-      const userIds = new Set<string>();
-      data.forEach((collection) => {
-        if (collection.request_by) userIds.add(collection.request_by);
-        if (collection.collector_assign)
-          userIds.add(collection.collector_assign);
-      });
-
-      // Create a map of user IDs to user data
-      const userDataMap = new Map<
-        string,
-        { email?: string; full_name?: string }
-      >();
-
-      await Promise.all(
-        Array.from(userIds).map(async (userId) => {
-          const userData = await getUserEmail(userId);
-          if (userData) {
-            userDataMap.set(userId, userData);
-          }
-        })
-      );
-
-      // Enrich collections with user emails and names
-      const collectionsWithEmails: CollectionWithEmails[] = data.map(
-        (collection) => {
-          const requesterData = userDataMap.get(collection.request_by);
-          const collectorData = userDataMap.get(collection.collector_assign);
-
-          return {
-            ...collection,
-            requester_email: requesterData?.email,
-            requester_name: requesterData?.full_name,
-            collector_email: collectorData?.email,
-            collector_name: collectorData?.full_name,
-          };
-        }
-      );
-
-      return collectionsWithEmails;
+      return data as CollectionWithEmails[];
     } catch (err) {
       error.value =
         err instanceof Error
@@ -804,7 +1102,7 @@ export const useCollectionsStore = defineStore("collections", () => {
    * @returns Object with counts for each status
    */
   const getStatusCounts = async (
-    collectorId?: string
+    collectorId?: string,
   ): Promise<StatusCounts> => {
     loading.value = true;
     error.value = undefined;
@@ -856,7 +1154,7 @@ export const useCollectionsStore = defineStore("collections", () => {
    * @returns Object with counts for each status
    */
   const getStatusCountsFromArray = (
-    collections: Collection[] | CollectionWithEmails[]
+    collections: Collection[] | CollectionWithEmails[],
   ): StatusCounts => {
     return {
       all: collections.length,
@@ -866,11 +1164,67 @@ export const useCollectionsStore = defineStore("collections", () => {
       cancelled: collections.filter((c) => c.status === "cancelled").length,
     };
   };
+  
+  // Realtime subscription
+  const subscribeToCollections = () => {
+    const channel = supabase
+      .channel('collections-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'collections' },
+        async (payload) => {
+          console.log('Collections Realtime Change:', payload);
+          
+          if (payload.eventType === 'INSERT') {
+            // Fetch the specific new row with user info from the VIEW
+            const { data } = await supabase
+              .from('collections_with_user_info')
+              .select('*')
+              .eq('id', payload.new.id)
+              .single();
+              
+            if (data) {
+              collections.value.unshift(data as CollectionWithEmails);
+              toast.info('New collection request received');
+            } else {
+               // Fallback: refresh all if simple fetch fails (unlikely)
+               await fetchCollectionsWithEmails(true);
+            }
+          } 
+          else if (payload.eventType === 'UPDATE') {
+            // Fetch updated row
+            const { data } = await supabase
+              .from('collections_with_user_info')
+              .select('*')
+              .eq('id', payload.new.id)
+              .single();
+              
+             if (data) {
+               const index = collections.value.findIndex(c => c.id === payload.new.id);
+               if (index !== -1) {
+                 collections.value[index] = data as CollectionWithEmails;
+               } else {
+                 // Might be a status change that moved it into a filtered view or just appeared
+                 collections.value.unshift(data as CollectionWithEmails);
+               }
+             }
+          }
+          else if (payload.eventType === 'DELETE') {
+             const oldId = (payload.old as any).id;
+             collections.value = collections.value.filter(c => c.id !== oldId);
+          }
+        }
+      )
+      .subscribe();
+      
+    return channel;
+  };
 
   return {
     // State
     collections,
     collectors,
+    purokMonitoring,
     currentCollection,
     loading,
     error,
@@ -902,5 +1256,11 @@ export const useCollectionsStore = defineStore("collections", () => {
     // Status count functions
     getStatusCounts,
     getStatusCountsFromArray,
+    // Purok Monitoring
+    fetchPurokMonitoring,
+    updatePurokStatus,
+    linkPurokCollection,
+    // Realtime
+    subscribeToCollections
   };
 });

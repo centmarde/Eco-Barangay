@@ -216,19 +216,20 @@ const getStatusTitle = (status: string) => {
             </v-card>
           </v-col>
 
-          <!-- Garbage Type -->
+          <!-- Garbage Type & Hazardous Status -->
           <v-col cols="12" md="6" class="d-flex">
             <v-card variant="outlined" class="flex-fill">
               <v-card-title class="text-subtitle-1 bg-primary">
                 <v-icon start>mdi-delete-variant</v-icon>
-                Garbage Type
+                Waste Classification
               </v-card-title>
               <v-card-text>
+                <div class="mb-1 text-caption text-medium-emphasis">Type</div>
                 <v-chip
                   :color="getGarbageTypeColor(collection.garbage_type)"
-                  size="large"
+                  size="default"
                   variant="tonal"
-                  class="my-2"
+                  class="mb-4"
                 >
                   <v-icon
                     start
@@ -236,6 +237,31 @@ const getStatusTitle = (status: string) => {
                   />
                   {{ collection.garbage_type.replace(/_/g, " ").toUpperCase() }}
                 </v-chip>
+
+                <v-divider class="mb-3"></v-divider>
+
+                <div class="mb-1 text-caption text-medium-emphasis">Safety Status</div>
+                <div v-if="collection.is_hazardous">
+                  <v-alert
+                    density="compact"
+                    type="error"
+                    variant="tonal"
+                    border="start"
+                    class="mb-0"
+                  >
+                    <template #prepend>
+                      <v-icon>mdi-biohazard</v-icon>
+                    </template>
+                    <div class="text-subtitle-2 font-weight-bold">Hazardous</div>
+                    <div class="text-caption">Handle with extreme care.</div>
+                  </v-alert>
+                </div>
+                <div v-else>
+                   <v-chip color="success" variant="tonal" size="small">
+                      <v-icon start>mdi-shield-check</v-icon>
+                      Non-Hazardous
+                   </v-chip>
+                </div>
               </v-card-text>
             </v-card>
           </v-col>

@@ -8,6 +8,7 @@ import type { Collection, Collector } from "@/stores/collectionsData";
 import RequestsTable from "./components/requestsTable.vue";
 import CollectorDialog from "./components/collectorDialog.vue";
 import StatCards from "./components/statCards.vue";
+import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 
 // Composables
 const toast = useToast();
@@ -24,6 +25,13 @@ const assignCollectorDialog = ref(false);
 const selectedCollection = ref<Collection | null>(null);
 const assigningCollector = ref(false);
 
+const confirmDialog = ref(false);
+const confirmTitle = ref("");
+const confirmMessage = ref("");
+const confirmColor = ref("primary");
+const confirmAction = ref<(() => Promise<void> | void) | null>(null);
+const confirmLoading = ref(false);
+
 // Computed
 const filteredCollections = computed(() => {
   let filtered = collections.value;
@@ -35,7 +43,7 @@ const filteredCollections = computed(() => {
       (item) =>
         item.address.toLowerCase().includes(searchLower) ||
         item.status.toLowerCase().includes(searchLower) ||
-        item.garbage_type.toLowerCase().includes(searchLower)
+        item.garbage_type.toLowerCase().includes(searchLower),
     );
   }
 
@@ -47,11 +55,14 @@ const filteredCollections = computed(() => {
   // Garbage type filter
   if (garbageTypeFilter.value) {
     filtered = filtered.filter(
-      (item) => item.garbage_type === garbageTypeFilter.value
+      (item) => item.garbage_type === garbageTypeFilter.value,
     );
   }
 
-  return filtered;
+  return filtered.map((item) => ({
+    ...item,
+    purok: item.purok || "",
+  })) as Collection[];
 });
 
 const statusOptions = computed(() => {
@@ -91,7 +102,7 @@ const assignCollector = async (collectorId: string) => {
 
     const success = await collectionsStore.assignCollector(
       selectedCollection.value.id,
-      collectorId
+      collectorId,
     );
 
     if (success) {
@@ -104,24 +115,40 @@ const assignCollector = async (collectorId: string) => {
   }
 };
 
-const rejectRequest = async (collection: Collection) => {
-  if (!confirm("Are you sure you want to reject this pickup request?")) {
-    return;
-  }
-
-  await collectionsStore.updateCollectionStatus(collection.id, "cancelled");
+const rejectRequest = (collection: Collection) => {
+  confirmTitle.value = "Reject Request";
+  confirmMessage.value = "Are you sure you want to reject this pickup request?";
+  confirmColor.value = "warning";
+  confirmAction.value = async () => {
+    await collectionsStore.updateCollectionStatus(collection.id, "cancelled");
+  };
+  confirmDialog.value = true;
 };
 
-const deleteRequest = async (collection: Collection) => {
-  if (
-    !confirm(
-      "Are you sure you want to delete this pickup request? This action cannot be undone."
-    )
-  ) {
-    return;
-  }
+const deleteRequest = (collection: Collection) => {
+  confirmTitle.value = "Delete Request";
+  confirmMessage.value =
+    "Are you sure you want to delete this pickup request? This action cannot be undone.";
+  confirmColor.value = "error";
+  confirmAction.value = async () => {
+    await collectionsStore.deleteCollection(collection.id);
+  };
+  confirmDialog.value = true;
+};
 
-  await collectionsStore.deleteCollection(collection.id);
+const handleConfirm = async () => {
+  if (!confirmAction.value) return;
+
+  confirmLoading.value = true;
+  try {
+    await confirmAction.value();
+    confirmDialog.value = false;
+  } catch (error) {
+    console.error("Error confirming action:", error);
+    toast.error("An error occurred while processing your request.");
+  } finally {
+    confirmLoading.value = false;
+  }
 };
 
 const clearFilters = () => {
@@ -229,6 +256,15 @@ onMounted(() => {
           :collectors="collectors"
           :loading="assigningCollector"
           @assign="assignCollector"
+        />
+
+        <ConfirmDialog
+          v-model="confirmDialog"
+          :title="confirmTitle"
+          :message="confirmMessage"
+          :color="confirmColor"
+          :loading="confirmLoading"
+          @confirm="handleConfirm"
         />
       </v-container>
     </template>

@@ -73,8 +73,10 @@ export const useNotificationsStore = defineStore("notifications", () => {
   };
 
   // Actions
-  const fetchNotifications = async (userId?: string) => {
-    loading.value = true;
+  const fetchNotifications = async (userId?: string, background: boolean = false) => {
+    if (!background) {
+      loading.value = true;
+    }
     error.value = null;
 
     try {
@@ -86,6 +88,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
       }
 
       // Fetch from user_notifications table with join to notifications
+      // Now selecting is_read from user_notifications (local status)
       const { data, error: fetchError } = await supabase
         .from("user_notifications")
         .select(
@@ -93,13 +96,13 @@ export const useNotificationsStore = defineStore("notifications", () => {
           id,
           created_at,
           user_id,
+          is_read,
           notifications:notification_id (
             id,
             title,
-            description,
-            is_read
+            description
           )
-        `
+        `,
         )
         .eq("user_id", targetUserId)
         .order("created_at", { ascending: false });
@@ -115,7 +118,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
           title: item.notifications?.title || "Notification",
           message: item.notifications?.description || "",
           type: "info" as const, // Default type since table doesn't have it
-          read: item.notifications?.is_read || false, // Get is_read from notifications table
+          read: item.is_read || false, // Get is_read from user_notifications table
           action_url: undefined,
         })) || [];
     } catch (err) {
@@ -131,33 +134,22 @@ export const useNotificationsStore = defineStore("notifications", () => {
     try {
       // Find the notification to get the notification_id
       const notification = notifications.value.find(
-        (n) => n.id === notificationId
+        (n) => n.id === notificationId,
       );
 
       if (!notification) {
         throw new Error("Notification not found");
       }
 
-      // Update is_read in the notifications table (not user_notifications)
-      // We need to get the actual notification_id first
-      const { data: userNotif, error: fetchError } = await supabase
+      // Update is_read in the user_notifications table directly
+      const { error: updateError } = await supabase
         .from("user_notifications")
-        .select("notification_id")
-        .eq("id", notificationId)
-        .single();
+        .update({ is_read: true })
+        .eq("id", notificationId);
 
-      if (fetchError) throw fetchError;
+      if (updateError) throw updateError;
 
-      if (userNotif?.notification_id) {
-        const { error: updateError } = await supabase
-          .from("notifications")
-          .update({ is_read: true })
-          .eq("id", userNotif.notification_id);
-
-        if (updateError) throw updateError;
-      }
-
-      // Update local state
+      // Update local state (optimistic update)
       notification.read = true;
     } catch (err) {
       console.error("Error marking notification as read:", err);
@@ -174,28 +166,14 @@ export const useNotificationsStore = defineStore("notifications", () => {
         throw new Error("User ID not found");
       }
 
-      // Get all notification IDs for this user
-      const { data: userNotifications, error: fetchError } = await supabase
+      // Update is_read for all notifications for this user
+      const { error: updateError } = await supabase
         .from("user_notifications")
-        .select("notification_id")
-        .eq("user_id", userId);
+        .update({ is_read: true })
+        .eq("user_id", userId)
+        .eq("is_read", false);
 
-      if (fetchError) throw fetchError;
-
-      if (userNotifications && userNotifications.length > 0) {
-        const notificationIds = userNotifications.map(
-          (un) => un.notification_id
-        );
-
-        // Update is_read in the notifications table for all these IDs
-        const { error: updateError } = await supabase
-          .from("notifications")
-          .update({ is_read: true })
-          .in("id", notificationIds)
-          .eq("is_read", false);
-
-        if (updateError) throw updateError;
-      }
+      if (updateError) throw updateError;
 
       // Update local state
       notifications.value.forEach((n) => {
@@ -220,7 +198,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
 
       // Update local state
       notifications.value = notifications.value.filter(
-        (n) => n.id !== notificationId
+        (n) => n.id !== notificationId,
       );
 
       toast.success("Notification deleted");
@@ -256,10 +234,13 @@ export const useNotificationsStore = defineStore("notifications", () => {
 
   // Create a notification (admin function)
   const createNotification = async (
-    notificationData: CreateNotificationData
+    notificationData: CreateNotificationData,
+    showToast: boolean = true,
   ) => {
+    console.log("createNotification called with:", notificationData);
     try {
-      // First create the notification in the notifications table
+      // First create the notification in the notifications table (shared content)
+      // Note: We ignore 'is_read' here as it is now per-user in user_notifications
       const { data: notificationRecord, error: notificationError } =
         await supabase
           .from("notifications")
@@ -267,15 +248,23 @@ export const useNotificationsStore = defineStore("notifications", () => {
             {
               title: notificationData.title,
               description: notificationData.message,
-              is_read: notificationData.read || false,
+              // is_read removed from here or ignored
             },
           ])
           .select()
           .single();
 
-      if (notificationError) throw notificationError;
+      if (notificationError) {
+        console.error(
+          "Error inserting into notifications table:",
+          notificationError,
+        );
+        throw notificationError;
+      }
 
-      // Then create the user_notification entry (without is_read)
+      console.log("Notification record created:", notificationRecord);
+
+      // Then create the user_notification entry (with is_read status)
       const { data: userNotification, error: userNotificationError } =
         await supabase
           .from("user_notifications")
@@ -283,24 +272,39 @@ export const useNotificationsStore = defineStore("notifications", () => {
             {
               user_id: notificationData.user_id,
               notification_id: notificationRecord.id,
+              is_read: notificationData.read || false,
             },
           ])
           .select()
           .single();
 
-      if (userNotificationError) throw userNotificationError;
+      if (userNotificationError) {
+        console.error(
+          "Error inserting into user_notifications table:",
+          userNotificationError,
+        );
+        throw userNotificationError;
+      }
 
-      toast.success("Notification created successfully");
+      console.log("User notification created:", userNotification);
+
+      if (showToast) {
+        toast.success("Notification sent successfully");
+      }
       return userNotification;
     } catch (err) {
       console.error("Error creating notification:", err);
-      toast.error("Failed to create notification");
+      if (showToast) {
+        toast.error("Failed to create notification");
+      }
       return null;
     }
   };
 
   // Subscribe to real-time notifications
   const subscribeToNotifications = (userId: string) => {
+    // Unsubscribe from existing channel if it exists (though caller usually handles this)
+    // We create a new channel
     const channel = supabase
       .channel(`notifications:${userId}`)
       .on(
@@ -312,21 +316,28 @@ export const useNotificationsStore = defineStore("notifications", () => {
           filter: `user_id=eq.${userId}`,
         },
         async (payload) => {
-          console.log("Notification change received:", payload);
+          console.log("Notification Realtime Event:", payload);
 
           if (payload.eventType === "INSERT") {
-            // Fetch the new notification details
-            await fetchNotifications(userId);
+            // New notification received
+            await fetchNotifications(userId, true);
+            toast.info("New notification received");
           } else if (payload.eventType === "UPDATE") {
-            // Update the notification in the local state
-            await fetchNotifications(userId);
+            // Notification updated (e.g., marked as read on another device)
+            await fetchNotifications(userId, true);
           } else if (payload.eventType === "DELETE") {
-            // Remove the notification from local state
-            notifications.value = notifications.value.filter(
-              (n) => n.id !== (payload.old as any).id
-            );
+            // Notification removed
+            const oldId = (payload.old as any).id;
+            if (oldId) {
+              notifications.value = notifications.value.filter(
+                (n) => n.id !== oldId,
+              );
+            } else {
+               // Fallback if ID isn't in payload (should be for DELETE)
+               await fetchNotifications(userId, true);
+            }
           }
-        }
+        },
       )
       .subscribe();
 

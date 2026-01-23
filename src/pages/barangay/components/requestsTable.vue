@@ -5,23 +5,7 @@ import {
   formatDate,
   getCollectorName,
 } from "../utils/pickupHelpers";
-
-// Types
-interface Collection {
-  id: number;
-  created_at: string;
-  address: string;
-  request_by: string;
-  collector_assign: string | null;
-  status: string;
-  garbage_type: string;
-}
-
-interface Collector {
-  id: string;
-  username: string;
-  email: string;
-}
+import type { Collection, Collector } from "@/stores/collectionsData";
 
 // Props
 const props = defineProps<{
@@ -56,6 +40,7 @@ const handleDelete = (collection: Collection) => {
     <v-data-table
       :headers="[
         { title: 'ID', key: 'id', width: '80px' },
+        { title: 'Purok', key: 'purok', width: '120px' },
         { title: 'Address', key: 'address' },
         {
           title: 'Garbage Type',
@@ -83,6 +68,15 @@ const handleDelete = (collection: Collection) => {
     >
       <template #item.id="{ item }">
         <span class="font-weight-medium">#{{ item.id }}</span>
+      </template>
+
+      <template #item.purok="{ item }">
+        <div class="d-flex align-center">
+          <v-icon size="small" class="mr-2" color="primary"
+            >mdi-map-marker</v-icon
+          >
+          <span>{{ item.purok }}</span>
+        </div>
       </template>
 
       <template #item.address="{ item }">

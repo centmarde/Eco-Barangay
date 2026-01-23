@@ -1,7 +1,8 @@
 import type { CollectionWithEmails } from "@/stores/collectionsData";
 import { useCollectionsStore } from "@/stores/collectionsData";
 import { useAuthUserStore } from "@/stores/authUser";
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { formatDate } from "@/utils/dateHelpers";
 import {
   getStatusColor,
@@ -15,9 +16,13 @@ export const useRequestView = () => {
   const collectionsStore = useCollectionsStore();
   const authStore = useAuthUserStore();
 
+  // Realtime subscription
+  let realtimeChannel: RealtimeChannel | null = null;
+
   // State
-  const collections = ref<CollectionWithEmails[]>([]);
-  const loading = ref(false);
+  // collections is now computed from store
+  const collections = computed(() => collectionsStore.collections);
+  const loading = computed(() => collectionsStore.loading);
   const selectedStatus = ref<string>("all");
   const showOnlyMyCollections = ref<boolean>(true);
 
@@ -89,15 +94,7 @@ export const useRequestView = () => {
 
   // Actions
   const fetchCollections = async () => {
-    loading.value = true;
-    try {
-      const data = await collectionsStore.fetchCollectionsWithEmails();
-      collections.value = data;
-    } catch (error) {
-      console.error("Error fetching collections:", error);
-    } finally {
-      loading.value = false;
-    }
+    await collectionsStore.fetchCollectionsWithEmails();
   };
 
   const openDialog = (collection: CollectionWithEmails) => {
@@ -114,17 +111,25 @@ export const useRequestView = () => {
     collectionId: number,
     newStatus: string
   ) => {
-    loading.value = true;
     try {
       await collectionsStore.updateCollectionStatus(collectionId, newStatus);
-      await fetchCollections();
+      // No need to manually fetchCollections(), realtime/store handles it
       closeDialog();
     } catch (error) {
       console.error("Error updating collection status:", error);
-    } finally {
-      loading.value = false;
     }
   };
+  
+  onMounted(() => {
+    fetchCollections();
+    realtimeChannel = collectionsStore.subscribeToCollections();
+  });
+
+  onUnmounted(() => {
+    if (realtimeChannel) {
+      realtimeChannel.unsubscribe();
+    }
+  });
 
   return {
     // State
@@ -156,10 +161,14 @@ export const useRequestView = () => {
 // New composable for history widget - shows all data sorted by latest first
 export const useRequestHistoryView = () => {
   const collectionsStore = useCollectionsStore();
+  
+  // Realtime subscription
+  let realtimeChannel: RealtimeChannel | null = null;
 
   // State
-  const collections = ref<CollectionWithEmails[]>([]);
-  const loading = ref(false);
+  // collections is now computed from store
+  const collections = computed(() => collectionsStore.collections);
+  const loading = computed(() => collectionsStore.loading);
   const selectedStatus = ref<string>("all");
 
   // Dialog state
@@ -196,15 +205,7 @@ export const useRequestHistoryView = () => {
 
   // Actions
   const fetchCollections = async () => {
-    loading.value = true;
-    try {
-      const data = await collectionsStore.fetchCollectionsWithEmails();
-      collections.value = data;
-    } catch (error) {
-      console.error("Error fetching collections:", error);
-    } finally {
-      loading.value = false;
-    }
+    await collectionsStore.fetchCollectionsWithEmails();
   };
 
   const openDialog = (collection: CollectionWithEmails) => {
@@ -221,17 +222,25 @@ export const useRequestHistoryView = () => {
     collectionId: number,
     newStatus: string
   ) => {
-    loading.value = true;
     try {
       await collectionsStore.updateCollectionStatus(collectionId, newStatus);
-      await fetchCollections();
+      // Realtime handles update
       closeDialog();
     } catch (error) {
       console.error("Error updating collection status:", error);
-    } finally {
-      loading.value = false;
     }
   };
+  
+  onMounted(() => {
+    fetchCollections();
+    realtimeChannel = collectionsStore.subscribeToCollections();
+  });
+
+  onUnmounted(() => {
+    if (realtimeChannel) {
+      realtimeChannel.unsubscribe();
+    }
+  });
 
   return {
     // State

@@ -1,7 +1,31 @@
 <script setup lang="ts">
 import { useDisplay } from "vuetify";
+import { computed } from "vue";
 
 const { mobile } = useDisplay();
+
+interface Props {
+  loading?: boolean;
+  error?: string | null;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  loading: false,
+  error: null,
+});
+
+// Derive status from loading/error states
+const systemState = computed(() => {
+  if (props.loading) return { text: "Checking...", color: "warning", icon: "mdi-loading mdi-spin" };
+  if (props.error) return { text: "Issues Detected", color: "error", icon: "mdi-alert-circle" };
+  return { text: "Online", color: "success", icon: "mdi-check-circle" };
+});
+
+const apiState = computed(() => {
+    if (props.loading) return { text: "Connecting...", color: "warning" };
+    if (props.error) return { text: "Unreachable", color: "error" };
+    return { text: "Running", color: "success" };
+});
 </script>
 
 <template>
@@ -16,9 +40,9 @@ const { mobile } = useDisplay();
     <div class="mb-4">
       <div class="d-flex justify-space-between align-center mb-3">
         <span :class="mobile ? 'text-caption' : 'text-body-2'">Database</span>
-        <v-chip color="success" size="small" variant="tonal">
-          <v-icon start :size="mobile ? 10 : 12">mdi-check-circle</v-icon>
-          Online
+        <v-chip :color="systemState.color" size="small" variant="tonal">
+          <v-icon start :size="mobile ? 10 : 12">{{ systemState.icon }}</v-icon>
+          {{ systemState.text }}
         </v-chip>
       </div>
 
@@ -26,9 +50,9 @@ const { mobile } = useDisplay();
         <span :class="mobile ? 'text-caption' : 'text-body-2'"
           >API Services</span
         >
-        <v-chip color="success" size="small" variant="tonal">
+        <v-chip :color="apiState.color" size="small" variant="tonal">
           <v-icon start :size="mobile ? 10 : 12">mdi-check-circle</v-icon>
-          Running
+          {{ apiState.text }}
         </v-chip>
       </div>
 

@@ -103,48 +103,56 @@ export const useDashboardStore = defineStore("dashboard", () => {
     error.value = null;
 
     try {
-      // Fetch total users count using admin API
+      // 1. Fetch Users Data (Total Users & Active Collectors)
       const { data: usersData, error: usersError } =
         await supabaseAdmin.auth.admin.listUsers();
 
+      if (usersError) throw usersError;
+
       const totalUsers = usersData?.users?.length || 0;
+      
+      // Filter collectors (assuming role 4 is collector)
+      // Note: Adjust the role check if your metadata structure is different
+      const activeCollectors = usersData?.users?.filter(
+        (u) => u.user_metadata?.role === 4
+      ).length || 0;
 
-      if (usersError) {
-        console.error("Error fetching users:", usersError);
-      }
+      // 2. Fetch Collections Data (Pending & Completed)
+      // Pending
+      const { count: pendingRequests, error: pendingError } = await supabase
+        .from("collections")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+      
+      if (pendingError) console.error("Error fetching pending requests:", pendingError);
 
-      // For now, we'll use placeholder data structure
-      // You'll need to adjust these queries based on your actual database schema
+      // Completed
+      const { count: completedPickups, error: completedError } = await supabase
+        .from("collections")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "completed");
 
-      // Example: Fetch collectors count (adjust table name as needed)
-      // const { count: activeCollectors } = await supabase
-      //   .from("collectors")
-      //   .select("*", { count: "exact", head: true })
-      //   .eq("status", "active");
+      if (completedError) console.error("Error fetching completed pickups:", completedError);
 
-      // Example: Fetch pending requests (adjust table name as needed)
-      // const { count: pendingRequests } = await supabase
-      //   .from("pickup_requests")
-      //   .select("*", { count: "exact", head: true })
-      //   .eq("status", "pending");
+      // 3. Reports (Total Reports / Monitoring items)
+      // Assuming purok_monitoring table holds 'reports' or surveys
+      const { count: totalReports, error: reportsError } = await supabase
+        .from("purok_monitoring")
+        .select("*", { count: "exact", head: true });
 
-      // Example: Fetch completed pickups (adjust table name as needed)
-      // const { count: completedPickups } = await supabase
-      //   .from("pickups")
-      //   .select("*", { count: "exact", head: true })
-      //   .eq("status", "completed");
+      if (reportsError) console.error("Error fetching reports:", reportsError);
 
-      // Update stats with real data where available
+      // Update stats
       dashboardStats.value = {
-        totalUsers: totalUsers,
-        activeCollectors: 0, // Replace with actual query
-        pendingRequests: 0, // Replace with actual query
-        completedPickups: 0, // Replace with actual query
-        totalReports: 0, // Replace with actual query
-        wasteCollected: 0, // Replace with actual query
+        totalUsers,
+        activeCollectors,
+        pendingRequests: pendingRequests || 0,
+        completedPickups: completedPickups || 0,
+        totalReports: totalReports || 0,
+        wasteCollected: completedPickups || 0, // Simplified metric
       };
 
-      // Fetch recent activities if you have an activity log table
+      // Fetch recent activities
       await loadRecentActivities();
     } catch (err) {
       console.error("Error loading dashboard data:", err);
@@ -158,27 +166,60 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
   const loadRecentActivities = async () => {
     try {
-      // Example query - adjust based on your actual schema
-      // You might have an activity_log or audit_log table
-      // const { data: activities, error: activitiesError } = await supabase
-      //   .from("activity_log")
-      //   .select("*")
-      //   .order("created_at", { ascending: false })
-      //   .limit(10);
+      // Use 'collections' table as the source of activity for now
+      // Fetch latest 10 collections
+      const { data: latestCollections, error: collectionsError } = await supabase
+        .from("collections")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(10);
 
-      // if (activitiesError) throw activitiesError;
+      if (collectionsError) throw collectionsError;
 
-      // For now, keeping empty array until you have activity tracking
-      recentActivities.value = [];
+      if (latestCollections) {
+        recentActivities.value = latestCollections.map((c) => {
+          let type = "New Request";
+          let message = `Pickup requested at ${c.address}`;
+          let icon = "mdi-delete-outline";
+          let color = "info";
+
+          if (c.status === "completed") {
+            type = "Collection Completed";
+            message = `Waste collected at ${c.address}`;
+            icon = "mdi-check-circle";
+            color = "success";
+          } else if (c.status === "cancelled") {
+            type = "Request Cancelled";
+            message = `Pickup cancelled at ${c.address}`;
+            icon = "mdi-close-circle";
+            color = "error";
+          } else if (c.status === "in_progress") {
+             type = "Collection Started";
+             message = `Collector assigned to ${c.address}`;
+             icon = "mdi-truck-fast";
+             color = "warning";
+          }
+
+          return {
+            id: c.id,
+            type,
+            message,
+            timestamp: getRelativeTime(c.created_at),
+            icon,
+            color,
+          };
+        });
+      }
     } catch (err) {
       console.error("Error loading recent activities:", err);
     }
   };
 
   const addRecentActivity = (activity: Omit<RecentActivity, "id">) => {
+    // In a real app, you would insert into DB. Here we just update local state.
     const newActivity = {
       ...activity,
-      id: Math.max(...recentActivities.value.map((a) => a.id)) + 1,
+      id: Date.now(), // simple unique ID
     };
     recentActivities.value.unshift(newActivity);
 

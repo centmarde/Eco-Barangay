@@ -2,33 +2,16 @@
 import { ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useAuthUserStore } from "@/stores/authUser";
-import { useCollectionsStore } from "@/stores/collectionsData";
-import { useToast } from "vue-toastification";
 import InnerLayoutWrapper from "@/layouts/InnerLayoutWrapper.vue";
-import FeedbackList from "@/pages/admin/components/FeedbackSection.vue";
 import DailyAnnouncement from "@/pages/residents/DailyAnnouncement.vue";
 import AnnouncementsWidget from "@/pages/residents/AnnouncementsWidget.vue";
-import CollectionSenderDialog from "@/pages/residents/dialogs/CollectionSenderDialog.vue";
+import CollectionRequestWidget from "@/pages/residents/CollectionRequestWidget.vue";
+import MyCollectionsWidget from "@/pages/residents/MyCollectionsWidget.vue";
 
 const authStore = useAuthUserStore();
-const collectionsStore = useCollectionsStore();
-const toast = useToast();
 
 // Reactive references from the auth store
 const { userName } = storeToRefs(authStore);
-
-// Dialog state
-const dialogOpen = ref(false);
-
-const openDialog = () => {
-  dialogOpen.value = true;
-};
-
-const handleCollectionCreated = async () => {
-  // Refresh collections list after creating a new collection
-  await collectionsStore.fetchCollections();
-  toast.success('Collection request submitted successfully!');
-};
 </script>
 
 <template>
@@ -40,6 +23,18 @@ const handleCollectionCreated = async () => {
       <v-container fluid>
         <v-row justify="center">
           <v-col cols="12" xl="12">
+            <!-- Collection Widgets Row -->
+            <v-row class="mb-6">
+              <v-col cols="12" sm="6" md="6">
+                <!-- Collection Request Widget -->
+                <CollectionRequestWidget />
+              </v-col>
+              <v-col cols="12" sm="6" md="6">
+                <!-- My Collections Widget -->
+                <MyCollectionsWidget />
+              </v-col>
+            </v-row>
+
             <!-- Announcements Widget -->
             <AnnouncementsWidget />
 						<v-divider></v-divider>
@@ -48,26 +43,6 @@ const handleCollectionCreated = async () => {
       </v-container>
     </template>
   </InnerLayoutWrapper>
-
-  <!-- Floating Action Button for Collection Request -->
-  <v-btn
-    icon
-    color="primary"
-    size="x-large"
-    elevation="8"
-    position="fixed"
-    location="bottom right"
-    style="bottom: 24px; right: 24px; z-index: 1000;"
-    @click="openDialog"
-  >
-    <v-icon size="32">mdi-plus</v-icon>
-  </v-btn>
-
-  <!-- Collection Sender Dialog -->
-  <CollectionSenderDialog
-    v-model="dialogOpen"
-    @collection-created="handleCollectionCreated"
-  />
 </template>
 
 <style scoped lang="scss">

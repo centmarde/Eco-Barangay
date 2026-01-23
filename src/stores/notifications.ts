@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "vue-toastification";
 import { useAuthUserStore } from "./authUser";
 
 // Type definitions
@@ -34,8 +33,6 @@ export interface UpdateNotificationData {
 }
 
 export const useNotificationsStore = defineStore("notifications", () => {
-  const toast = useToast();
-
   // State
   const notifications = ref<Notification[]>([]);
   const loading = ref(false);
@@ -153,7 +150,6 @@ export const useNotificationsStore = defineStore("notifications", () => {
       notification.read = true;
     } catch (err) {
       console.error("Error marking notification as read:", err);
-      toast.error("Failed to mark notification as read");
     }
   };
 
@@ -180,10 +176,8 @@ export const useNotificationsStore = defineStore("notifications", () => {
         n.read = true;
       });
 
-      toast.success("All notifications marked as read");
     } catch (err) {
       console.error("Error marking all as read:", err);
-      toast.error("Failed to mark all notifications as read");
     }
   };
 
@@ -201,10 +195,8 @@ export const useNotificationsStore = defineStore("notifications", () => {
         (n) => n.id !== notificationId,
       );
 
-      toast.success("Notification deleted");
     } catch (err) {
       console.error("Error deleting notification:", err);
-      toast.error("Failed to delete notification");
     }
   };
 
@@ -225,10 +217,8 @@ export const useNotificationsStore = defineStore("notifications", () => {
       if (deleteError) throw deleteError;
 
       notifications.value = [];
-      toast.success("All notifications cleared");
     } catch (err) {
       console.error("Error clearing notifications:", err);
-      toast.error("Failed to clear notifications");
     }
   };
 
@@ -289,13 +279,11 @@ export const useNotificationsStore = defineStore("notifications", () => {
       console.log("User notification created:", userNotification);
 
       if (showToast) {
-        toast.success("Notification sent successfully");
       }
       return userNotification;
     } catch (err) {
       console.error("Error creating notification:", err);
       if (showToast) {
-        toast.error("Failed to create notification");
       }
       return null;
     }
@@ -321,7 +309,6 @@ export const useNotificationsStore = defineStore("notifications", () => {
           if (payload.eventType === "INSERT") {
             // New notification received
             await fetchNotifications(userId, true);
-            toast.info("New notification received");
           } else if (payload.eventType === "UPDATE") {
             // Notification updated (e.g., marked as read on another device)
             await fetchNotifications(userId, true);

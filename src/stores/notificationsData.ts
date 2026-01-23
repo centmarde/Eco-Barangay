@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "vue-toastification";
 
 // Type definitions
 export type Notification = {
@@ -25,8 +24,6 @@ export type UpdateNotificationData = {
 };
 
 export const useNotificationsStore = defineStore("notifications", () => {
-  const toast = useToast();
-
   // State
   const notifications = ref<Notification[]>([]);
   const currentNotification = ref<Notification | undefined>(undefined);
@@ -50,7 +47,6 @@ export const useNotificationsStore = defineStore("notifications", () => {
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to fetch notifications";
-      toast.error("Failed to fetch notifications");
     } finally {
       loading.value = false;
     }
@@ -74,7 +70,6 @@ export const useNotificationsStore = defineStore("notifications", () => {
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to fetch notification";
-      toast.error("Failed to fetch notification");
       return undefined;
     } finally {
       loading.value = false;
@@ -100,7 +95,6 @@ export const useNotificationsStore = defineStore("notifications", () => {
         err instanceof Error
           ? err.message
           : "Failed to fetch unread notifications";
-      toast.error("Failed to fetch unread notifications");
       return [];
     } finally {
       loading.value = false;
@@ -126,7 +120,6 @@ export const useNotificationsStore = defineStore("notifications", () => {
         err instanceof Error
           ? err.message
           : "Failed to fetch read notifications";
-      toast.error("Failed to fetch read notifications");
       return [];
     } finally {
       loading.value = false;
@@ -157,12 +150,10 @@ export const useNotificationsStore = defineStore("notifications", () => {
         notifications.value.unshift(data);
       }
 
-      toast.success("Notification created successfully");
       return data;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to create notification";
-      toast.error("Failed to create notification");
       return undefined;
     } finally {
       loading.value = false;
@@ -193,12 +184,10 @@ export const useNotificationsStore = defineStore("notifications", () => {
         }
       }
 
-      toast.success("Notification updated successfully");
       return data;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to update notification";
-      toast.error("Failed to update notification");
       return undefined;
     } finally {
       loading.value = false;
@@ -237,12 +226,10 @@ export const useNotificationsStore = defineStore("notifications", () => {
         });
       }
 
-      toast.success("All notifications marked as read");
       return data;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to mark all as read";
-      toast.error("Failed to mark all as read");
       return undefined;
     } finally {
       loading.value = false;
@@ -262,12 +249,10 @@ export const useNotificationsStore = defineStore("notifications", () => {
       if (deleteError) throw deleteError;
 
       notifications.value = notifications.value.filter((n) => n.id !== id);
-      toast.success("Notification deleted successfully");
       return true;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to delete notification";
-      toast.error("Failed to delete notification");
       return false;
     } finally {
       loading.value = false;
@@ -287,14 +272,12 @@ export const useNotificationsStore = defineStore("notifications", () => {
       if (deleteError) throw deleteError;
 
       notifications.value = notifications.value.filter((n) => !n.is_read);
-      toast.success("All read notifications deleted successfully");
       return true;
     } catch (err) {
       error.value =
         err instanceof Error
           ? err.message
           : "Failed to delete read notifications";
-      toast.error("Failed to delete read notifications");
       return false;
     } finally {
       loading.value = false;

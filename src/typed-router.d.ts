@@ -60,6 +60,7 @@ declare module 'vue-router/auto-routes' {
     '/residents/dialogs/AnnouncementDetailDialog': RouteRecordInfo<'/residents/dialogs/AnnouncementDetailDialog', '/residents/dialogs/AnnouncementDetailDialog', Record<never, never>, Record<never, never>>,
     '/residents/dialogs/CollectionSenderDialog': RouteRecordInfo<'/residents/dialogs/CollectionSenderDialog', '/residents/dialogs/CollectionSenderDialog', Record<never, never>, Record<never, never>>,
     '/residents/dialogs/MyCollectionsDialog': RouteRecordInfo<'/residents/dialogs/MyCollectionsDialog', '/residents/dialogs/MyCollectionsDialog', Record<never, never>, Record<never, never>>,
+    '/residents/MyCollectionsView': RouteRecordInfo<'/residents/MyCollectionsView', '/residents/MyCollectionsView', Record<never, never>, Record<never, never>>,
     '/residents/MyCollectionsWidget': RouteRecordInfo<'/residents/MyCollectionsWidget', '/residents/MyCollectionsWidget', Record<never, never>, Record<never, never>>,
   }
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useAuthUserStore } from "@/stores/authUser";
 import { useCollectionsStore } from "@/stores/collectionsData";
@@ -10,11 +10,13 @@ const authStore = useAuthUserStore();
 const collectionsStore = useCollectionsStore();
 
 const { userData } = storeToRefs(authStore);
-const { loading } = storeToRefs(collectionsStore);
+const { loading: storeLoading } = storeToRefs(collectionsStore);
 
 // Local state
 const myCollections = ref<CollectionWithEmails[]>([]);
 const dialogOpen = ref(false);
+const loading = ref(false);
+const error = ref<string | null>(null);
 
 // Computed
 const statusCounts = computed(() => {
@@ -33,19 +35,43 @@ const statusCounts = computed(() => {
 
 // Methods
 const fetchMyCollections = async () => {
-  if (!userData.value?.id) return;
+  if (!userData.value?.id) {
+    console.log('No user ID available, skipping collection fetch');
+    return;
+  }
+
+  loading.value = true;
+  error.value = null;
 
   try {
+    console.log('Fetching collections for user:', userData.value.id);
     const collections = await collectionsStore.fetchCollectionsByRequestBy(userData.value.id);
     myCollections.value = collections as CollectionWithEmails[];
-  } catch (error) {
-    console.error('Error fetching my collections:', error);
+    console.log('Fetched collections:', collections.length);
+  } catch (err) {
+    console.error('Error fetching my collections:', err);
+    error.value = 'Failed to load collections';
+    myCollections.value = []; // Reset on error
+  } finally {
+    loading.value = false;
   }
 };
 
 const openDialog = () => {
   dialogOpen.value = true;
 };
+
+// Watch for userData changes (handles authentication timing)
+watch(
+  () => userData.value?.id,
+  (newUserId, oldUserId) => {
+    console.log('User ID changed:', { oldUserId, newUserId });
+    if (newUserId && newUserId !== oldUserId) {
+      fetchMyCollections();
+    }
+  },
+  { immediate: true }
+);
 
 // Lifecycle
 onMounted(() => {
@@ -82,11 +108,30 @@ onMounted(() => {
             My Collections
           </v-card-title>
           <v-card-subtitle class="text-body-2 text-white pa-0" style="opacity: 0.9;">
-            {{ myCollections.length }} requests • {{ statusCounts.pending }} pending
+            <template v-if="loading">
+              Loading...
+            </template>
+            <template v-else-if="error">
+              {{ error }}
+            </template>
+            <template v-else>
+              {{ myCollections.length }} requests • {{ statusCounts.pending }} pending
+            </template>
           </v-card-subtitle>
         </v-col>
         <v-col cols="auto" class="text-center">
-          <div class="text-h6 font-weight-bold text-white">{{ statusCounts.all }}</div>
+          <div class="text-h6 font-weight-bold text-white">
+            <template v-if="loading">
+              <v-progress-circular
+                indeterminate
+                color="white"
+                size="24"
+              />
+            </template>
+            <template v-else>
+              {{ statusCounts.all }}
+            </template>
+          </div>
           <div class="text-caption text-white" style="opacity: 0.8;">Total</div>
         </v-col>
         <v-col cols="auto">

@@ -1,5 +1,4 @@
 import { supabase, supabaseAdmin } from "@/lib/supabase";
-import { useToast } from "vue-toastification";
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { useNotificationsStore } from "./notifications";
@@ -101,8 +100,6 @@ export type PurokMonitoring = {
 };
 
 export const useCollectionsStore = defineStore("collections", () => {
-  const toast = useToast();
-
   // State
   const collections = ref<CollectionWithEmails[]>([]);
   const collectors = ref<Collector[]>([]);
@@ -130,7 +127,6 @@ export const useCollectionsStore = defineStore("collections", () => {
         err instanceof Error
           ? err.message
           : "Failed to fetch purok monitoring data";
-      toast.error("Failed to fetch purok monitoring data");
     } finally {
       loading.value = false;
     }
@@ -176,7 +172,6 @@ export const useCollectionsStore = defineStore("collections", () => {
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to update purok status";
-      toast.error("Failed to update purok status");
       return undefined;
     } finally {
       loading.value = false;
@@ -211,7 +206,6 @@ export const useCollectionsStore = defineStore("collections", () => {
         err instanceof Error
           ? err.message
           : "Failed to link purok to collection";
-      toast.error("Failed to link purok to collection");
       return undefined;
     } finally {
       loading.value = false;
@@ -236,7 +230,6 @@ export const useCollectionsStore = defineStore("collections", () => {
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to fetch collections";
-      toast.error("Failed to fetch collections");
     } finally {
       loading.value = false;
     }
@@ -269,7 +262,6 @@ export const useCollectionsStore = defineStore("collections", () => {
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to fetch collectors";
-      toast.error("Failed to fetch collectors");
     } finally {
       loading.value = false;
     }
@@ -293,7 +285,6 @@ export const useCollectionsStore = defineStore("collections", () => {
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to fetch collection";
-      toast.error("Failed to fetch collection");
       return undefined;
     } finally {
       loading.value = false;
@@ -319,7 +310,6 @@ export const useCollectionsStore = defineStore("collections", () => {
         err instanceof Error
           ? err.message
           : "Failed to fetch collections by requester";
-      toast.error("Failed to fetch collections by requester");
       return [];
     } finally {
       loading.value = false;
@@ -345,7 +335,6 @@ export const useCollectionsStore = defineStore("collections", () => {
         err instanceof Error
           ? err.message
           : "Failed to fetch collections by collector";
-      toast.error("Failed to fetch collections by collector");
       return [];
     } finally {
       loading.value = false;
@@ -371,7 +360,6 @@ export const useCollectionsStore = defineStore("collections", () => {
         err instanceof Error
           ? err.message
           : "Failed to fetch collections by status";
-      toast.error("Failed to fetch collections by status");
       return [];
     } finally {
       loading.value = false;
@@ -397,7 +385,6 @@ export const useCollectionsStore = defineStore("collections", () => {
         err instanceof Error
           ? err.message
           : "Failed to fetch collections by garbage type";
-      toast.error("Failed to fetch collections by garbage type");
       return [];
     } finally {
       loading.value = false;
@@ -434,7 +421,6 @@ export const useCollectionsStore = defineStore("collections", () => {
         err instanceof Error
           ? err.message
           : "Failed to fetch collection with feedback";
-      toast.error("Failed to fetch collection with feedback");
       return undefined;
     } finally {
       loading.value = false;
@@ -470,7 +456,6 @@ export const useCollectionsStore = defineStore("collections", () => {
         err instanceof Error
           ? err.message
           : "Failed to fetch collections with feedback";
-      toast.error("Failed to fetch collections with feedback");
       return [];
     } finally {
       loading.value = false;
@@ -510,7 +495,6 @@ export const useCollectionsStore = defineStore("collections", () => {
         err instanceof Error
           ? err.message
           : "Failed to fetch collection with users";
-      toast.error("Failed to fetch collection with users");
       return undefined;
     } finally {
       loading.value = false;
@@ -536,7 +520,6 @@ export const useCollectionsStore = defineStore("collections", () => {
         err instanceof Error
           ? err.message
           : "Failed to fetch collections by user";
-      toast.error("Failed to fetch collections by user");
       return [];
     } finally {
       loading.value = false;
@@ -562,7 +545,6 @@ export const useCollectionsStore = defineStore("collections", () => {
         err instanceof Error
           ? err.message
           : "Failed to search collections by address";
-      toast.error("Failed to search collections by address");
       return [];
     } finally {
       loading.value = false;
@@ -593,7 +575,6 @@ export const useCollectionsStore = defineStore("collections", () => {
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to fetch collection stats";
-      toast.error("Failed to fetch collection stats");
       return {
         total: 0,
         pending: 0,
@@ -622,18 +603,16 @@ export const useCollectionsStore = defineStore("collections", () => {
       // Note: we don't need to manually update state here as realtime subscription will catch it
       // but for immediate feedback we can optimistic update or let the sub handle it.
       // Optimistic update:
-      // collections.value.unshift(data); 
+      // collections.value.unshift(data);
       // But we lack email data, so better let realtime fetch it or sub handle it.
       // For now, keeping legacy behavior (unshift) but casting.
       // collections.value.unshift(data as CollectionWithEmails);
 
-      toast.success("Collection created successfully");
       return data;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to create collection";
       console.error("Create collection error:", err);
-      toast.error(`Failed to create collection: ${error.value}`);
       return undefined;
     } finally {
       loading.value = false;
@@ -658,13 +637,11 @@ export const useCollectionsStore = defineStore("collections", () => {
       if (updateError) throw updateError;
 
       // Realtime will handle the update
-      
-      toast.success("Collection updated successfully");
+
       return data;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to update collection";
-      toast.error("Failed to update collection");
       return undefined;
     } finally {
       loading.value = false;
@@ -871,13 +848,11 @@ export const useCollectionsStore = defineStore("collections", () => {
           .eq("id", linkedPurokId);
       }
 
-      toast.success("Collection deleted successfully");
       return true;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to delete collection";
       console.error("Delete collection error:", err);
-      toast.error(`Failed to delete collection: ${error.value}`);
       return false;
     } finally {
       loading.value = false;
@@ -899,14 +874,12 @@ export const useCollectionsStore = defineStore("collections", () => {
       collections.value = collections.value.filter(
         (c) => c.request_by !== userId && c.collector_assign !== userId,
       );
-      toast.success("User collections deleted successfully");
       return true;
     } catch (err) {
       error.value =
         err instanceof Error
           ? err.message
           : "Failed to delete user collections";
-      toast.error("Failed to delete user collections");
       return false;
     } finally {
       loading.value = false;
@@ -923,11 +896,11 @@ export const useCollectionsStore = defineStore("collections", () => {
         .select('email, full_name')
         .eq('id', userId)
         .single();
-        
+
       if (!error && data) {
         return data;
       }
-      
+
       // Fallback to admin API if available (e.g. for super admins)
       // or if profiles table is not yet populated
       const {
@@ -975,13 +948,12 @@ export const useCollectionsStore = defineStore("collections", () => {
         err instanceof Error
           ? err.message
           : "Failed to fetch collections with emails";
-      toast.error("Failed to fetch collections with emails");
       return [];
     } finally {
       if (!background) loading.value = false;
     }
   };
-  
+
   // Legacy method for fallback
   const fetchCollectionsWithEmailsLegacy = async () => {
      try {
@@ -1032,7 +1004,7 @@ export const useCollectionsStore = defineStore("collections", () => {
           };
         },
       );
-      
+
       collections.value = collectionsWithEmails;
 
       return collectionsWithEmails;
@@ -1055,7 +1027,7 @@ export const useCollectionsStore = defineStore("collections", () => {
         .single();
 
       if (fetchError) throw fetchError;
-      
+
       return data as CollectionWithEmails;
 
     } catch (err) {
@@ -1063,7 +1035,6 @@ export const useCollectionsStore = defineStore("collections", () => {
         err instanceof Error
           ? err.message
           : "Failed to fetch collection with emails";
-      toast.error("Failed to fetch collection with emails");
       return undefined;
     } finally {
       loading.value = false;
@@ -1089,7 +1060,6 @@ export const useCollectionsStore = defineStore("collections", () => {
         err instanceof Error
           ? err.message
           : "Failed to fetch collections by status with emails";
-      toast.error("Failed to fetch collections by status with emails");
       return [];
     } finally {
       loading.value = false;
@@ -1135,7 +1105,6 @@ export const useCollectionsStore = defineStore("collections", () => {
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to fetch status counts";
-      toast.error("Failed to fetch status counts");
       return {
         all: 0,
         pending: 0,
@@ -1164,7 +1133,7 @@ export const useCollectionsStore = defineStore("collections", () => {
       cancelled: collections.filter((c) => c.status === "cancelled").length,
     };
   };
-  
+
   // Realtime subscription
   const subscribeToCollections = () => {
     const channel = supabase
@@ -1174,7 +1143,7 @@ export const useCollectionsStore = defineStore("collections", () => {
         { event: '*', schema: 'public', table: 'collections' },
         async (payload) => {
           console.log('Collections Realtime Change:', payload);
-          
+
           if (payload.eventType === 'INSERT') {
             // Fetch the specific new row with user info from the VIEW
             const { data } = await supabase
@@ -1182,15 +1151,14 @@ export const useCollectionsStore = defineStore("collections", () => {
               .select('*')
               .eq('id', payload.new.id)
               .single();
-              
+
             if (data) {
               collections.value.unshift(data as CollectionWithEmails);
-              toast.info('New collection request received');
             } else {
                // Fallback: refresh all if simple fetch fails (unlikely)
                await fetchCollectionsWithEmails(true);
             }
-          } 
+          }
           else if (payload.eventType === 'UPDATE') {
             // Fetch updated row
             const { data } = await supabase
@@ -1198,7 +1166,7 @@ export const useCollectionsStore = defineStore("collections", () => {
               .select('*')
               .eq('id', payload.new.id)
               .single();
-              
+
              if (data) {
                const index = collections.value.findIndex(c => c.id === payload.new.id);
                if (index !== -1) {
@@ -1216,7 +1184,7 @@ export const useCollectionsStore = defineStore("collections", () => {
         }
       )
       .subscribe();
-      
+
     return channel;
   };
 

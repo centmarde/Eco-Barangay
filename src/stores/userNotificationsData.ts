@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "vue-toastification";
 
 // Type definitions
 export type UserNotification = {
@@ -24,8 +23,6 @@ export type UpdateUserNotificationData = {
 export const useUserNotificationsStore = defineStore(
   "userNotifications",
   () => {
-    const toast = useToast();
-
     // State
     const userNotifications = ref<UserNotification[]>([]);
     const currentUserNotification = ref<UserNotification | undefined>(
@@ -53,7 +50,6 @@ export const useUserNotificationsStore = defineStore(
           err instanceof Error
             ? err.message
             : "Failed to fetch user notifications";
-        toast.error("Failed to fetch user notifications");
       } finally {
         loading.value = false;
       }
@@ -79,7 +75,6 @@ export const useUserNotificationsStore = defineStore(
           err instanceof Error
             ? err.message
             : "Failed to fetch user notification";
-        toast.error("Failed to fetch user notification");
         return undefined;
       } finally {
         loading.value = false;
@@ -105,7 +100,6 @@ export const useUserNotificationsStore = defineStore(
           err instanceof Error
             ? err.message
             : "Failed to fetch user notifications by user ID";
-        toast.error("Failed to fetch user notifications");
         return [];
       } finally {
         loading.value = false;
@@ -133,7 +127,6 @@ export const useUserNotificationsStore = defineStore(
           err instanceof Error
             ? err.message
             : "Failed to fetch user notifications by notification ID";
-        toast.error("Failed to fetch user notifications");
         return [];
       } finally {
         loading.value = false;
@@ -159,14 +152,12 @@ export const useUserNotificationsStore = defineStore(
           userNotifications.value.unshift(data);
         }
 
-        toast.success("User notification created successfully");
         return data;
       } catch (err) {
         error.value =
           err instanceof Error
             ? err.message
             : "Failed to create user notification";
-        toast.error("Failed to create user notification");
         return undefined;
       } finally {
         loading.value = false;
@@ -197,14 +188,12 @@ export const useUserNotificationsStore = defineStore(
           }
         }
 
-        toast.success("User notification updated successfully");
         return data;
       } catch (err) {
         error.value =
           err instanceof Error
             ? err.message
             : "Failed to update user notification";
-        toast.error("Failed to update user notification");
         return undefined;
       } finally {
         loading.value = false;
@@ -226,14 +215,12 @@ export const useUserNotificationsStore = defineStore(
         userNotifications.value = userNotifications.value.filter(
           (n) => n.id !== id
         );
-        toast.success("User notification deleted successfully");
         return true;
       } catch (err) {
         error.value =
           err instanceof Error
             ? err.message
             : "Failed to delete user notification";
-        toast.error("Failed to delete user notification");
         return false;
       } finally {
         loading.value = false;
@@ -255,14 +242,12 @@ export const useUserNotificationsStore = defineStore(
         userNotifications.value = userNotifications.value.filter(
           (n) => n.user_id !== userId
         );
-        toast.success("User notifications deleted successfully");
         return true;
       } catch (err) {
         error.value =
           err instanceof Error
             ? err.message
             : "Failed to delete user notifications";
-        toast.error("Failed to delete user notifications");
         return false;
       } finally {
         loading.value = false;

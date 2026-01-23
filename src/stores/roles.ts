@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "vue-toastification";
 
 // Type definitions
 export type Role = {
@@ -26,8 +25,6 @@ export type RoleWithPages = Role & {
 };
 
 export const useUserRolesStore = defineStore("userRoles", () => {
-  const toast = useToast();
-
   // State
   const roles = ref<Role[]>([]);
   const rolesWithPages = ref<RoleWithPages[]>([]);
@@ -52,7 +49,6 @@ export const useUserRolesStore = defineStore("userRoles", () => {
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to fetch roles";
-      toast.error("Failed to fetch roles");
     } finally {
       loading.value = false;
     }
@@ -75,7 +71,6 @@ export const useUserRolesStore = defineStore("userRoles", () => {
       return data;
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to fetch role";
-      toast.error("Failed to fetch role");
       return null;
     } finally {
       loading.value = false;
@@ -98,7 +93,6 @@ export const useUserRolesStore = defineStore("userRoles", () => {
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to fetch roles with pages";
-      toast.error("Failed to fetch roles with pages");
     } finally {
       loading.value = false;
     }
@@ -121,7 +115,6 @@ export const useUserRolesStore = defineStore("userRoles", () => {
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to fetch role with pages";
-      toast.error("Failed to fetch role with pages");
       return null;
     } finally {
       loading.value = false;
@@ -143,14 +136,12 @@ export const useUserRolesStore = defineStore("userRoles", () => {
 
       roles.value.unshift(data);
       if (!silent) {
-        toast.success("Role created successfully");
       }
       return data;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to create role";
       if (!silent) {
-        toast.error("Failed to create role");
       }
       return null;
     } finally {
@@ -187,14 +178,12 @@ export const useUserRolesStore = defineStore("userRoles", () => {
       }
 
       if (!silent) {
-        toast.success("Role updated successfully");
       }
       return data;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to update role";
       if (!silent) {
-        toast.error("Failed to update role");
       }
       return null;
     } finally {
@@ -221,12 +210,10 @@ export const useUserRolesStore = defineStore("userRoles", () => {
         currentRole.value = null;
       }
 
-      toast.success("Role deleted successfully");
       return true;
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to delete role";
-      toast.error("Failed to delete role");
       return false;
     } finally {
       loading.value = false;

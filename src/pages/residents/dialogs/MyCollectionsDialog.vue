@@ -3,6 +3,9 @@ import { ref, computed, watch } from "vue";
 import { useDisplay } from "vuetify";
 import { formatDate, formatRelativeTime } from "@/utils/dateHelpers";
 import type { CollectionWithEmails } from "@/stores/collectionsData";
+import { useFeedbackStore } from '@/stores/feedBackData';
+import { useAuthUserStore } from '@/stores/authUser';
+import { useToast } from 'vue-toastification';
 
 interface Props {
   modelValue: boolean;
@@ -19,9 +22,25 @@ const emit = defineEmits<Emits>();
 
 const { xs, sm, mdAndUp } = useDisplay();
 
+// Stores
+const feedbackStore = useFeedbackStore();
+const authStore = useAuthUserStore();
+const toast = useToast();
+
 // Local state
 const selectedStatus = ref('all');
 const searchQuery = ref('');
+
+// Feedback dialog state
+const feedbackDialog = ref(false);
+const selectedCollection = ref<CollectionWithEmails | null>(null);
+const feedbackForm = ref({
+  title: '',
+  rate: 5,
+  description: ''
+});
+const feedbackLoading = ref(false);
+const existingFeedbacks = ref<Record<number, boolean>>({});
 
 // Status options
 const statusOptions = [
@@ -107,6 +126,86 @@ const getGarbageTypeIcon = (type: string) => {
   return icons[type] || 'mdi-trash-can';
 };
 
+// Feedback methods
+const openFeedbackDialog = (collection: CollectionWithEmails) => {
+  selectedCollection.value = collection;
+  feedbackForm.value = {
+    title: `Feedback for Collection #${collection.id}`,
+    rate: 5,
+    description: ''
+  };
+  feedbackDialog.value = true;
+};
+
+const closeFeedbackDialog = () => {
+  feedbackDialog.value = false;
+  selectedCollection.value = null;
+  feedbackForm.value = {
+    title: '',
+    rate: 5,
+    description: ''
+  };
+};
+
+const submitFeedback = async () => {
+  if (!selectedCollection.value || !authStore.userData?.id) {
+    toast.error('Unable to submit feedback');
+    return;
+  }
+
+  if (!feedbackForm.value.description.trim()) {
+    toast.error('Please provide feedback description');
+    return;
+  }
+
+  feedbackLoading.value = true;
+
+  try {
+    const feedbackData = {
+      user_id: authStore.userData.id,
+      title: feedbackForm.value.title,
+      rate: feedbackForm.value.rate,
+      description: feedbackForm.value.description.trim(),
+      collection_id: selectedCollection.value.id
+    };
+
+    const result = await feedbackStore.createFeedback(feedbackData);
+
+    if (result) {
+      closeFeedbackDialog();
+      toast.success('Feedback submitted successfully!');
+      // Update the existing feedbacks state to reflect the new feedback
+      if (selectedCollection.value) {
+        existingFeedbacks.value[selectedCollection.value.id] = true;
+      }
+    }
+  } catch (error) {
+    console.error('Error submitting feedback:', error);
+    toast.error('Failed to submit feedback');
+  } finally {
+    feedbackLoading.value = false;
+  }
+};
+
+// Check if collection has existing feedback
+const checkExistingFeedbacks = async () => {
+  if (!authStore.userData?.id) return;
+
+  const userFeedbacks = await feedbackStore.fetchFeedbacksByUserId(authStore.userData.id);
+  const feedbackMap: Record<number, boolean> = {};
+
+  userFeedbacks.forEach(feedback => {
+    feedbackMap[feedback.collection_id] = true;
+  });
+
+  existingFeedbacks.value = feedbackMap;
+};
+
+// Check if specific collection has feedback
+const hasExistingFeedback = (collectionId: number): boolean => {
+  return existingFeedbacks.value[collectionId] || false;
+};
+
 // Methods
 const closeDialog = () => {
   emit('update:modelValue', false);
@@ -121,6 +220,7 @@ watch(() => props.modelValue, (newValue) => {
   if (newValue) {
     selectedStatus.value = 'all';
     searchQuery.value = '';
+    checkExistingFeedbacks(); // Load existing feedbacks when dialog opens
   }
 });
 </script>
@@ -316,18 +416,153 @@ watch(() => props.modelValue, (newValue) => {
                   </div>
 
                   <!-- Notes -->
-                  <div v-if="collection.notes">
+                  <div v-if="collection.notes" class="mb-2">
                     <div class="d-flex align-center mb-1">
                       <v-icon icon="mdi-note-text" size="x-small" class="mr-1" color="grey-darken-1"></v-icon>
                       <span class="text-caption text-grey-darken-1 font-weight-medium">NOTES</span>
                     </div>
                     <div class="text-caption">{{ collection.notes }}</div>
                   </div>
+
+                  <!-- Feedback Button (Only for completed collections without existing feedback) -->
+                  <div v-if="collection.status === 'completed' && !hasExistingFeedback(collection.id)" class="mt-3">
+                    <v-btn
+                      color="success"
+                      variant="outlined"
+                      size="small"
+                      prepend-icon="mdi-star"
+                      @click="openFeedbackDialog(collection)"
+                      block
+                    >
+                      Give Feedback
+                    </v-btn>
+                  </div>
+
+                  <!-- Feedback Already Submitted Indicator -->
+                  <div v-if="collection.status === 'completed' && hasExistingFeedback(collection.id)" class="mt-3">
+                    <v-chip
+                      color="success"
+                      variant="tonal"
+                      size="small"
+                      prepend-icon="mdi-check-circle"
+                      class="w-100"
+                    >
+                      Feedback Submitted
+                    </v-chip>
+                  </div>
                 </v-card-text>
               </v-card>
             </v-col>
           </v-row>
         </div>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+
+  <!-- Feedback Dialog -->
+  <v-dialog
+    v-model="feedbackDialog"
+    max-width="600"
+    persistent
+  >
+    <v-card>
+      <v-card-title class="d-flex align-center bg-success text-white pa-4">
+        <v-icon icon="mdi-star" class="mr-3"></v-icon>
+        <div>
+          <div class="text-h6 font-weight-bold">Submit Feedback</div>
+          <div class="text-caption" style="opacity: 0.9;">
+            Collection #{{ selectedCollection?.id }}
+          </div>
+        </div>
+        <v-spacer></v-spacer>
+        <v-btn
+          icon="mdi-close"
+          variant="text"
+          color="white"
+          @click="closeFeedbackDialog"
+          :disabled="feedbackLoading"
+        />
+      </v-card-title>
+
+      <v-card-text class="pa-4">
+        <v-form @submit.prevent="submitFeedback">
+          <!-- Collection Details -->
+          <v-card
+            v-if="selectedCollection"
+            variant="tonal"
+            color="grey-lighten-4"
+            class="mb-4"
+          >
+            <v-card-text class="pa-3">
+              <div class="d-flex align-center mb-2">
+                <v-icon :icon="getStatusIcon(selectedCollection.status)" class="mr-2" size="small" color="success"></v-icon>
+                <span class="font-weight-medium">{{ selectedCollection.address }}</span>
+              </div>
+              <div class="text-caption text-grey-darken-1">
+                {{ selectedCollection.garbage_type.replace('_', ' ') }} • {{ formatDate(selectedCollection.created_at) }}
+              </div>
+            </v-card-text>
+          </v-card>
+
+          <!-- Feedback Title -->
+          <v-text-field
+            v-model="feedbackForm.title"
+            label="Feedback Title"
+            variant="outlined"
+            density="comfortable"
+            :disabled="feedbackLoading"
+            class="mb-3"
+          />
+
+          <!-- Rating -->
+          <div class="mb-4">
+            <v-label class="text-body-2 font-weight-medium mb-2 d-block">Rate your experience</v-label>
+            <v-rating
+              v-model="feedbackForm.rate"
+              :length="5"
+              active-color="yellow-darken-2"
+              size="large"
+              hover
+              :disabled="feedbackLoading"
+            />
+            <div class="text-caption text-grey-darken-1 mt-1">
+              {{ feedbackForm.rate }} out of 5 stars
+            </div>
+          </div>
+
+          <!-- Description -->
+          <v-textarea
+            v-model="feedbackForm.description"
+            label="Your Feedback"
+            placeholder="Tell us about your experience with this collection service..."
+            variant="outlined"
+            rows="4"
+            :disabled="feedbackLoading"
+            :rules="[v => !!v || 'Feedback description is required']"
+            class="mb-3"
+          />
+
+          <!-- Actions -->
+          <v-card-actions class="px-0 pb-0">
+            <v-spacer></v-spacer>
+            <v-btn
+              variant="text"
+              @click="closeFeedbackDialog"
+              :disabled="feedbackLoading"
+            >
+              Cancel
+            </v-btn>
+            <v-btn
+              color="success"
+              variant="flat"
+              type="submit"
+              :loading="feedbackLoading"
+              :disabled="!feedbackForm.description.trim()"
+            >
+              Submit Feedback
+            </v-btn>
+          </v-card-actions>
+        </v-form>
       </v-card-text>
     </v-card>
   </v-dialog>

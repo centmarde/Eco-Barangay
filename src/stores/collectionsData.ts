@@ -18,6 +18,17 @@ export type Collection = {
   is_hazardous?: boolean;
 };
 
+export type Feedback = {
+  id: number;
+  created_at: string;
+  user_id: string | null;
+  title: string | null;
+  rate: number | null;
+  description: string | null;
+  collection_id: number | null;
+  type: string;
+};
+
 export type Collector = {
   id: string;
   username: string;
@@ -32,13 +43,29 @@ export type CollectionWithEmails = Collection & {
 };
 
 export type CollectionWithFeedback = Collection & {
-  feedbacks?: Array<{
-    id: number;
-    title: string;
-    rate: number;
-    description: string;
-    user_id: string;
-  }>;
+  feedbacks?: Feedback[];
+};
+
+export type FeedbackWithUser = Feedback & {
+  user_email?: string;
+  user_name?: string;
+};
+
+export type CreateFeedbackData = {
+  user_id: string;
+  title?: string;
+  rate?: number;
+  description?: string;
+  collection_id?: number;
+  type?: string;
+};
+
+export type UpdateFeedbackData = {
+  title?: string;
+  rate?: number;
+  description?: string;
+  collection_id?: number;
+  type?: string;
 };
 
 export type CollectionWithUsers = Collection & {
@@ -103,8 +130,10 @@ export const useCollectionsStore = defineStore("collections", () => {
   // State
   const collections = ref<CollectionWithEmails[]>([]);
   const collectors = ref<Collector[]>([]);
+  const feedbacks = ref<FeedbackWithUser[]>([]);
   const purokMonitoring = ref<PurokMonitoring[]>([]);
   const currentCollection = ref<Collection | undefined>(undefined);
+  const currentFeedback = ref<Feedback | undefined>(undefined);
   const loading = ref(false);
   const error = ref<string | undefined>(undefined);
 
@@ -207,6 +236,409 @@ export const useCollectionsStore = defineStore("collections", () => {
           ? err.message
           : "Failed to link purok to collection";
       return undefined;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  // Feedback Actions
+  const fetchFeedbacks = async () => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from("feedbacks")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      feedbacks.value = (data as Feedback[]) || [];
+    } catch (err) {
+      error.value =
+        err instanceof Error ? err.message : "Failed to fetch feedbacks";
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const fetchFeedbackById = async (id: number) => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from("feedbacks")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      currentFeedback.value = data;
+      return data as Feedback;
+    } catch (err) {
+      error.value =
+        err instanceof Error ? err.message : "Failed to fetch feedback";
+      return undefined;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const fetchFeedbacksByCollectionId = async (collectionId: number) => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from("feedbacks")
+        .select("*")
+        .eq("collection_id", collectionId)
+        .order("created_at", { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      return (data as Feedback[]) || [];
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : "Failed to fetch feedbacks by collection";
+      return [];
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const fetchFeedbacksByUserId = async (userId: string) => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from("feedbacks")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      return (data as Feedback[]) || [];
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : "Failed to fetch feedbacks by user";
+      return [];
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const fetchFeedbacksByType = async (type: string) => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from("feedbacks")
+        .select("*")
+        .eq("type", type)
+        .order("created_at", { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      return (data as Feedback[]) || [];
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : "Failed to fetch feedbacks by type";
+      return [];
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const fetchFeedbacksWithUserInfo = async () => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from("feedbacks")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      if (!data) return [];
+
+      // Fetch user emails for all unique user IDs
+      const userIds = new Set<string>();
+      data.forEach((feedback) => {
+        if (feedback.user_id) userIds.add(feedback.user_id);
+      });
+
+      // Create a map of user IDs to user data
+      const userDataMap = new Map<
+        string,
+        { email?: string; full_name?: string }
+      >();
+
+      await Promise.all(
+        Array.from(userIds).map(async (userId) => {
+          const userData = await getUserEmail(userId);
+          if (userData) {
+            userDataMap.set(userId, userData);
+          }
+        }),
+      );
+
+      // Enrich feedbacks with user emails and names
+      const feedbacksWithUserInfo: FeedbackWithUser[] = data.map(
+        (feedback) => {
+          const userData = userDataMap.get(feedback.user_id);
+
+          return {
+            ...feedback,
+            user_email: userData?.email,
+            user_name: userData?.full_name,
+          };
+        },
+      );
+
+      feedbacks.value = feedbacksWithUserInfo;
+      return feedbacksWithUserInfo;
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : "Failed to fetch feedbacks with user info";
+      return [];
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const createFeedback = async (feedbackData: CreateFeedbackData) => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      const { data, error: createError } = await supabase
+        .from("feedbacks")
+        .insert([feedbackData])
+        .select()
+        .single();
+
+      if (createError) throw createError;
+
+      return data as Feedback;
+    } catch (err) {
+      error.value =
+        err instanceof Error ? err.message : "Failed to create feedback";
+      console.error("Create feedback error:", err);
+      return undefined;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const updateFeedback = async (
+    id: number,
+    feedbackData: UpdateFeedbackData,
+  ) => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      const { data, error: updateError } = await supabase
+        .from("feedbacks")
+        .update(feedbackData)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      return data as Feedback;
+    } catch (err) {
+      error.value =
+        err instanceof Error ? err.message : "Failed to update feedback";
+      return undefined;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const deleteFeedback = async (id: number) => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      const { error: deleteError } = await supabase
+        .from("feedbacks")
+        .delete()
+        .eq("id", id);
+
+      if (deleteError) throw deleteError;
+
+      // Remove from local state
+      feedbacks.value = feedbacks.value.filter((f) => f.id !== id);
+
+      return true;
+    } catch (err) {
+      error.value =
+        err instanceof Error ? err.message : "Failed to delete feedback";
+      console.error("Delete feedback error:", err);
+      return false;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const deleteFeedbacksByUserId = async (userId: string) => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      const { error: deleteError } = await supabase
+        .from("feedbacks")
+        .delete()
+        .eq("user_id", userId);
+
+      if (deleteError) throw deleteError;
+
+      feedbacks.value = feedbacks.value.filter((f) => f.user_id !== userId);
+      return true;
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : "Failed to delete user feedbacks";
+      return false;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const deleteFeedbacksByCollectionId = async (collectionId: number) => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      const { error: deleteError } = await supabase
+        .from("feedbacks")
+        .delete()
+        .eq("collection_id", collectionId);
+
+      if (deleteError) throw deleteError;
+
+      feedbacks.value = feedbacks.value.filter(
+        (f) => f.collection_id !== collectionId,
+      );
+      return true;
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : "Failed to delete collection feedbacks";
+      return false;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const getAverageRatingByCollectionId = async (collectionId: number) => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from("feedbacks")
+        .select("rate")
+        .eq("collection_id", collectionId)
+        .not("rate", "is", null);
+
+      if (fetchError) throw fetchError;
+
+      if (!data || data.length === 0) return 0;
+
+      const totalRating = data.reduce((sum, feedback) => sum + (feedback.rate || 0), 0);
+      return totalRating / data.length;
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : "Failed to calculate average rating";
+      return 0;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const getFeedbackStatsByCollector = async (collectorId: string) => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      // Get all collections assigned to this collector
+      const { data: collections, error: collectionsError } = await supabase
+        .from("collections")
+        .select("id")
+        .eq("collector_assign", collectorId);
+
+      if (collectionsError) throw collectionsError;
+
+      if (!collections || collections.length === 0) {
+        return {
+          totalFeedbacks: 0,
+          averageRating: 0,
+          ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+        };
+      }
+
+      const collectionIds = collections.map((c) => c.id);
+
+      // Get all feedbacks for these collections
+      const { data: feedbacks, error: feedbacksError } = await supabase
+        .from("feedbacks")
+        .select("rate")
+        .in("collection_id", collectionIds)
+        .not("rate", "is", null);
+
+      if (feedbacksError) throw feedbacksError;
+
+      const totalFeedbacks = feedbacks?.length || 0;
+      const totalRating = feedbacks?.reduce((sum, f) => sum + (f.rate || 0), 0) || 0;
+      const averageRating = totalFeedbacks > 0 ? totalRating / totalFeedbacks : 0;
+
+      // Calculate rating distribution
+      const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      feedbacks?.forEach((f) => {
+        if (f.rate && f.rate >= 1 && f.rate <= 5) {
+          ratingDistribution[f.rate as keyof typeof ratingDistribution]++;
+        }
+      });
+
+      return {
+        totalFeedbacks,
+        averageRating,
+        ratingDistribution,
+      };
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : "Failed to fetch feedback stats";
+      return {
+        totalFeedbacks: 0,
+        averageRating: 0,
+        ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+      };
     } finally {
       loading.value = false;
     }
@@ -1192,11 +1624,13 @@ export const useCollectionsStore = defineStore("collections", () => {
     // State
     collections,
     collectors,
+    feedbacks,
     purokMonitoring,
     currentCollection,
+    currentFeedback,
     loading,
     error,
-    // Actions
+    // Collection Actions
     fetchCollections,
     fetchCollectors,
     fetchCollectionById,
@@ -1228,6 +1662,20 @@ export const useCollectionsStore = defineStore("collections", () => {
     fetchPurokMonitoring,
     updatePurokStatus,
     linkPurokCollection,
+    // Feedback Actions
+    fetchFeedbacks,
+    fetchFeedbackById,
+    fetchFeedbacksByCollectionId,
+    fetchFeedbacksByUserId,
+    fetchFeedbacksByType,
+    fetchFeedbacksWithUserInfo,
+    createFeedback,
+    updateFeedback,
+    deleteFeedback,
+    deleteFeedbacksByUserId,
+    deleteFeedbacksByCollectionId,
+    getAverageRatingByCollectionId,
+    getFeedbackStatsByCollector,
     // Realtime
     subscribeToCollections
   };

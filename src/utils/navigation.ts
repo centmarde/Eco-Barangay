@@ -22,6 +22,12 @@ export const navigationConfig: NavigationGroup[] = [
         title: "Home",
         icon: "mdi-home",
         route: "/account/home",
+      },
+       {
+        title: "My Feedback",
+        icon: "mdi-comment-account",
+        route: "/residents/my-feedback",
+        permission: "residents.feedback.view",
       }
     ],
   },
@@ -63,6 +69,7 @@ export const navigationConfig: NavigationGroup[] = [
       },
     ],
   },
+
   {
     title: "Admin Controls",
     icon: "mdi-cog",
@@ -79,6 +86,12 @@ export const navigationConfig: NavigationGroup[] = [
         icon: "mdi-account-key",
         route: "/admin/user-roles",
         permission: "admin.roles.manage",
+      },
+      {
+        title: "Feedback Management",
+        icon: "mdi-comment-multiple",
+        route: "/admin/feedback-management",
+        permission: "admin.feedback.manage",
       },
        {
         title: "Admin Requests History",

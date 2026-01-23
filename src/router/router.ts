@@ -9,6 +9,7 @@ import ForbiddenView from "@/pages/ForbiddenView.vue";
 import AdminUserRolesView from "@/pages/admin/AdminUserRolesView.vue";
 import UserManagementView from "@/pages/admin/UserManagementView.vue";
 import AdminDashboardView from "@/pages/admin/DashboardView.vue";
+import FeedbackManagementView from "@/pages/admin/FeedbackManagementView.vue";
 
 // Collectors pages
 import RequestsView from "@/pages/collectors/RequestsView.vue";
@@ -18,6 +19,9 @@ import RequestsHistoryView from "@/pages/collectors/RequestsHistoryView.vue";
 import PickupsView from "@/pages/barangay/PickupsView.vue";
 import MonitoringView from "@/pages/barangay/MonitoringView.vue";
 import ReportAnalysisView from "@/pages/barangay/ReportAnalysisView.vue";
+
+// Residents pages
+import MyFeedbackView from "@/pages/residents/MyFeedbackView.vue";
 
 /**
  * Route definitions for the application
@@ -64,6 +68,12 @@ const routes = setupLayouts([
     component: ReportAnalysisView,
     meta: { requiresAuth: true },
   },
+  // Residents routes
+  {
+    path: "/residents/my-feedback",
+    component: MyFeedbackView,
+    meta: { requiresAuth: true },
+  },
   // Admin routes
   {
     path: "/admin/dashboard",
@@ -78,6 +88,11 @@ const routes = setupLayouts([
   {
     path: "/admin/user-management",
     component: UserManagementView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/admin/feedback-management",
+    component: FeedbackManagementView,
     meta: { requiresAuth: true },
   },
   {

@@ -252,7 +252,7 @@ const getStatusText = (status: PurokStatus) => {
           <v-btn
             color="success"
             variant="elevated"
-            class="flex-grow-1 mr-2"
+            class="flex-grow-1 ml-4"
             prepend-icon="mdi-thumb-down"
             @click="submitSurvey(false)"
           >
@@ -261,7 +261,7 @@ const getStatusText = (status: PurokStatus) => {
           <v-btn
             color="error"
             variant="elevated"
-            class="flex-grow-1 ml-2"
+            class="flex-grow-1 mr-4"
             prepend-icon="mdi-thumb-up"
             @click="submitSurvey(true)"
           >

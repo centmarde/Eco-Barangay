@@ -183,7 +183,7 @@ onMounted(async () => {
           >
             <div class="w-100 d-flex align-center justify-center">
               <img
-                src="../assets/loginImage.jpg"
+                src="../assets/LoginImage.png"
                 alt="Login Illustration"
                 style="
                   max-width: 100%;

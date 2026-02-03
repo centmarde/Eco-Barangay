@@ -185,12 +185,16 @@ const registerForm = reactive({
   confirmPassword: "",
 });
 
-// Computed properties for role options
+// Computed properties for role options - filtered to show only residents
 const roleOptions = computed(() => {
-  return rolesStore.roles.map((role) => ({
-    title: role.title || "Untitled Role",
-    value: role.id,
-  }));
+  return rolesStore.roles
+    .filter((role) =>
+      role.title?.toLowerCase().includes('resident')
+    )
+    .map((role) => ({
+      title: role.title || "Untitled Role",
+      value: role.id,
+    }));
 });
 
 // Error handling

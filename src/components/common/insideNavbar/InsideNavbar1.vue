@@ -7,6 +7,7 @@ import { useDisplay } from "vuetify";
 import { useAuthUserStore } from "@/stores/authUser";
 import SlugName from "./SlugName.vue";
 import NotificationBell from "@/components/common/NotificationBell.vue";
+import { usePermissions } from "@/composables/usePermissions";
 import {
   navigationConfig,
   type NavigationGroup,
@@ -20,6 +21,9 @@ interface Props {
 const props = defineProps<Props>();
 const router = useRouter();
 const authStore = useAuthUserStore();
+
+// Permissions composable
+const { fetchUserPermissions, hasPageAccess, hasGroupAccess, isLoading: permissionsLoading } = usePermissions();
 
 // Responsive breakpoints
 const { mobile } = useDisplay();
@@ -70,6 +74,31 @@ onUnmounted(() => {
 });
 
 const navbarConfig = computed(() => props.config?.navbar);
+
+// Filter navigation groups based on user permissions
+const navigationGroups = computed(() => {
+  return navigationConfig
+    .map(group => {
+      // Filter children based on page access
+      const accessibleChildren = group.children.filter(child => hasPageAccess(child.route))
+
+      // Only include group if it has accessible children
+      if (accessibleChildren.length > 0) {
+        return {
+          ...group,
+          children: accessibleChildren
+        }
+      }
+
+      return null
+    })
+    .filter(Boolean) as NavigationGroup[]
+});
+
+// Initialize permissions on component mount
+onMounted(async () => {
+  await fetchUserPermissions();
+});
 
 // Theme toggle computed properties
 const currentTheme = computed(() => getCurrentTheme());
@@ -131,9 +160,24 @@ async function handleLogout() {
 
     <v-divider />
 
+    <!-- Loading State -->
+    <div v-if="permissionsLoading" class="pa-4">
+      <v-skeleton-loader
+        type="list-item"
+        class="mb-2"
+      ></v-skeleton-loader>
+      <v-skeleton-loader
+        type="list-item"
+        class="mb-2"
+      ></v-skeleton-loader>
+      <v-skeleton-loader
+        type="list-item"
+      ></v-skeleton-loader>
+    </div>
+
     <!-- Navigation Menu -->
-    <v-list nav class="py-2">
-      <template v-for="group in navigationConfig" :key="group.title">
+    <v-list v-else nav class="py-2">
+      <template v-for="group in navigationGroups" :key="group.title">
         <!-- Navigation Group -->
         <v-list-group :value="group.title">
           <template #activator="{ props: activatorProps }">
@@ -162,9 +206,6 @@ async function handleLogout() {
 
       <v-divider class="my-2 mx-4" />
 
-      <!-- Notifications (Mobile) -->
-      <NotificationBell />
-
       <!-- Theme Toggle -->
       <v-list-item
         :title="themeTooltip"
@@ -174,9 +215,12 @@ async function handleLogout() {
         @click="toggleTheme"
       />
 
-      <!-- User Menu with SlugName -->
+      <!-- Notifications and User Section in a Row -->
       <div class="pa-2">
-        <SlugName />
+        <div class="d-flex align-center justify-space-between">
+          <NotificationBell />
+          <SlugName />
+        </div>
       </div>
     </v-list>
   </v-navigation-drawer>

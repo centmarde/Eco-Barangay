@@ -14,8 +14,8 @@ const authStore = useAuthUserStore();
 // Reactive references from the auth store
 const { userName, userRole } = storeToRefs(authStore);
 
-// Check if user is a resident (role 1) or normal user
-const isResidentUser = computed(() => userRole.value === 1);
+// Check if user is a resident role 3 user
+const isResidentUser = computed(() =>  userRole.value === 3);
 </script>
 
 <template>

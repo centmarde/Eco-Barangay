@@ -119,7 +119,7 @@ export const useRequestView = () => {
       console.error("Error updating collection status:", error);
     }
   };
-  
+
   onMounted(() => {
     fetchCollections();
     realtimeChannel = collectionsStore.subscribeToCollections();
@@ -161,7 +161,7 @@ export const useRequestView = () => {
 // New composable for history widget - shows all data sorted by latest first
 export const useRequestHistoryView = () => {
   const collectionsStore = useCollectionsStore();
-  
+
   // Realtime subscription
   let realtimeChannel: RealtimeChannel | null = null;
 
@@ -230,7 +230,27 @@ export const useRequestHistoryView = () => {
       console.error("Error updating collection status:", error);
     }
   };
-  
+
+  const deleteCollection = async (collectionId: number) => {
+    try {
+      await collectionsStore.deleteCollection(collectionId);
+      // Realtime handles removal from list
+    } catch (error) {
+      console.error("Error deleting collection:", error);
+      throw error; // Re-throw to handle in component
+    }
+  };
+
+  const deleteAllCollections = async (status?: string) => {
+    try {
+      await collectionsStore.deleteAllCollections(status);
+      // Realtime handles removal from list
+    } catch (error) {
+      console.error("Error deleting all collections:", error);
+      throw error; // Re-throw to handle in component
+    }
+  };
+
   onMounted(() => {
     fetchCollections();
     realtimeChannel = collectionsStore.subscribeToCollections();
@@ -258,6 +278,8 @@ export const useRequestHistoryView = () => {
     openDialog,
     closeDialog,
     updateCollectionStatus,
+    deleteCollection,
+    deleteAllCollections,
     getStatusColor,
     getStatusIcon,
     getStatusText,

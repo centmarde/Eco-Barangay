@@ -1318,6 +1318,50 @@ export const useCollectionsStore = defineStore("collections", () => {
     }
   };
 
+  const deleteAllCollections = async (status?: string) => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      let query;
+
+      // If status is provided and not "all", only delete collections with that status
+      if (status && status !== "all") {
+        query = supabase
+          .from("collections")
+          .delete()
+          .eq("status", status);
+      } else {
+        // For "all" status, we need to delete all records but with a safe WHERE clause
+        // We'll use a condition that matches all records (id is not null)
+        query = supabase
+          .from("collections")
+          .delete()
+          .not("id", "is", null); // This matches all records since id is never null
+      }
+
+      const { error: deleteError } = await query;
+
+      if (deleteError) throw deleteError;
+
+      // Update local state based on what was deleted
+      if (status && status !== "all") {
+        collections.value = collections.value.filter(c => c.status !== status);
+      } else {
+        collections.value = [];
+      }
+
+      return true;
+    } catch (err) {
+      error.value =
+        err instanceof Error ? err.message : "Failed to delete all collections";
+      console.error("Delete all collections error:", err);
+      return false;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const getUserEmail = async (
     userId: string,
   ): Promise<{ email?: string; full_name?: string } | null> => {
@@ -1650,6 +1694,7 @@ export const useCollectionsStore = defineStore("collections", () => {
     assignCollector,
     deleteCollection,
     deleteCollectionsByUserId,
+    deleteAllCollections,
     // New actions with emails
     getUserEmail,
     fetchCollectionsWithEmails,

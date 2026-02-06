@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import { getUserDisplayName, getEmailInitials } from "@/utils/userHelpers";
 import { useRequestHistoryView } from "../composables/requestView";
+import { useDeleteConfirmation } from "../composables/collectionHelper";
 import { useDisplay } from "vuetify";
 import { onMounted, ref, computed, watch } from "vue";
+import { useToast } from "vue-toastification";
 import RequestDialog from "../dialogs/RequestDialog.vue";
 import RequestsPagination from "./RequestsPagination.vue";
+import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
+import DeleteAllCollectionsDialog from "../dialogs/DeleteAllCollectionsDialog.vue";
 
 const { smAndDown, mdAndUp } = useDisplay();
+const toast = useToast();
 
 const {
   loading,
@@ -19,6 +24,8 @@ const {
   openDialog,
   closeDialog,
   updateCollectionStatus,
+  deleteCollection,
+  deleteAllCollections,
   getStatusColor,
   getStatusIcon,
   getStatusText,
@@ -26,6 +33,25 @@ const {
   getGarbageTypeIcon,
   formatDate,
 } = useRequestHistoryView();
+
+// Delete confirmation helpers
+const {
+  showDeleteAllDialog,
+  confirmationCode,
+  generatedCode,
+  isValidConfirmation,
+  deleteLoading,
+  validateConfirmation,
+  formatCodeInput,
+  resetConfirmation,
+  openDeleteAllDialog,
+  getDeleteAllMessage
+} = useDeleteConfirmation();
+
+// Single delete confirmation dialog
+const showDeleteDialog = ref(false);
+const collectionToDelete = ref<any>(null);
+const singleDeleteLoading = ref(false);
 
 // Search
 const searchQuery = ref("");
@@ -80,6 +106,52 @@ onMounted(async () => {
 const handleStatusUpdate = async (collectionId: number, newStatus: string) => {
   await updateCollectionStatus(collectionId, newStatus);
 };
+
+const openDeleteDialog = (collection: any) => {
+  collectionToDelete.value = collection;
+  showDeleteDialog.value = true;
+};
+
+const handleDelete = async () => {
+  if (!collectionToDelete.value) return;
+
+  singleDeleteLoading.value = true;
+  try {
+    await deleteCollection(collectionToDelete.value.id);
+    toast.success("Collection request deleted successfully");
+    showDeleteDialog.value = false;
+    collectionToDelete.value = null;
+  } catch (error) {
+    console.error("Error deleting collection:", error);
+    toast.error("Failed to delete collection request");
+  } finally {
+    singleDeleteLoading.value = false;
+  }
+};
+
+const handleDeleteAll = async () => {
+  if (!isValidConfirmation.value) return;
+
+  deleteLoading.value = true;
+  try {
+    const statusToDelete = selectedStatus.value === 'all' ? undefined : selectedStatus.value;
+    await deleteAllCollections(statusToDelete);
+
+    const statusText = selectedStatus.value === 'all' ? 'all' : selectedStatus.value.replace('_', ' ');
+    toast.success(`All ${statusText} collections deleted successfully`);
+    resetConfirmation();
+  } catch (error) {
+    console.error("Error deleting all collections:", error);
+    toast.error("Failed to delete all collections");
+  } finally {
+    deleteLoading.value = false;
+  }
+};
+
+// Watch confirmation code for validation
+watch(confirmationCode, (newCode) => {
+  validateConfirmation(newCode);
+});
 </script>
 
 <template>
@@ -117,9 +189,22 @@ const handleStatusUpdate = async (collectionId: number, newStatus: string) => {
     <v-card class="mb-4">
       <v-card-text class="pa-2">
         <!-- Filter Header -->
-        <div class="d-flex align-center mb-3 px-2">
-          <v-icon color="primary" class="mr-2">mdi-filter</v-icon>
-          <span class="text-subtitle-2 font-weight-bold">Status Filters</span>
+        <div class="d-flex align-center justify-space-between mb-3 px-2">
+          <div class="d-flex align-center">
+            <v-icon color="primary" class="mr-2">mdi-filter</v-icon>
+            <span class="text-subtitle-2 font-weight-bold">Status Filters</span>
+          </div>
+          <v-btn
+            v-if="filteredCollections.length > 0"
+            color="error"
+            variant="outlined"
+            :size="smAndDown ? 'x-small' : 'small'"
+            @click="openDeleteAllDialog"
+          >
+            <v-icon :start="!smAndDown">mdi-delete-sweep</v-icon>
+            <span v-if="!smAndDown" class="ml-1">Delete All</span>
+            <span v-else class="sr-only">Delete All</span>
+          </v-btn>
         </div>
 
         <v-divider class="mb-2" />
@@ -242,6 +327,14 @@ const handleStatusUpdate = async (collectionId: number, newStatus: string) => {
               />
               {{ getStatusText(collection.status) }}
             </v-chip>
+            <v-icon
+              color="error"
+              size="small"
+              class="ml-2 cursor-pointer"
+              @click="openDeleteDialog(collection)"
+            >
+              mdi-delete
+            </v-icon>
           </div>
 
           <v-card-text class="pb-2">
@@ -347,7 +440,7 @@ const handleStatusUpdate = async (collectionId: number, newStatus: string) => {
           <v-divider />
 
           <!-- Actions -->
-          <v-card-actions>
+          <v-card-actions class="pa-2">
             <v-btn
               variant="text"
               color="primary"
@@ -376,6 +469,31 @@ const handleStatusUpdate = async (collectionId: number, newStatus: string) => {
       :collection="selectedCollection"
       @status-updated="handleStatusUpdate"
     />
+
+    <!-- Delete Confirmation Dialog -->
+    <ConfirmDialog
+      v-model="showDeleteDialog"
+      title="Delete Collection Request"
+      :message="`Are you sure you want to delete this collection request${collectionToDelete ? ` from ${collectionToDelete.requester_name || collectionToDelete.requester_email}` : ''}? This action cannot be undone.`"
+      confirm-text="Delete"
+      cancel-text="Cancel"
+      color="error"
+      :loading="singleDeleteLoading"
+      @confirm="handleDelete"
+    />
+
+    <!-- Delete All Confirmation Dialog -->
+    <DeleteAllCollectionsDialog
+      v-model="showDeleteAllDialog"
+      v-model:confirmation-code="confirmationCode"
+      :selected-status="selectedStatus"
+      :total-count="filteredCollections.length"
+      :generated-code="generatedCode"
+      :is-valid-confirmation="isValidConfirmation"
+      :loading="deleteLoading"
+      @confirm="handleDeleteAll"
+      @cancel="resetConfirmation"
+    />
   </div>
 </template>
 
@@ -398,9 +516,15 @@ const handleStatusUpdate = async (collectionId: number, newStatus: string) => {
   top: 12px;
   right: 12px;
   z-index: 1;
+  display: flex;
+  align-items: center;
 }
 
 .collection-card .v-card-text {
   padding-top: 48px;
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }
 </style>

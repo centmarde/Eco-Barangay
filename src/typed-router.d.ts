@@ -55,6 +55,7 @@ declare module 'vue-router/auto-routes' {
     '/collectors/components/RequestsHistoryWidget': RouteRecordInfo<'/collectors/components/RequestsHistoryWidget', '/collectors/components/RequestsHistoryWidget', Record<never, never>, Record<never, never>>,
     '/collectors/components/RequestsPagination': RouteRecordInfo<'/collectors/components/RequestsPagination', '/collectors/components/RequestsPagination', Record<never, never>, Record<never, never>>,
     '/collectors/components/RequestsWidget': RouteRecordInfo<'/collectors/components/RequestsWidget', '/collectors/components/RequestsWidget', Record<never, never>, Record<never, never>>,
+    '/collectors/dialogs/DeleteAllCollectionsDialog': RouteRecordInfo<'/collectors/dialogs/DeleteAllCollectionsDialog', '/collectors/dialogs/DeleteAllCollectionsDialog', Record<never, never>, Record<never, never>>,
     '/collectors/dialogs/RequestDialog': RouteRecordInfo<'/collectors/dialogs/RequestDialog', '/collectors/dialogs/RequestDialog', Record<never, never>, Record<never, never>>,
     '/collectors/RequestsHistoryView': RouteRecordInfo<'/collectors/RequestsHistoryView', '/collectors/RequestsHistoryView', Record<never, never>, Record<never, never>>,
     '/collectors/RequestsView': RouteRecordInfo<'/collectors/RequestsView', '/collectors/RequestsView', Record<never, never>, Record<never, never>>,

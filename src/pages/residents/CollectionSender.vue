@@ -47,19 +47,21 @@ const handleCollectionCreated = async () => {
 
 <style scoped lang="scss">
 .collection-sender {
-  position: relative;
-  min-height: 100vh;
+  position: fixed;
+  bottom: -60px;
+  right: 24px;
+  z-index: 1000;
 }
 
 .content-wrapper {
-  padding: 20px;
+  display: none; // Hide content wrapper as we only want the floating button
 }
 
 .floating-action-button {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  z-index: 1000;
+  position: relative;
+  bottom: 0;
+  right: 0;
+  z-index: 1001;
   border-radius: 50%;
   width: 64px;
   height: 64px;
@@ -72,9 +74,12 @@ const handleCollectionCreated = async () => {
 
 // Media query for mobile devices
 @media (max-width: 600px) {
-  .floating-action-button {
-    bottom: 16px;
+  .collection-sender {
+    bottom: -60px;
     right: 16px;
+  }
+  
+  .floating-action-button {
     width: 56px;
     height: 56px;
   }

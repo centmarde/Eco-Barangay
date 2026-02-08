@@ -231,7 +231,7 @@ const handleLogout = async () => {
       <v-list-item class="pa-4">
         <v-list-item-content>
           <v-list-item-subtitle class="text-caption grey--text text-center">
-            QR BASE
+           Eco Barangay v1.0.0
           </v-list-item-subtitle>
         </v-list-item-content>
       </v-list-item>

@@ -55,7 +55,8 @@ onMounted(async () => {
     <div class="backdrop-overlay" @click="closeAnnouncement"></div>
 
     <div class="daily-announcement-wrapper">
-      <div class="announcement-card">
+      <!-- Desktop view with background image -->
+      <div class="announcement-card d-none d-sm-block">
         <div class="announcement-actions">
           <button class="close-button" @click="closeAnnouncement" aria-label="Close announcement">
             Close
@@ -68,6 +69,27 @@ onMounted(async () => {
           {{ todayAnnouncement.description }}
         </p>
       </div>
+
+      <!-- Mobile view with v-card -->
+      <v-card class="d-block d-sm-none mobile-announcement-card" elevation="8">
+        <v-card-title class="mobile-title">
+          {{ todayAnnouncement.title }}
+        </v-card-title>
+        <v-card-text class="mobile-description">
+          {{ todayAnnouncement.description }}
+        </v-card-text>
+        <v-card-actions class="mobile-actions">
+          <v-spacer></v-spacer>
+          <v-btn
+            variant="outlined"
+            color="primary"
+            @click="closeAnnouncement"
+            size="small"
+          >
+            Close
+          </v-btn>
+        </v-card-actions>
+      </v-card>
     </div>
   </div>
 </template>

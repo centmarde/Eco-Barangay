@@ -3,6 +3,15 @@ import { onMounted } from 'vue'
 import { useLandingController } from '@/controller/landingController'
 import Sidebar1 from '@/components/common/sideBar/Sidebar.vue'
 
+// Navbar Components
+import InsideNavbar1 from '@/components/common/insideNavbar/InsideNavbar1.vue'
+import InsideNavbar2 from '@/components/common/insideNavbar/InsideNavbar2.vue'
+import InsideNavbar3 from '@/components/common/insideNavbar/InsideNavbar3.vue'
+import InsideNavbar4 from '@/components/common/insideNavbar/InsideNavbar4.vue'
+
+// Footer Components
+import OuterFooter from '@/components/common/outerFooters/OuterFooter.vue'
+import OuterFooter2 from '@/components/common/outerFooters/OuterFooter2.vue'
 
 const { data, fetchLandingData } = useLandingController()
 

@@ -235,6 +235,57 @@ export const useAnnouncementsStore = defineStore("announcements", () => {
     }
   };
 
+  const uploadImage = async (file: File) => {
+    loading.value = true;
+    error.value = undefined;
+
+    try {
+      // Generate a unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+      const filePath = `announcements/bucket/${fileName}`;
+
+      // Upload file to Supabase storage
+      const { data, error: uploadError } = await supabase.storage
+        .from('announcements')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get the public URL
+      const { data: publicUrlData } = supabase.storage
+        .from('announcements')
+        .getPublicUrl(filePath);
+
+      return publicUrlData.publicUrl;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : "Failed to upload image";
+      return null;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const deleteImage = async (imageUrl: string) => {
+    try {
+      // Extract file path from URL
+      const url = new URL(imageUrl);
+      const pathParts = url.pathname.split('/');
+      const filePath = pathParts.slice(-2).join('/'); // Get last two parts (announcements/bucket/filename)
+
+      const { error: deleteError } = await supabase.storage
+        .from('announcements')
+        .remove([filePath]);
+
+      if (deleteError) throw deleteError;
+
+      return true;
+    } catch (err) {
+      console.error('Error deleting image:', err);
+      return false;
+    }
+  };
+
   return {
     // State
     announcements,
@@ -250,5 +301,7 @@ export const useAnnouncementsStore = defineStore("announcements", () => {
     updateAnnouncement,
     deleteAnnouncement,
     deleteMultipleAnnouncements,
+    uploadImage,
+    deleteImage,
   };
 });

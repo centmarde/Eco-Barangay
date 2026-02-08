@@ -1,13 +1,16 @@
 <template>
   <!-- Announcement Card -->
   <v-card
-    class="announcement-card mb-4"
+    class="d-flex flex-column"
     elevation="2"
-    :class="{ 'selected': isSelected }"
+    height="280"
+    :class="{ 'border-primary border-lg': isSelected }"
     @click="handleCardClick"
+    hover
   >
-    <!-- Selection Checkbox -->
-    <div class="selection-checkbox">
+    <!-- Card Header with Controls -->
+    <v-card-title class="d-flex align-center pa-3">
+      <!-- Selection Checkbox -->
       <v-checkbox
         :model-value="isSelected"
         @update:model-value="$emit('toggle-selection', announcement.id)"
@@ -15,17 +18,16 @@
         color="primary"
         hide-details
         density="compact"
+        class="me-3"
       />
-    </div>
 
-    <!-- Announcement Header -->
-    <v-card-title class="d-flex justify-space-between align-center pa-4">
-      <div class="text-h6 font-weight-bold announcement-title">
+      <!-- Title -->
+      <div class="flex-grow-1 text-subtitle-1 font-weight-medium text-truncate">
         {{ announcement.title }}
       </div>
 
       <!-- Action Menu -->
-      <v-menu offset-y>
+      <v-menu>
         <template v-slot:activator="{ props }">
           <v-btn
             v-bind="props"
@@ -35,16 +37,16 @@
             @click.stop
           />
         </template>
-        <v-list>
+        <v-list density="compact">
           <v-list-item @click="$emit('view', announcement)">
             <template v-slot:prepend>
-              <v-icon>mdi-eye</v-icon>
+              <v-icon size="18">mdi-eye</v-icon>
             </template>
-            <v-list-item-title>View Details</v-list-item-title>
+            <v-list-item-title>View</v-list-item-title>
           </v-list-item>
           <v-list-item @click="$emit('edit', announcement)">
             <template v-slot:prepend>
-              <v-icon>mdi-pencil</v-icon>
+              <v-icon size="18">mdi-pencil</v-icon>
             </template>
             <v-list-item-title>Edit</v-list-item-title>
           </v-list-item>
@@ -54,7 +56,7 @@
             class="text-error"
           >
             <template v-slot:prepend>
-              <v-icon color="error">mdi-delete</v-icon>
+              <v-icon size="18" color="error">mdi-delete</v-icon>
             </template>
             <v-list-item-title>Delete</v-list-item-title>
           </v-list-item>
@@ -65,45 +67,50 @@
 
 
     <!-- Announcement Content -->
-    <v-card-text class="pa-4">
-      <div class="announcement-description">
+    <v-card-text class="px-4 py-2 flex-grow-1">
+      <v-sheet class="text-body-2" color="transparent">
         {{ truncatedDescription }}
         <v-btn
           v-if="announcement.description.length > descriptionLimit"
           variant="text"
-          size="small"
+          size="x-small"
           color="primary"
-          @click.stop="$emit('view', announcement)"
           class="pa-0 ml-1"
+          @click.stop="$emit('view', announcement)"
         >
           Read more
         </v-btn>
-      </div>
+      </v-sheet>
     </v-card-text>
 
     <!-- Announcement Footer -->
-    <v-card-actions class="px-4 pb-4">
-      <div class="d-flex justify-space-between align-center w-100">
+    <v-card-actions class="px-4 py-2 mt-auto">
+      <v-row no-gutters class="align-center justify-space-between w-100">
         <!-- Created Date -->
-        <div class="text-caption text-medium-emphasis d-flex align-center">
-          <v-icon size="16" class="mr-1">mdi-clock-outline</v-icon>
-          {{ formatDate(announcement.created_at) }}
-        </div>
+        <v-col cols="auto">
+          <v-chip
+            size="x-small"
+            variant="outlined"
+            color="primary"
+            prepend-icon="mdi-clock-outline"
+          >
+            {{ formatDate(announcement.created_at) }}
+          </v-chip>
+        </v-col>
 
         <!-- Quick Actions -->
-        <div class="d-flex ga-2">
-
+        <v-col cols="auto">
           <v-btn
             size="small"
             variant="outlined"
-            color="secondary"
+            color="primary"
+            prepend-icon="mdi-pencil"
             @click.stop="$emit('edit', announcement)"
           >
-            <v-icon start>mdi-pencil</v-icon>
             Edit
           </v-btn>
-        </div>
-      </div>
+        </v-col>
+      </v-row>
     </v-card-actions>
   </v-card>
 </template>
@@ -155,66 +162,3 @@ const handleCardClick = () => {
   emit('view', props.announcement)
 }
 </script>
-
-<style scoped>
-.announcement-card {
-  position: relative;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  border: 2px solid transparent;
-}
-
-.announcement-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-}
-
-.announcement-card.selected {
-  border-color: rgb(var(--v-theme-primary));
-  background-color: rgba(var(--v-theme-primary), 0.05);
-}
-
-.selection-checkbox {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  z-index: 2;
-
-  border-radius: 4px;
-  padding: 2px;
-}
-
-.announcement-title {
-  color: rgb(var(--v-theme-on-surface));
-  line-height: 1.3;
-  word-break: break-word;
-  max-width: calc(100% - 48px); /* Account for menu button */
-}
-
-.announcement-image {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.announcement-description {
-  color: rgb(var(--v-theme-on-surface-variant));
-  line-height: 1.5;
-  word-break: break-word;
-}
-
-/* Responsive adjustments */
-@media (max-width: 600px) {
-  .announcement-card {
-    margin-bottom: 12px;
-  }
-
-  .announcement-title {
-    font-size: 1.1rem;
-  }
-
-  .selection-checkbox {
-    top: 4px;
-    left: 4px;
-  }
-}
-</style>

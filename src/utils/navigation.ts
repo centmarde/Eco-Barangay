@@ -105,22 +105,18 @@ export const navigationConfig: NavigationGroup[] = [
         route: "/admin/dashboard",
         permission: "admin.dashboard.view",
       },
-    ],
-  },
 
-  {
-    title: "Developers",
-    icon: "mdi-code-braces",
-    permission: "developers.access",
-    children: [
       {
         title: "Announcements",
         icon: "mdi-bullhorn",
         route: "/developers/announcements",
         permission: "developers.announcements.manage",
-      },
+      }
     ],
   },
+
+
+
 ];
 
 // Helper function to get all permissions from navigation config

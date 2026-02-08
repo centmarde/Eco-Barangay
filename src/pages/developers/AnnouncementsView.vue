@@ -77,7 +77,7 @@ const clearSearch = async () => {
       <v-row>
         <v-col cols="12">
           <!-- Header Section -->
-          <v-card class="mb-6" elevation="2">
+
             <v-card-title class="text-h5 font-weight-bold d-flex align-center">
               <v-icon left class="mr-3" color="primary">mdi-bullhorn</v-icon>
               Announcements Management
@@ -170,10 +170,10 @@ const clearSearch = async () => {
                 </v-chip>
               </div>
             </v-card-text>
-          </v-card>
+
 
           <!-- Content Section -->
-          <v-card elevation="2">
+
             <v-card-text class="pa-6">
               <!-- Loading State -->
               <div v-if="controller.isLoading.value" class="text-center py-8">
@@ -223,21 +223,26 @@ const clearSearch = async () => {
                 </v-row>
 
                 <!-- List View -->
-                <div v-else class="announcements-list">
-                  <AnnouncementsWidget
+                <v-row v-else>
+                  <v-col
                     v-for="announcement in controller.announcements.value"
                     :key="announcement.id"
-                    :announcement="announcement"
-                    :is-selected="controller.isAnnouncementSelected(announcement.id)"
-                    @toggle-selection="controller.toggleAnnouncementSelection"
-                    @view="handleViewAnnouncement"
-                    @edit="handleEditAnnouncement"
-                    @delete="handleDeleteSingle"
-                  />
-                </div>
+                    cols="12"
+                    class="py-2"
+                  >
+                    <AnnouncementsWidget
+                      :announcement="announcement"
+                      :is-selected="controller.isAnnouncementSelected(announcement.id)"
+                      @toggle-selection="controller.toggleAnnouncementSelection"
+                      @view="handleViewAnnouncement"
+                      @edit="handleEditAnnouncement"
+                      @delete="handleDeleteSingle"
+                    />
+                  </v-col>
+                </v-row>
               </div>
             </v-card-text>
-          </v-card>
+
         </v-col>
       </v-row>
     </v-container>
@@ -283,12 +288,6 @@ const clearSearch = async () => {
 </template>
 
 <style scoped>
-.announcements-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 /* Responsive adjustments */
 @media (max-width: 960px) {
   .d-flex.flex-wrap.align-center.ga-4 {

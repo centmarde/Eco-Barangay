@@ -15,10 +15,6 @@ const closeAnnouncement = () => {
   isVisible.value = false;
 };
 
-const goToAnnouncements = () => {
-  router.push('/announcements');
-};
-
 const todayAnnouncement = computed(() => {
   if (!announcements.value || announcements.value.length === 0) return null;
 
@@ -62,11 +58,15 @@ onMounted(async () => {
       <div class="announcement-card">
         <div class="announcement-actions">
           <button class="close-button" @click="closeAnnouncement" aria-label="Close announcement">
-            close
+            Close
           </button>
         </div>
-        <h2 class="announcement-title">{{ todayAnnouncement.title }}</h2>
-        <p class="announcement-description">{{ todayAnnouncement.description }}</p>
+        <h2 class="announcement-title">
+          {{ todayAnnouncement.title }}
+        </h2>
+        <p class="announcement-description">
+          {{ todayAnnouncement.description }}
+        </p>
       </div>
     </div>
   </div>

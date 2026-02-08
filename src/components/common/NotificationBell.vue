@@ -6,6 +6,7 @@ import { useAuthUserStore } from "@/stores/authUser";
 import { useDisplay } from "vuetify";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import NotificationDialog from "./NotificationDialog.vue";
+import NotificationDetailDialog from "./NotificationDetailDialog.vue";
 
 const router = useRouter();
 const notificationsStore = useNotificationsStore();
@@ -14,6 +15,8 @@ const { mobile } = useDisplay();
 
 // Local state
 const notificationMenu = ref(false);
+const showDetailDialog = ref(false);
+const selectedNotification = ref<any>(null);
 let realtimeChannel: RealtimeChannel | null = null;
 
 // Computed properties
@@ -37,16 +40,22 @@ const viewAllNotifications = () => {
 };
 
 const handleNotificationClick = async (notification: any) => {
-  // Mark as read
-  if (!notification.read) {
-    await markAsRead(notification.id);
+  // Close the notification menu
+  notificationMenu.value = false;
+
+  // Set the selected notification and show detail dialog
+  selectedNotification.value = notification;
+  showDetailDialog.value = true;
+};
+
+const handleDetailDialogClose = async () => {
+  // Mark notification as read when dialog is closed
+  if (selectedNotification.value && !selectedNotification.value.read) {
+    await markAsRead(selectedNotification.value.id);
   }
 
-  // Navigate if there's an action URL
-  if (notification.action_url) {
-    notificationMenu.value = false;
-    router.push(notification.action_url);
-  }
+  // Reset selected notification
+  selectedNotification.value = null;
 };
 
 // Lifecycle hooks
@@ -79,5 +88,11 @@ onUnmounted(() => {
     @mark-read="markAsRead"
     @view-all="viewAllNotifications"
     @notification-click="handleNotificationClick"
+  />
+
+  <NotificationDetailDialog
+    v-model="showDetailDialog"
+    :notification="selectedNotification"
+    @close="handleDetailDialogClose"
   />
 </template>

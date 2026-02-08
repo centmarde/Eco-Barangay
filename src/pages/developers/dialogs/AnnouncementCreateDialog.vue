@@ -32,34 +32,91 @@
             required
           />
 
-          <v-text-field
-            v-model="localForm.image"
-            label="Image URL (Optional)"
-            variant="outlined"
-            density="comfortable"
-            placeholder="https://example.com/image.jpg"
-            :error="!!errors.image"
-            :error-messages="errors.image"
-          />
+          <!-- Image Upload Section -->
+          <v-card variant="outlined" class="mb-4">
+            <v-card-subtitle class="text-subtitle-2 font-weight-medium pa-4 pb-2">
+              <v-icon left class="mr-2">mdi-image-plus</v-icon>
+              Announcement Image (Optional)
+            </v-card-subtitle>
 
-          <!-- Image Preview -->
-          <div v-if="localForm.image && isValidImageUrl" class="mt-4">
-            <v-card class="pa-2" variant="outlined">
-              <v-card-subtitle class="text-caption">Image Preview:</v-card-subtitle>
-              <v-img
-                :src="localForm.image"
-                height="200"
-                class="rounded mt-2"
-                cover
+            <v-card-text class="pt-0">
+              <!-- File Input -->
+              <input
+                ref="fileInputRef"
+                type="file"
+                accept="image/*"
+                @change="handleFileSelect"
+                style="display: none"
+              />
+
+              <!-- Upload Button -->
+              <v-btn
+                v-if="!imagePreview"
+                variant="outlined"
+                color="primary"
+                @click="fileInputRef?.click()"
+                :disabled="uploadingImage"
+                class="mb-3"
               >
-                <template v-slot:error>
-                  <div class="d-flex align-center justify-center fill-height">
-                    <v-icon size="48" color="grey-lighten-1">mdi-image-broken</v-icon>
-                  </div>
-                </template>
-              </v-img>
-            </v-card>
-          </div>
+                <v-icon left>mdi-cloud-upload</v-icon>
+                Choose Image
+              </v-btn>
+
+              <!-- Image Preview -->
+              <div v-if="imagePreview">
+                <v-img
+                  :src="imagePreview"
+                  height="200"
+                  class="rounded mb-3"
+                  cover
+                >
+                  <template v-slot:error>
+                    <div class="d-flex align-center justify-center fill-height">
+                      <v-icon size="48" color="grey-lighten-1">mdi-image-broken</v-icon>
+                    </div>
+                  </template>
+                </v-img>
+
+                <!-- Image Actions -->
+                <div class="d-flex gap-2">
+                  <v-btn
+                    variant="outlined"
+                    color="primary"
+                    size="small"
+                    @click="fileInputRef?.click()"
+                    :disabled="uploadingImage"
+                  >
+                    <v-icon left>mdi-image-edit</v-icon>
+                    Change Image
+                  </v-btn>
+
+                  <v-btn
+                    variant="outlined"
+                    color="error"
+                    size="small"
+                    @click="removeImage"
+                    :disabled="uploadingImage"
+                  >
+                    <v-icon left>mdi-delete</v-icon>
+                    Remove
+                  </v-btn>
+                </div>
+              </div>
+
+              <!-- Upload Progress -->
+              <v-progress-linear
+                v-if="uploadingImage"
+                indeterminate
+                color="primary"
+                class="mt-2"
+              />
+
+              <!-- Help Text -->
+              <v-card-subtitle class="text-caption text-grey-darken-1 px-0 pb-0">
+                Supported formats: JPEG, PNG, GIF, WebP. Maximum size: 5MB
+              </v-card-subtitle>
+            </v-card-text>
+          </v-card>
         </v-form>
       </v-card-text>
 
@@ -68,14 +125,14 @@
         <v-btn
           variant="text"
           @click="handleCancel"
-          :disabled="loading"
+          :disabled="isProcessing"
         >
           Cancel
         </v-btn>
         <v-btn
           color="success"
           @click="handleSubmit"
-          :loading="loading"
+          :loading="isProcessing"
         >
           Create Announcement
         </v-btn>
@@ -86,6 +143,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { useAnnouncementsStore } from '@/stores/announcementsData'
+import { useToast } from 'vue-toastification'
 import type { CreateAnnouncementData } from '@/stores/announcementsData'
 
 interface Props {
@@ -105,8 +164,13 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
+// Store and utilities
+const announcementsStore = useAnnouncementsStore()
+const toast = useToast()
+
 // Form reference
 const formRef = ref()
+const fileInputRef = ref()
 
 // Local form state
 const localForm = ref<CreateAnnouncementData>({
@@ -114,6 +178,11 @@ const localForm = ref<CreateAnnouncementData>({
   description: '',
   image: ''
 })
+
+// Image upload state
+const selectedFile = ref<File | null>(null)
+const imagePreview = ref<string>('')
+const uploadingImage = ref(false)
 
 // Form errors
 const errors = ref({
@@ -123,15 +192,7 @@ const errors = ref({
 })
 
 // Computed
-const isValidImageUrl = computed(() => {
-  if (!localForm.value.image) return false
-  try {
-    const url = new URL(localForm.value.image)
-    return ['http:', 'https:'].includes(url.protocol)
-  } catch {
-    return false
-  }
-})
+const isProcessing = computed(() => props.loading || uploadingImage.value)
 
 // Watch for dialog show/hide
 watch(
@@ -152,6 +213,68 @@ watch(
 )
 
 // Methods
+const handleFileSelect = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+
+  if (file) {
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Please select a valid image file (JPEG, PNG, GIF, or WebP)')
+      return
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024
+    if (file.size > maxSize) {
+      toast.error('Image size must be less than 5MB')
+      return
+    }
+
+    selectedFile.value = file
+
+    // Create preview
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      imagePreview.value = e.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+const removeImage = () => {
+  selectedFile.value = null
+  imagePreview.value = ''
+  localForm.value.image = ''
+
+  // Reset file input
+  if (fileInputRef.value) {
+    fileInputRef.value.value = ''
+  }
+}
+
+const uploadImageFile = async (): Promise<string | null> => {
+  if (!selectedFile.value) return null
+
+  try {
+    uploadingImage.value = true
+    const imageUrl = await announcementsStore.uploadImage(selectedFile.value)
+
+    if (imageUrl) {
+      return imageUrl
+    } else {
+      toast.error('Failed to upload image')
+      return null
+    }
+  } catch (error) {
+    console.error('Error uploading image:', error)
+    toast.error('Failed to upload image')
+    return null
+  } finally {
+    uploadingImage.value = false
+  }
+}
 const validateForm = (): boolean => {
   let isValid = true
 
@@ -174,12 +297,6 @@ const validateForm = (): boolean => {
     isValid = false
   }
 
-  // Validate image URL if provided
-  if (localForm.value.image && !isValidImageUrl.value) {
-    errors.value.image = 'Please enter a valid image URL'
-    isValid = false
-  }
-
   return isValid
 }
 
@@ -188,19 +305,36 @@ const handleSubmit = async () => {
     return
   }
 
-  // Clean the form data
-  const formData: CreateAnnouncementData = {
-    title: localForm.value.title?.trim() || '',
-    description: localForm.value.description?.trim() || ''
-  }
+  try {
+    // Upload new image if selected
+    let imageUrl = ''
 
-  // Add image field only if it has a value
-  const imageValue = localForm.value.image?.trim()
-  if (imageValue) {
-    formData.image = imageValue
-  }
+    if (selectedFile.value) {
+      const uploadedUrl = await uploadImageFile()
+      if (uploadedUrl) {
+        imageUrl = uploadedUrl
+      } else {
+        // Failed to upload image
+        return
+      }
+    }
 
-  emit('submit', formData)
+    // Clean the form data
+    const formData: CreateAnnouncementData = {
+      title: localForm.value.title?.trim() || '',
+      description: localForm.value.description?.trim() || ''
+    }
+
+    // Add image field only if it has a value
+    if (imageUrl) {
+      formData.image = imageUrl
+    }
+
+    emit('submit', formData)
+  } catch (error) {
+    console.error('Error in form submission:', error)
+    toast.error('An error occurred while creating the announcement')
+  }
 }
 
 const handleCancel = () => {
@@ -221,6 +355,15 @@ const resetForm = () => {
     image: ''
   }
 
+  // Reset image state
+  selectedFile.value = null
+  imagePreview.value = ''
+
+  // Reset file input
+  if (fileInputRef.value) {
+    fileInputRef.value.value = ''
+  }
+
   // Reset form validation
   if (formRef.value) {
     formRef.value.resetValidation()
@@ -232,5 +375,9 @@ const resetForm = () => {
 .v-card-subtitle {
   font-weight: 500;
   opacity: 0.8;
+}
+
+.gap-2 {
+  gap: 8px;
 }
 </style>

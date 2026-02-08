@@ -82,13 +82,14 @@ export const authGuard = async (
                 userRoleId
               );
 
-              // Check if user is trying to access a parent tab route (collectors or barangay)
+              // Check if user is trying to access a parent tab route (collectors, barangay, developers, etc.)
               // and redirect to forbidden if they don't have access to any child pages
               const isCollectorsRoute = to.path.startsWith("/collectors");
               const isBarangayRoute = to.path.startsWith("/barangay");
               const isAdminRoute = to.path.startsWith("/admin");
+              const isDevelopersRoute = to.path.startsWith("/developers");
 
-              if (isCollectorsRoute || isBarangayRoute || isAdminRoute) {
+              if (isCollectorsRoute || isBarangayRoute || isAdminRoute || isDevelopersRoute) {
                 return next("/forbidden");
               }
 

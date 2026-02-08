@@ -23,6 +23,9 @@ import ReportAnalysisView from "@/pages/barangay/ReportAnalysisView.vue";
 // Residents pages
 import MyFeedbackView from "@/pages/residents/MyFeedbackView.vue";
 
+// Developers pages
+import AnnouncementsView from "@/pages/developers/AnnouncementsView.vue";
+
 /**
  * Route definitions for the application
  */
@@ -93,6 +96,12 @@ const routes = setupLayouts([
   {
     path: "/admin/feedback-management",
     component: FeedbackManagementView,
+    meta: { requiresAuth: true },
+  },
+  // Developers routes
+  {
+    path: "/developers/announcements",
+    component: AnnouncementsView,
     meta: { requiresAuth: true },
   },
   {

@@ -140,17 +140,13 @@ async function handleLogout() {
     <div class="pa-4 d-flex align-center">
       <template v-if="navbarConfig?.logo?.src">
         <v-img
-          :src="navbarConfig.logo.src"
+          :src="navbarConfig.logo.src.replace('/src/assets/', '/assets/')"
           :alt="navbarConfig.logo.alt"
           width="50"
           height="50"
           class="me-2 rounded-circle"
           cover
-        >
-          <template #error>
-            <v-icon class="me-2" :icon="navbarConfig.icon" size="large" />
-          </template>
-        </v-img>
+        />
       </template>
       <template v-else>
         <v-icon class="me-2" :icon="navbarConfig?.icon" size="large" />
@@ -249,21 +245,16 @@ async function handleLogout() {
 
       <!-- Logo and Title - Desktop only -->
       <div v-if="!mobile" class="d-flex align-center">
-        <!-- Logo Image with Icon Fallback -->
+        <!-- Logo Image -->
         <template v-if="navbarConfig?.logo?.src">
           <v-img
-            :src="navbarConfig.logo.src"
+            :src="navbarConfig.logo.src.replace('/src/assets/', '/assets/')"
             :alt="navbarConfig.logo.alt"
             width="50"
             height="50"
             class="me-2 rounded-circle"
             cover
-          >
-            <template #error>
-              <!-- Fallback to icon if image fails to load -->
-              <v-icon class="me-2" :icon="navbarConfig.icon" size="large" />
-            </template>
-          </v-img>
+          />
         </template>
 
         <template v-else>
@@ -280,17 +271,13 @@ async function handleLogout() {
       <div v-else class="d-flex align-center">
         <template v-if="navbarConfig?.logo?.src">
           <v-img
-            :src="navbarConfig.logo.src"
+            :src="navbarConfig.logo.src.replace('/src/assets/', '/assets/')"
             :alt="navbarConfig.logo.alt"
             width="32"
             height="32"
             class="rounded-circle"
             cover
-          >
-            <template #error>
-              <v-icon :icon="navbarConfig.icon" size="24" />
-            </template>
-          </v-img>
+          />
         </template>
         <template v-else>
           <v-icon :icon="navbarConfig?.icon" size="24" />

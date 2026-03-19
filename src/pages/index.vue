@@ -12,8 +12,8 @@ const { data, loading, error, fetchLandingData } = useLandingController();
 // Compute the image source based on theme
 const heroImage = computed(() => {
   return theme.global.current.value.dark
-    ? new URL("@/assets/landingDark.png", import.meta.url).href
-    : new URL("@/assets/landing.png", import.meta.url).href;
+    ? "/assets/landingDark.png"
+    : "/assets/landing.png";
 });
 
 onMounted(async () => {
